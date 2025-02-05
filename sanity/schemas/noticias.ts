@@ -1,10 +1,16 @@
-// schemas/caseStudy.ts
+// schemas/noticias.ts
 
 export default {
-    name: 'caseStudy',
-    title: 'Case Study',
+    name: 'noticias',
+    title: 'Noticias',
     type: 'document',
     fields: [
+      {
+        name: 'publishedAt',
+        title: 'Published At',
+        type: 'datetime',
+        validation: (Rule: any) => Rule.required(),
+      },
       {
         name: 'coverImage',
         title: 'Cover Image',

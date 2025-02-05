@@ -2,9 +2,10 @@
 
 import { SchemaTypeDefinition } from 'sanity'
 
-import caseStudy from './schemas/caseStudy'
+import noticias from './schemas/noticias'
+import empresas from './schemas/empresas'
 
-export const schemaTypes = [caseStudy]
+export const schemaTypes = [noticias, empresas]
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [caseStudy],
+  types: [noticias, empresas],
 }

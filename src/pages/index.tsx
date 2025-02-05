@@ -1,11 +1,16 @@
 import Image from 'next/image'
 import { Inter } from 'next/font/google'
-import { useTranslation } from "@/hooks/UseTranslation"
-
 const inter = Inter({ subsets: ['latin'] })
-
-import { getDictionary } from '@/locales/getDictionary'
-import { useRouter } from 'next/router';
+import { useTranslation } from '@/hook/UseTranslation';
+import Header from '@/components/layout/Header';
+import Hero from '@/components/home/Hero';
+import ServiceList from '@/components/home/ServiceList';
+import AboutUs from '@/components/home/AboutUs';
+import WhyUs from '@/components/home/WhyUs';
+import ProjectGrid from '@/components/home/ProjectGrid';
+import StoreSection from '@/components/home/StoreSection';
+import Cta from '@/components/home/Cta';
+import Footer from '@/components/layout/Footer';
 
 export default function Home() {
 
@@ -13,9 +18,17 @@ export default function Home() {
 
   return (
     <main
-      className={`flex min-h-screen flex-col items-center justify-between p-24 ${inter.className}`}
+      className={`${inter.className}`}
     >
-      {dict.welcome}
+      <Header/>
+      <Hero/>
+      <StoreSection/>
+      <AboutUs/>
+      <ServiceList/>
+      <WhyUs/>
+      <ProjectGrid/>
+      <Cta/>
+      <Footer/>
     </main>
   )
 }
