@@ -137,7 +137,7 @@ export default function Header() {
           {/* Logo centrado */}
           <Link href="/" className="flex-shrink-0 w-1/3 flex justify-center">
             <span className="sr-only">Logo</span>
-            <Image src="/RomanaEbanistería.png" alt="Logo" width={120} height={50} />
+            <Image src="/romanaEbanistería.png" alt="Logo" width={120} height={50} />
           </Link>
           {/* Botón de menú a la izquierda */}
           <button
@@ -153,7 +153,7 @@ export default function Header() {
           <div className="flex items-center">
             <Link href="/" className="">
               <span className="sr-only">Logo</span>
-              <Image src="/RomanaEbanistería.png" alt="Logo" width={150} height={50} />
+              <Image src="/romanaEbanistería.png" alt="Logo" width={150} height={50} />
             </Link>
           </div>
           <div className="flex space-x-8 text-gray-800 text-base font-medium">
@@ -237,7 +237,7 @@ export default function Header() {
               <div className="flex items-center justify-between">
                 <Link href="/" className="-m-2 p-2">
                   <span className="sr-only">Logo</span>
-                  <Image src="/RomanaEbanistería.png" alt="Logo" width={150} height={50} />
+                  <Image src="/romanaEbanistería.png" alt="Logo" width={150} height={50} />
                 </Link>
                 <button type="button" className="p-2 text-gray-800" onClick={() => setMobileMenuOpen(false)}>
                   <X className="h-8 w-8" />
