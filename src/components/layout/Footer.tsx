@@ -23,8 +23,7 @@ const Footer = () => {
           {/* Logo y Nombre */}
           <div className="mb-4 md:mb-0">
             <Link href="/">
-              <img
-                src="/RomanaEbanistería.png"
+              <img src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png"
                 alt="ROMAna Ebanistería Logo"
                 className="h-16 w-auto"
                 style={{ borderRadius: 0 }}
