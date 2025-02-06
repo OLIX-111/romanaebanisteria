@@ -15,7 +15,7 @@ const es = {
     },
     cta: "Contactanos",
   },
-  heroTitle: "Expertos en Ebanistería y Carpintería en Aluminio",
+  heroTitle: "Puertas | Cocinas | Mobiliario Para Grandes Proyectos",
   heroDescription: "Décadas de experiencia llevando innovación y precisión a grandes proyectos y soluciones personalizadas.",
   heroCallToAction1: "Nuestros productos y servicios",
   heroCallToAction2: "Solicita tu Cotización",

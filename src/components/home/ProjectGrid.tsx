@@ -98,7 +98,7 @@ export default function ProjectGrid() {
                   alt={`${project.category} project #${project.id}`}
                   width={400}
                   height={600}
-                  className="lg:aspect-square transition-transform duration-300 hover:scale-105"
+                  className="h-full w-full object-cover transition-transform duration-300 hover:scale-105"
                 />
               </motion.div>
             ))}
