@@ -20,7 +20,7 @@ export default function Home() {
     <main
       className={`${openSans.className}`}
     >
-      <Header/>
+      <Header enableScroll/>
       <Hero/>
       <StoreSection/>
       <AboutUs/>
