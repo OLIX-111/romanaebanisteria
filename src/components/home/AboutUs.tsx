@@ -67,7 +67,7 @@ export default function AboutUs() {
     return (
         <section className="w-full bg-white py-24">
             <CTA />
-            <div className="container mx-auto px-4 grid grid-cols-2 mt-16">
+            <div className="container mx-auto px-4 grid lg:grid-cols-2 mt-16">
                 <motion.div
                     initial="hidden"
                     whileInView="visible"
