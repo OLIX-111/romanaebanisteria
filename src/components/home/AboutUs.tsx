@@ -47,7 +47,7 @@ function CTA() {
     }, [])
 
     return (
-        <div ref={sectionRef} className="relative h-[80vh] w-full overflow-hidden">
+        <div ref={sectionRef} className="relative h-[450px] lg:h-[80vh] w-full overflow-hidden">
             <div
                 ref={imageRef}
                 className="absolute inset-0 transition-all duration-300 ease-out will-change-transform"
@@ -55,7 +55,7 @@ function CTA() {
                 <img
                     src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/1grupochavonRomana_Ebanisteria.png"
                     alt="Students on stairs"
-                    className="object-cover shadow-2xl"
+                    className="object-cover shadow-md"
                     sizes="100vw"
                 />
             </div>
@@ -67,14 +67,14 @@ export default function AboutUs() {
     return (
         <section className="w-full bg-white py-24">
             <CTA />
-            <div className="container mx-auto px-4 grid lg:grid-cols-2 mt-16">
+            <div className="container mx-auto px-4 grid lg:grid-cols-2 mt-6 lg:mt-16">
                 <motion.div
                     initial="hidden"
                     whileInView="visible"
                     viewport={{ once: true }}
                     transition={{ duration: 0.5 }}
                     variants={fadeIn}
-                    className="mb-16"
+                    className="lg:mb-16"
                 >
                     <h2 className="text-3xl font-medium text-gray-900 mb-6">Acerca de ROMAna Ebanistería</h2>
                     <div className="w-24 h-1 bg-gray-900 mb-8" />

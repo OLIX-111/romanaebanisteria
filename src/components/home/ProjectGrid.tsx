@@ -96,9 +96,9 @@ export default function ProjectGrid() {
                 <Image
                   src={project.image || "/placeholder.svg"}
                   alt={`${project.category} project #${project.id}`}
-                  layout="fill"
-                  objectFit="cover"
-                  className="transition-transform duration-300 hover:scale-105"
+                  width={500}
+                  height={500}
+                  className="aspect-square transition-transform duration-300 hover:scale-105"
                 />
               </motion.div>
             ))}

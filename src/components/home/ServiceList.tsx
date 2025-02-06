@@ -33,10 +33,10 @@ const SingleWork = (work: Work) => {
         <div className="relative h-[30rem]">
           <Image
             src={work.image || "/placeholder.svg"}
-            layout="fill"
-            objectFit="cover"
+            width={900}
+            height={900}
             alt={work.description + " | ROMAna Ebanistería"}
-            className="transition-transform duration-300 group-hover:scale-105"
+            className="aspect-square transition-transform duration-300 group-hover:scale-105"
           />
           <div className="h-full w-full absolute bg-gradient-to-b from-black/0 to-black/40 z-10" />
         </div>
@@ -71,6 +71,7 @@ const ServiceList = () => {
 
   const randomWorks: Work[] = dict.serviceList.works.map((item, index) => ({
     ...item,
+    image: getRandomImagePath(),
     i: index,
   }));
 
