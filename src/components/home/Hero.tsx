@@ -1,17 +1,33 @@
-import { motion } from "framer-motion";
-import Link from "next/link";
-import { useTranslation } from "@/hook/UseTranslation";
+"use client"
+
+import { motion } from "framer-motion"
+import { useTranslation } from "@/hook/UseTranslation"
+import { ArrowRight, Factory, Home, Plus } from "lucide-react"
 
 export default function Hero() {
+  const dict = useTranslation()
 
-    const dict = useTranslation()
+  const fadeInUp = {
+    initial: { opacity: 0, y: 20 },
+    animate: { opacity: 1, y: 0 },
+    exit: { opacity: 0, y: -20 },
+  }
 
-    return (
-        <div
-            className="relative isolate overflow-hidden bg-cover bg-fixed bg-no-repeat min-h-[88vh]"
-            style={{ backgroundImage: "url('/hero_romana_ebanisteria.jpg')", backgroundPosition: "0px 0px" }}
-        >
-            <div
+  const stagger = {
+    animate: { transition: { staggerChildren: 0.1 } },
+  }
+
+  return (
+    <motion.div
+      initial="initial"
+      animate="animate"
+      exit="exit"
+      className="relative isolate flex flex-col justify-between overflow-hidden bg-cover bg-fixed bg-no-repeat min-h-[88vh]"
+      style={{ backgroundImage: "url('/hero_romana_ebanisteria.jpg')", backgroundPosition: "0px 0px" }}
+    >
+      {/* Background elements remain unchanged */}
+
+      <div
                 className="hidden sm:absolute sm:-top-10 sm:right-1/2 sm:-z-10 sm:mr-10 sm:block sm:transform-gpu sm:blur-3xl"
                 aria-hidden="true"
             >
@@ -48,56 +64,62 @@ export default function Hero() {
                 "
             />
 
-            <motion.div
-                initial={{ opacity: 0, y: 20 }} // Estado inicial: invisible y ligeramente hacia abajo
-                animate={{ opacity: 1, y: 0 }} // Anima hacia opacidad completa y posición original
-                transition={{ duration: 0.6 }} // Duración de la transición en segundos
+      <motion.div
+        variants={fadeInUp}
+        transition={{ duration: 0.6 }}
+        className="mx-auto w-full max-w-6xl px-5 md:px-10 pb-16 md:pb-24 lg:pb-28 2xl:pb-36 pt-36 md:pt-48 lg:pt-44 2xl:pt-48"
+      >
+        <motion.div variants={stagger} className="mx-auto mb-12 w-full max-w-4xl text-center md:mb-16 lg:mb-20">
+          <motion.h1 variants={fadeInUp} className="mb-4 text-2xl lg:text-4xl w-full font-medium text-gray-50">
+            {dict.heroTitle}
+          </motion.h1>
+          <motion.p variants={fadeInUp} className="mx-auto m-5 text-sm mb-12 lg:mb-8 text-gray-200">
+            {dict.heroDescription}
+          </motion.p>
 
-                className="
-                    mx-auto w-full max-w-6xl 
-                    px-5 md:px-10 
-                    pb-16 md:pb-24 lg:pb-28 2xl:pb-36 
-                    pt-36 md:pt-48 lg:pt-44 2xl:pt-48
-                "
+          <motion.div variants={fadeInUp} className="flex flex-col sm:flex-row gap-3 mt-8">
+            <motion.button
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+              type="button"
+              className="py-2.5 px-3 w-full inline-flex justify-center items-center gap-x-2 text-sm font-semibold text-gray-50"
             >
-                <div className="mx-auto mb-12 w-full max-w-6xl text-center md:mb-16 lg:mb-20">
-                    <h1 className="
-                    mb-4 
-                    text-[1.8rem] sm:text-[3rem] md:text-[3rem] lg:text-[3.4rem]
-                    w-full font-semibold md:font-bold 
-                    text-gray-50
-                    ">
-                        {dict.heroTitle}
-                    </h1>
-                    <p className="mx-auto m-5 text-lg mb-12 lg:mb-8 text-gray-200">
-                        {dict.heroDescription}
-                    </p>
-                    <div className="flex flex-col lg:flex-row lg:justify-center lg:items-end w-full mx-auto lg:gap-4 gap-6">
-                        <Link href="/store">
-                            <button
-                                className="
-                                    flex items-center shadow-md bg-primary text-white 
-                                    px-6 text-lg py-4 font-medium rounded hover:px-8 duration-200
-                                    border border-primary w-full text-center justify-center
-                                "
-                            >
-                                {dict.heroCallToAction1}
-                            </button>
-                        </Link>
-                        <Link href="/#contact">
-                            <button
-                                className="
-                                    flex items-center shadow-md bg-[#111]/80 border text-white 
-                                    px-6 text-lg py-4 font-medium rounded hover:px-8 duration-200
-                                    w-full text-center justify-center
-                                "
-                            >
-                                {dict.heroCallToAction2}
-                            </button>
-                        </Link>
-                    </div>
-                </div>
+              <motion.div
+                whileHover={{ gap: "0.75rem" }}
+                className="bg-black/40 backdrop-blur-lg text-white border-white hover:border-black hover:bg-black w-fit flex items-center gap-2 py-3 px-8 border-2 rounded-md hover:text-white duration-300"
+              >
+                {dict.heroCallToAction1} <ArrowRight size={18} />
+              </motion.div>
+            </motion.button>
+          </motion.div>
+        </motion.div>
+      </motion.div>
+
+      <motion.div
+        variants={fadeInUp}
+        transition={{ duration: 0.6, delay: 0.3 }}
+        className="w-full text-white py-14 bg-gradient-to-t from-black/80 via-black/40 to-transparent"
+      >
+        <motion.div variants={stagger} className="w-full max-w-3xl mx-auto px-4 grid lg:grid-cols-3 gap-12">
+          {[
+            { Icon: Plus, title: "48+ Años", subtitle: "de experiencia" },
+            { Icon: Factory, title: "Gran Infraestructura", subtitle: "Capacidad industrial para grandes desarrollos" },
+            { Icon: Home, title: "1000+", subtitle: "Propiedades intervenidas" },
+          ].map((item, index) => (
+            <motion.div key={index} variants={fadeInUp} className="flex flex-col items-center text-center">
+              <motion.div
+                whileHover={{ scale: 1.1, rotate: 360 }}
+                transition={{ type: "spring", stiffness: 260, damping: 20 }}
+              >
+                <item.Icon />
+              </motion.div>
+              <span className="font-medium mb-1 mt-2 text-lg">{item.title}</span>
+              <span className="text-sm text-zinc-400">{item.subtitle}</span>
             </motion.div>
-        </div>
-    )
+          ))}
+        </motion.div>
+      </motion.div>
+    </motion.div>
+  )
 }
+

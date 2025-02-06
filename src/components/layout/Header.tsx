@@ -4,17 +4,21 @@ import { useTranslation } from "@/hook/UseTranslation"
 import { useRouter } from "next/router"
 import { useEffect, useState, Fragment } from "react"
 import { fetchEmpresasByType } from "../../../sanity/sanityQueries"
-import Image from "next/image"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronDown, ChevronDownIcon, Globe, MenuIcon, X, ShoppingCart } from "lucide-react"
 import Link from "next/link"
 import { Dialog, Disclosure, Transition, Menu } from "@headlessui/react"
 
+
+interface HeaderProps {
+  enableScroll?: boolean
+}
+
 function classNames(...classes: string[]) {
   return classes.filter(Boolean).join(" ")
 }
 
-export default function Header() {
+export default function Header({ enableScroll = false }: HeaderProps) {
   const dict = useTranslation()
   const { header } = dict
   const router = useRouter()
@@ -49,28 +53,63 @@ export default function Header() {
     }
   }
 
-  // Variantes para el header
   const headerVariants = {
     hidden: { opacity: 0, y: -20 },
-    visible: { opacity: 1, y: 0, transition: { duration: 0.5, ease: "easeOut" } },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: {
+        duration: 0.5,
+        ease: "easeOut",
+        staggerChildren: 0.1,
+        delayChildren: 0.2,
+      },
+    },
   }
 
-  // Variantes para el menú móvil
+  const navItemVariants = {
+    hidden: { opacity: 0, y: -10 },
+    visible: {
+      opacity: 1,
+      y: 0,
+      transition: { duration: 0.3, ease: "easeOut" },
+    },
+  }
+
   const mobileMenuVariants = {
-    hidden: { opacity: 0, scale: 0.95 },
-    visible: { opacity: 1, scale: 1, transition: { duration: 0.3, ease: "easeOut" } },
-    exit: { opacity: 0, scale: 0.95, transition: { duration: 0.2, ease: "easeIn" } },
+    hidden: { opacity: 0, x: "100%" },
+    visible: {
+      opacity: 1,
+      x: 0,
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      },
+    },
+    exit: {
+      opacity: 0,
+      x: "100%",
+      transition: {
+        type: "spring",
+        stiffness: 300,
+        damping: 30,
+      },
+    },
   }
 
-  const isScrolled = scrollPosition > 50
+  //const isScrolled = scrollPosition > 50
+
+  // If enableScroll is false, always show as scrolled
+  const isScrolled = enableScroll ? scrollPosition > 50 : true
 
   return (
     <motion.header
       variants={headerVariants}
       initial="hidden"
       animate="visible"
-      className={`sticky top-0 z-50 transition-colors duration-300 backdrop-blur-md px-4 lg:px-8 ${
-        isScrolled ? "bg-white/95 shadow-lg" : "bg-transparent"
+      className={`fixed w-full top-0 z-50 transition-all duration-300 px-4 lg:px-8 ${
+        scrollPosition > 50 ? `bg-white/95 shadow-md` : `${enableScroll ?"bg-transparent": "bg-white border-b"} `
       }`}
     >
       <nav className="mx-auto container">
@@ -78,95 +117,85 @@ export default function Header() {
         <div className="lg:hidden flex items-center justify-between py-4">
           {/* Botón CTA a la derecha */}
           <div className="w-1/3">
-            {/* <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center gap-1 text-gray-800 hover:text-gray-900">
-                <Globe className="w-5 h-5" />
-                <span className="uppercase">{locale}</span>
-                <ChevronDownIcon className="w-4 h-4" />
-              </Menu.Button>
-              <Transition
-                as={Fragment}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Menu.Items className="absolute left-0 mt-2 w-20 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none">
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={() => changeLanguage("en")}
-                        className={classNames(
-                          active ? "bg-gray-100" : "",
-                          "block w-full text-left px-4 py-2 text-sm text-gray-700",
-                        )}
-                      >
-                        EN
-                      </button>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={() => changeLanguage("es")}
-                        className={classNames(
-                          active ? "bg-gray-100" : "",
-                          "block w-full text-left px-4 py-2 text-sm text-gray-700",
-                        )}
-                      >
-                        ES
-                      </button>
-                    )}
-                  </Menu.Item>
-                </Menu.Items>
-              </Transition>
-            </Menu> */}
             <motion.button
-                  className="
-                    bg-primary text-white rounded-full 
-                    transition-transform flex items-center justify-center h-12 w-12
-                    "
-                  whileHover={{ scale: 1.05 }}
-                  whileTap={{ scale: 0.95 }}
-                >
-                  <ShoppingCart className="h-6 w-6" />
-                </motion.button>
+              className="text-white rounded-full transition-transform flex items-center justify-center h-12 w-12"
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <ShoppingCart className={`h-8 w-8 ${isScrolled ? "text-gray-800" : "text-gray-50"}`} />
+            </motion.button>
           </div>
           {/* Logo centrado */}
           <Link href="/" className="flex-shrink-0 w-1/3 flex justify-center">
             <span className="sr-only">Logo</span>
-            <img src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png" alt="Logo" width={120} height={50} />
+            <motion.img
+              src={
+                isScrolled
+                  ? `https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png`
+                  : `/romanaEbanistería_alt.png`
+              }
+              alt="Logo"
+              width={120}
+              height={50}
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            />
           </Link>
           {/* Botón de menú a la izquierda */}
-          <button
+          <motion.button
             type="button"
-            className="p-2 text-gray-800 w-1/3 flex justify-end"
+            className="text-gray-800 w-1/3 flex justify-end"
             onClick={() => setMobileMenuOpen(true)}
+            whileHover={{ scale: 1.05 }}
+            whileTap={{ scale: 0.95 }}
           >
-            <MenuIcon className="h-8 w-8" />
-          </button>
+            <MenuIcon className={`h-8 w-8 ${isScrolled ? "text-gray-800" : "text-gray-50"}`} />
+          </motion.button>
         </div>
         {/* ===== DESKTOP HEADER ===== */}
-        <div className="hidden lg:flex items-center justify-between py-4">
+        <div className="hidden lg:flex items-center justify-between py-2">
           <div className="flex items-center">
             <Link href="/" className="">
               <span className="sr-only">Logo</span>
-              <img src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png" alt="Logo" width={150} height={50} />
+              <motion.img
+                src={
+                  isScrolled
+                    ? `https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png`
+                    : `/romanaEbanistería_alt.png`
+                }
+                alt="Logo"
+                width={150}
+                height={55}
+                className="h-18 object-contain"
+                initial={{ opacity: 0 }}
+                animate={{ opacity: 1 }}
+                transition={{ duration: 0.5 }}
+              />
             </Link>
           </div>
-          <div className="flex space-x-8 text-gray-800 text-base font-medium">
-            <Link href="/">{header?.nav?.home}</Link>
-            <Link href="/about">{header?.nav?.about}</Link>
-            <Link href="/services">{header?.nav?.services}</Link>
-            <Link href="/store">{header?.nav?.store}</Link>
-            <Link href="/proyectos">{header?.nav?.projects}</Link>
-            <Link href="/news">{header?.nav?.news}</Link>
-          </div>
+          <motion.div
+            className={`flex space-x-6 text-[14px] font-medium ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
+            variants={headerVariants}
+          >
+            {[
+              { href: "/", text: header?.nav?.home },
+              { href: "/about", text: header?.nav?.about },
+              { href: "/services", text: header?.nav?.services },
+              { href: "/store", text: header?.nav?.store },
+              { href: "/proyectos", text: header?.nav?.projects },
+              { href: "/news", text: header?.nav?.news },
+            ].map((item, index) => (
+              <motion.div key={index} variants={navItemVariants}>
+                <Link href={item.href} className="hover:text-primary transition-colors duration-200">
+                  {item.text}
+                </Link>
+              </motion.div>
+            ))}
+          </motion.div>
           <div className="flex items-center space-x-4">
             <Menu as="div" className="relative">
-              <Menu.Button className="flex items-center gap-1 text-gray-800 hover:text-gray-900">
+              <Menu.Button className={`flex items-center gap-1 ${isScrolled ? "text-gray-800" : "text-gray-50"}`}>
                 <Globe className="w-5 h-5" />
                 <span className="uppercase">{locale}</span>
                 <ChevronDownIcon className="w-4 h-4" />
@@ -211,7 +240,7 @@ export default function Header() {
               </Transition>
             </Menu>
             <motion.button
-              className="bg-primary text-white p-3 rounded-full transition-transform"
+              className={`rounded-full transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -237,13 +266,18 @@ export default function Header() {
               <div className="flex items-center justify-between">
                 <Link href="/" className="-m-2 p-2">
                   <span className="sr-only">Logo</span>
-                  <img src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png" alt="Logo" width={150} height={50} />
+                  <img
+                    src={`https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png`}
+                    alt="Logo"
+                    width={150}
+                    height={50}
+                  />
                 </Link>
                 <button type="button" className="p-2 text-gray-800" onClick={() => setMobileMenuOpen(false)}>
                   <X className="h-8 w-8" />
                 </button>
               </div>
-              <div className="mt-6 space-y-4">
+              <div className="mt-12 space-y-8">
                 <Link
                   href="/"
                   className="block text-lg font-medium text-gray-800"
@@ -300,7 +334,7 @@ export default function Header() {
               </div>
               <div className="mt-8 space-y-4">
                 <Menu as="div" className="relative">
-                  <Menu.Button className="flex w-full items-center justify-between rounded bg-gray-100 px-4 py-3 text-lg font-medium text-gray-800">
+                  <Menu.Button className="flex w-full items-center justify-between bg-gray-100 px-4 py-5 text-lg font-medium text-gray-800">
                     {locale.toUpperCase()}
                     <ChevronDown className="h-6 w-6 text-gray-500" />
                   </Menu.Button>
@@ -350,7 +384,7 @@ export default function Header() {
                   </Transition>
                 </Menu>
                 <motion.button
-                  className="w-full bg-primary text-white px-4 py-3 rounded-full transition-transform flex items-center justify-center"
+                  className="w-full bg-primary text-white px-4 py-5 transition-transform flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

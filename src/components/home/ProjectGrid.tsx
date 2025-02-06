@@ -1,145 +1,119 @@
-import { useState } from "react";
-import { motion } from "framer-motion";
-import { ArrowUpRight } from "lucide-react";
-import { useRouter } from "next/router";
-import en from "@/locales/en";
-import es from "@/locales/es";
+"use client"
 
-// Interfaz para cada proyecto
+import { useState } from "react"
+import { motion, AnimatePresence } from "framer-motion"
+import { ArrowUpRight } from "lucide-react"
+import { useTranslation } from "@/hook/UseTranslation"
+import Image from "next/image"
+import Link from "next/link"
+
 interface Project {
-  id: number;
-  category: string; // "Residencial", "Villas", "Hoteles", "All Works"
-  image: string;    
+  id: number
+  category: string
+  image: string
 }
 
-/**
- * Genera un arreglo de 10 proyectos con números aleatorios (1..90) 
- * para la ruta de la imagen, según la categoría seleccionada.
- */
 function getRandomProjects(category: string, count = 11): Project[] {
-  const projects: Project[] = [];
-  const usedNumbers = new Set<number>();
+  const projects: Project[] = []
+  const usedNumbers = new Set<number>()
 
   while (projects.length < count) {
-    const randomNum = Math.floor(Math.random() * 90) + 1; // 1..90
-    // Evita repetir la misma imagen
+    const randomNum = Math.floor(Math.random() * 90) + 1
     if (!usedNumbers.has(randomNum)) {
-      usedNumbers.add(randomNum);
+      usedNumbers.add(randomNum)
       projects.push({
         id: randomNum,
         category,
         image: `/projects/romana_ebanisteria_grupo_chavon${randomNum}.png`,
-      });
+      })
     }
   }
 
-  return projects;
+  return projects
 }
 
-const ProjectGrid = () => {
-  const { locale } = useRouter() as { locale: string };
-  const translations = locale === "es" ? es : en;
-  const projTrans = translations.ProjectGrid; // Objeto de traducciones para este componente
+const categories = ["Todos", "Residencial", "Villas", "Hoteles"]
 
-  // Categorías (con "All Works" para mostrar 10 aleatorias de la mezcla).
-  const categories = ["All Works", "Residencial", "Villas", "Hoteles"];
+export default function ProjectGrid() {
+  const { ProjectGrid: projTrans } = useTranslation()
+  const [activeCategory, setActiveCategory] = useState<string>("Todos")
+  const [filteredProjects, setFilteredProjects] = useState<Project[]>(getRandomProjects("Todos"))
 
-  // Estado para la categoría seleccionada
-  const [activeCategory, setActiveCategory] = useState<string>("All Works");
-
-  // Estado que contiene los proyectos filtrados aleatoriamente
-  const [filteredProjects, setFilteredProjects] = useState<Project[]>(
-    getRandomProjects("All Works") // Al iniciar, cargamos 10 de "All Works"
-  );
-
-  // Maneja el cambio de categoría
   const handleCategoryChange = (category: string) => {
-    setActiveCategory(category);
-    // Genera 10 imágenes aleatorias nuevas para esa categoría
-    setFilteredProjects(getRandomProjects(category));
-  };
+    setActiveCategory(category)
+    setFilteredProjects(getRandomProjects(category))
+  }
 
   return (
-    <section className="px-4 lg:px-8">
-      <div className="mx-auto container py-16 md:py-24">
-        <div className="text-center mb-8">
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900">
-						{projTrans.title}
-          </h2>
-        </div>
+    <section className="w-full bg-white py-24">
+      <div className="container mx-auto px-4">
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          whileInView={{ opacity: 1, y: 0 }}
+          viewport={{ once: true }}
+          transition={{ duration: 0.5 }}
+          className="text-center mb-16"
+        >
+          <h2 className="text-3xl font-medium text-gray-900 mb-6">{projTrans.title}</h2>
+        </motion.div>
 
-        {/* Filtros de categorías */}
-        <div className="flex flex-wrap justify-center gap-4 mb-10">
-          {categories.map((cat) => {
-            const isActive = cat === activeCategory;
-            return (
-              <button
-                key={cat}
-                onClick={() => handleCategoryChange(cat)}
-                className={`
-                  px-4 py-2 text-sm font-medium border transition-colors duration-200 rounded-sm
-                  ${isActive 
-                    ? "bg-primary text-white border-primary"
-                    : "bg-white text-gray-900 border-gray-300 hover:bg-gray-100"
-                  }
-                `}
-              >
-                {cat}
-              </button>
-            );
-          })}
-        </div>
-
-        {/* Grid de proyectos (10 aleatorios para cada categoría) */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-2">
-          {filteredProjects.map((project) => (
-            <motion.div
-              key={project.id}
-              initial={{ opacity: 0, y: 20 }}
-              animate={{ opacity: 1, y: 0 }}
-              transition={{ duration: 0.3 }}
-              className="relative w-full h-72 bg-gray-100 overflow-hidden shadow-md rounded-md"
-              style={{ borderRadius: 0 }}
+        <div className="flex flex-wrap justify-center gap-6 mb-12">
+          {categories.map((cat) => (
+            <button
+              key={cat}
+              onClick={() => handleCategoryChange(cat)}
+              className={`
+                px-4 py-2 text-sm font-medium transition-colors duration-200
+                ${
+                  cat === activeCategory
+                    ? "text-gray-900 border-b-2 border-gray-900"
+                    : "text-gray-500 hover:text-gray-900"
+                }
+              `}
             >
-              <img
-                src={project.image}
-                alt={`${project.category} project #${project.id}`}
-                className="object-cover w-full h-full hover:scale-105 transition-transform duration-300"
-                style={{ borderRadius: 0 }}
-              />
-            </motion.div>
+              {cat}
+            </button>
           ))}
-
-          {/* Tarjeta de "Ver todos los proyectos" */}
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.3 }}
-            className={`
-              relative w-full h-72 flex flex-col items-start justify-between
-              bg-primary text-white font-semibold shadow cursor-pointer
-            `}
-            style={{ borderRadius: 0 }}
-          >
-            <a
-              href="/projects" // Ajusta la ruta a tu página con más proyectos
-              className="flex flex-col justify-between p-4"
-            >
-              <span className="text-4xl lg:text-4xl max-w-[80%]">
-                {projTrans.seeAll}
-              </span>
-              
-            </a>
-            <div className="flex flex-row-reverse w-full">
-              <span className="mt-2 bg-white text-black p-2 flex w-fit rounded-tl-sm">
-                  <ArrowUpRight width={40} height={40}/>
-                </span>
-            </div>
-          </motion.div>
         </div>
+
+        <AnimatePresence mode="wait">
+          <motion.div
+            key={activeCategory}
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.5 }}
+            className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6"
+          >
+            {filteredProjects.map((project) => (
+              <motion.div
+                key={project.id}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
+                className="relative aspect-square overflow-hidden"
+              >
+                <Image
+                  src={project.image || "/placeholder.svg"}
+                  alt={`${project.category} project #${project.id}`}
+                  layout="fill"
+                  objectFit="cover"
+                  className="transition-transform duration-300 hover:scale-105"
+                />
+              </motion.div>
+            ))}
+
+            <Link
+              href="/projects"
+              className="relative aspect-square bg-gray-900 text-white flex flex-col justify-between p-6 group"
+            >
+              <span className="text-2xl font-light max-w-[80%]">{projTrans.seeAll}</span>
+              <ArrowUpRight className="w-10 h-10 self-end transition-transform duration-300 group-hover:translate-x-1 group-hover:-translate-y-1" />
+            </Link>
+          </motion.div>
+        </AnimatePresence>
       </div>
     </section>
-  );
-};
+  )
+}
 
-export default ProjectGrid;
