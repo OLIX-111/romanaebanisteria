@@ -31,16 +31,16 @@ const SingleWork = (work: Work) => {
     >
       <Link href={work.url} className="block h-full">
         <div className="relative h-[30rem]">
-          <Image
+         <Image
             src={work.image || "/placeholder.svg"}
             width={900}
             height={900}
             alt={work.description + " | ROMAna Ebanistería"}
-            className="aspect-square transition-transform duration-300 group-hover:scale-105"
+            className="h-full w-full transition-transform duration-300 group-hover:scale-105 z-10"
           />
-          <div className="h-full w-full absolute bg-gradient-to-b from-black/0 to-black/40 z-10" />
+          {/* <div className="h-full w-full absolute bg-red-200 z-30" /> */}
         </div>
-        <div className="absolute z-20 bottom-0 left-0 right-0 p-6 transform transition-transform duration-300">
+        <div className="absolute z-20 bg-gradient-to-t flex justify-end flex-col from-black/50 via-text/40 to-black/0 bottom-0 left-0 right-0 p-6 transform transition-transform duration-300 h-full">
           <h3 className="font-medium text-white text-xl mb-2">{work.name}</h3>
           <p className="text-gray-200 text-sm mb-4">{work.description}</p>
           <motion.div
