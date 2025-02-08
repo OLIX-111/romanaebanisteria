@@ -137,7 +137,7 @@ export default function Filters({
 
                                 {/* Filters */}
                                 <form className="border-t border-gray-200 mt-12">
-                                    <div className="px-4 mt-4">{children}</div>
+                                    <div className="px-4 my-6">{children}</div>
                                     {filters.map((section) => (
                                         <Disclosure as="div" key={section.id} className="border-t border-gray-200 px-4 py-6">
                                             {({ open }) => (
@@ -221,4 +221,3 @@ export default function Filters({
         </>
     )
 }
-

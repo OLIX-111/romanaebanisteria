@@ -72,7 +72,7 @@ export default function Hero() {
         className="mx-auto w-full max-w-6xl px-5 md:px-10 pb-16 md:pb-24 lg:pb-28 2xl:pb-36 pt-36 md:pt-48 lg:pt-44 2xl:pt-48"
       >
         <motion.div variants={stagger} className="mx-auto mb-12 w-full max-w-4xl text-center md:mb-16 lg:mb-20">
-          <motion.h1 variants={fadeInUp} className="mb-4 text-2xl lg:text-4xl w-full font-medium text-gray-50">
+          <motion.h1 variants={fadeInUp} className="mb-4 text-2xl lg:text-4xl w-full font-semibold text-gray-50">
             Puertas <span className="text-primary">|</span> Cocinas <span className="text-primary">|</span> Mobiliario Para Grandes Proyectos
           </motion.h1>
         </motion.div>
