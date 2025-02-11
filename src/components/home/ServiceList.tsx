@@ -6,16 +6,23 @@ import { useInView } from 'react-intersection-observer';
 import Link from "next/link";
 import { useTranslation } from "@/hook/UseTranslation";
 import { ArrowRight } from 'lucide-react';
+import { useEffect, useState } from "react";
+import { getServices } from "../../../sanity/sanityQueries";
 
-interface Work {
+interface Service {
+  _id: string;
   name: string;
   description: string;
-  image: string;
-  url: string;
-  i: number;
+  shortdescription: string;
+  imageUrl: string;
+  slug: { current: string };
+  price: number;
+  categoryName: string;
+  duration: string;
+  availability: string;
 }
 
-const SingleWork = (work: Work) => {
+const SingleService = ({ service, index }: { service: Service; index: number }) => {
   const { ref, inView } = useInView({
     threshold: 0.14,
     triggerOnce: true,
@@ -26,23 +33,22 @@ const SingleWork = (work: Work) => {
       ref={ref}
       initial={{ opacity: 0, y: 50 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5, delay: work.i * 0.1 }}
+      transition={{ duration: 0.5, delay: index * 0.1 }}
       className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-2 bg-gray-100 relative overflow-hidden group"
     >
-      <Link href={work.url} className="block h-full">
+      <Link href={`/store/services/${service.slug.current}`} className="block h-full">
         <div className="relative h-[30rem]">
          <Image
-            src={work.image || "/placeholder.svg"}
+            src={service.imageUrl || "/placeholder.svg"}
             width={900}
             height={900}
-            alt={work.description + " | ROMAna Ebanistería"}
-            className="h-full w-full transition-transform duration-300 group-hover:scale-105 z-10"
+            alt={service.description + " | ROMAna Ebanistería"}
+            className="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105 z-10"
           />
-          {/* <div className="h-full w-full absolute bg-red-200 z-30" /> */}
         </div>
         <div className="absolute z-20 bg-gradient-to-t flex justify-end flex-col from-black/50 via-text/40 to-black/0 bottom-0 left-0 right-0 p-6 transform transition-transform duration-300 h-full">
-          <h3 className="font-medium text-white text-xl mb-2">{work.name}</h3>
-          <p className="text-gray-200 text-sm mb-4">{work.description}</p>
+          <h3 className="font-medium text-white text-xl mb-2">{service.name}</h3>
+          <p className="text-gray-200 text-sm mb-4">{service.shortdescription}</p>
           <motion.div
             className="inline-flex items-center text-white"
             whileHover={{ x: 5 }}
@@ -56,11 +62,6 @@ const SingleWork = (work: Work) => {
   );
 };
 
-function getRandomImagePath() {
-  const randomNum = Math.floor(Math.random() * 90) + 1;
-  return `/projects/romana_ebanisteria_grupo_chavon${randomNum}.png`;
-}
-
 const ServiceList = () => {
   const { ref, inView } = useInView({
     threshold: 0.1,
@@ -68,12 +69,32 @@ const ServiceList = () => {
   });
 
   const dict = useTranslation();
+  const [services, setServices] = useState<Service[]>([]);
+  const [isLoading, setIsLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
-  const randomWorks: Work[] = dict.serviceList.works.map((item, index) => ({
-    ...item,
-    image: getRandomImagePath(),
-    i: index,
-  }));
+  useEffect(() => {
+    const fetchServices = async () => {
+      try {
+        const fetchedServices = await getServices();
+        setServices(fetchedServices);
+      } catch (err) {
+        setError("Error al cargar los servicios. Por favor, intente de nuevo más tarde.");
+      } finally {
+        setIsLoading(false);
+      }
+    };
+
+    fetchServices();
+  }, []);
+
+  if (isLoading) {
+    return <div className="text-center py-24">Cargando servicios...</div>;
+  }
+
+  if (error) {
+    return <div className="text-center py-24 text-red-500">{error}</div>;
+  }
 
   return (
     <section id="work" className="bg-white py-24">
@@ -92,14 +113,11 @@ const ServiceList = () => {
         </motion.div>
         
         <div className="grid md:grid-cols-4 lg:grid-cols-6 gap-6">
-          {randomWorks.map((work) => (
-            <SingleWork
-              key={work.i}
-              i={work.i}
-              description={work.description}
-              image={work.image}
-              name={work.name}
-              url={work.url}
+          {services.map((service, index) => (
+            <SingleService
+              key={service._id}
+              service={service}
+              index={index}
             />
           ))}
         </div>

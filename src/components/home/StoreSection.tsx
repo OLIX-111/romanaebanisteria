@@ -4,56 +4,18 @@ import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
+import { useEffect, useState } from "react"
+import { getFeaturedProducts } from "../../../sanity/sanityQueries"
 
-const getRandomImagePath = () => {
-  const randomNum = Math.floor(Math.random() * 90) + 1
-  return `/projects/romana_ebanisteria_grupo_chavon${randomNum}.png`
+
+interface FeaturedProduct {
+  _id: string
+  name: string
+  slug: string
+  description: string
+  imageUrl: string
+  price: number
 }
-
-const featuredProducts = [
-  {
-    id: 1,
-    title: "Gabinete Moderno",
-    description: "Diseño en melamina premium, ideal para cocinas contemporáneas.",
-    image: getRandomImagePath(),
-    price: "RD$ 12,800",
-  },
-  {
-    id: 2,
-    title: "Puertas de Aluminio",
-    description: "Carpintería de aluminio con acabados resistentes para exteriores.",
-    image: getRandomImagePath(),
-    price: "RD$ 10,500",
-  },
-  {
-    id: 3,
-    title: "Closet Personalizado",
-    description: "Armario a medida en MDF con sistema de correderas y accesorios.",
-    image: getRandomImagePath(),
-    price: "RD$ 15,000",
-  },
-  {
-    id: 4,
-    title: "Modulo de Cocina Integral",
-    description: "Combinación de madera y aluminio para un estilo funcional y elegante.",
-    image: getRandomImagePath(),
-    price: "RD$ 18,200",
-  },
-  {
-    id: 5,
-    title: "Puerta Corredera Minimalista",
-    description: "Estructura en melamina mate, perfecta para espacios modernos.",
-    image: getRandomImagePath(),
-    price: "RD$ 9,900",
-  },
-  {
-    id: 6,
-    title: "Centro de Entretenimiento",
-    description: "Diseño modular en madera y aluminio para salas de estar o salones.",
-    image: getRandomImagePath(),
-    price: "RD$ 20,500",
-  },
-]
 
 const container = {
   hidden: { opacity: 0 },
@@ -71,6 +33,28 @@ const item = {
 }
 
 export default function FeaturedProductsElegant() {
+  const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+
+  useEffect(() => {
+    async function loadFeaturedProducts() {
+      try {
+        const products = await getFeaturedProducts()
+        setFeaturedProducts(products)
+      } catch (error) {
+        console.error("Error fetching featured products:", error)
+      } finally {
+        setIsLoading(false)
+      }
+    }
+
+    loadFeaturedProducts()
+  }, [])
+
+  if (isLoading) {
+    return <div className="text-center py-24">Cargando productos destacados...</div>
+  }
+
   return (
     <section className="w-full bg-white py-24">
       <div className="container mx-auto px-4">
@@ -95,20 +79,20 @@ export default function FeaturedProductsElegant() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
         >
           {featuredProducts.map((product) => (
-            <motion.div key={product.id} variants={item} className="group">
-              <Link href={`/products/${product.id}`} className="block">
+            <motion.div key={product._id} variants={item} className="group">
+              <Link href={`/store/products/${product.slug}`} className="block">
                 <div className="aspect-square overflow-hidden bg-gray-100 mb-6">
                   <Image
-                    src={product.image || "/placeholder.svg"}
-                    alt={product.title}
+                    src={product.imageUrl || "/placeholder.svg"}
+                    alt={product.name}
                     width={400}
                     height={400}
                     className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">{product.title}</h3>
+                <h3 className="text-xl font-medium text-gray-900 mb-2">{product.name}</h3>
                 <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-                <span className="text-lg font-medium text-gray-900">RD$ {product.price}</span>
+                <span className="text-lg font-medium text-gray-900">RD$ {product.price.toLocaleString()}</span>
               </Link>
             </motion.div>
           ))}

@@ -1,19 +1,22 @@
 /**
- * This configuration is used to for the Sanity Studio that’s mounted on the `/pages/gg-kitchen/[[...index]].tsx` route
+ * This configuration is used to for the Sanity Studio that’s mounted on the `/pages/ebanisteria-kitchen/[[...index]].tsx` route
  */
 
 import {visionTool} from '@sanity/vision'
 import {defineConfig} from 'sanity'
 import {deskTool} from 'sanity/desk'
 
+
 // Go to https://www.sanity.io/docs/api-versioning to learn how API versioning works
 import {apiVersion, dataset, projectId} from './sanity/env'
 import {schema} from './sanity/schema'
+import MyCustomLogo from '@/components/MyLogo'
 
 export default defineConfig({
-  basePath: '/gg-kitchen',
+  basePath: '/ebanisteria-kitchen',
   projectId,
   dataset,
+  icon: MyCustomLogo,
   // Add and edit the content schema in the './sanity/schema' folder
   schema,
   plugins: [

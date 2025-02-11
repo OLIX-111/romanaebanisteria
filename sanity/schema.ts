@@ -1,11 +1,13 @@
 // schema.ts
 
 import { SchemaTypeDefinition } from 'sanity'
+import category from './schemas/category'
+import finish from './schemas/finish'
+import material from './schemas/material'
+import product from './schemas/product'
+import service from './schemas/service'
 
-import noticias from './schemas/noticias'
-import empresas from './schemas/empresas'
-
-export const schemaTypes = [noticias, empresas]
+export const schemaTypes = [category, finish, material, product, service]
 export const schema: { types: SchemaTypeDefinition[] } = {
-  types: [noticias, empresas],
+  types: [category, finish, material, product, service],
 }

@@ -3,7 +3,6 @@
 import { useTranslation } from "@/hook/UseTranslation"
 import { useRouter } from "next/router"
 import { useEffect, useState, Fragment } from "react"
-import { fetchEmpresasByType } from "../../../sanity/sanityQueries"
 import { motion, AnimatePresence } from "framer-motion"
 import { ChevronDown, ChevronDownIcon, Globe, MenuIcon, X, ShoppingCart } from "lucide-react"
 import Link from "next/link"
@@ -35,17 +34,6 @@ export default function Header({ enableScroll = false }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  useEffect(() => {
-    const fetchData = async () => {
-      const empresasData = await fetchEmpresasByType("empresa", locale)
-      const proyectosData = await fetchEmpresasByType("proyecto", locale)
-      const marcasData = await fetchEmpresasByType("marca", locale)
-      setEmpresas(empresasData)
-      setProyectos(proyectosData)
-      setMarcas(marcasData)
-    }
-    fetchData()
-  }, [locale])
 
   const changeLanguage = (newLocale: "en" | "es") => {
     if (newLocale !== locale) {
@@ -180,8 +168,8 @@ export default function Header({ enableScroll = false }: HeaderProps) {
           >
             {[
               { href: "/", text: header?.nav?.home },
-              { href: "/about", text: header?.nav?.about },
-              { href: "/services", text: header?.nav?.services },
+              /* { href: "/about", text: header?.nav?.about }, */
+              { href: "/store/services", text: header?.nav?.services },
               { href: "/store", text: header?.nav?.store },
               { href: "/proyectos", text: header?.nav?.projects },
               { href: "/news", text: header?.nav?.news },
@@ -285,15 +273,15 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                 >
                   {header?.nav?.home}
                 </Link>
-                <Link
+                {/* <Link
                   href="/about"
                   className="block text-lg font-medium text-gray-800"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {header?.nav?.about}
-                </Link>
+                </Link> */}
                 <Link
-                  href="/services"
+                  href="/store/services"
                   className="block text-lg font-medium text-gray-800"
                   onClick={() => setMobileMenuOpen(false)}
                 >

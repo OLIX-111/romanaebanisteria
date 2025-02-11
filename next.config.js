@@ -2,6 +2,16 @@
 const nextConfig = {
   reactStrictMode: true,
   images: {
+    remotePatterns: [
+      {
+        protocol: "https",
+        hostname: "https://www.romanaebanisteria.com",
+      },
+      {
+        protocol: "https",
+        hostname: "https://storage.googleapis.com",
+      },
+    ],
     domains: ['cdn.sanity.io'],
   },
   i18n: {
