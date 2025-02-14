@@ -273,13 +273,6 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                 >
                   {header?.nav?.home}
                 </Link>
-                {/* <Link
-                  href="/about"
-                  className="block text-lg font-medium text-gray-800"
-                  onClick={() => setMobileMenuOpen(false)}
-                >
-                  {header?.nav?.about}
-                </Link> */}
                 <Link
                   href="/store/services"
                   className="block text-lg font-medium text-gray-800"

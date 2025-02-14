@@ -2,47 +2,55 @@
 
 import { useEffect, useState } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { FilterSidebar } from "@/components/store/filter-sidebar"
 import { ProductCard } from "@/components/store/product-card"
-
+import { FilterSidebar } from "@/components/store/filter-sidebar"
 import { Open_Sans } from "next/font/google"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
-import { getCategories, getFinishes, getMaterials, getProducts, getServices } from "../../../sanity/sanityQueries"
-import { ServiceCard } from "@/components/store/ServiceCard"
+import { ChevronLeft, ChevronRight } from "lucide-react"
+import { getProducts } from "@/utils/api"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
+interface Product {
+  id: number
+  name: string
+  image: string
+  price: number
+  description: string
+  type: string
+  vendor: string
+}
+
 export default function StorePage() {
-  const [items, setItems] = useState<any[]>([])
-  const [categories, setCategories] = useState([])
-  const [materials, setMaterials] = useState([])
-  const [finishes, setFinishes] = useState([])
+  const [products, setProducts] = useState<Product[]>([])
+  const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [activeFilters, setActiveFilters] = useState<Record<string, string[]>>({
-    category: [],
-    material: [],
-    finish: [],
-    availability: [],
+    type: [],
+    vendor: [],
   })
   const [sortBy, setSortBy] = useState("featured")
-  const [showProducts, setShowProducts] = useState(true)
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const productsPerPage = 100
 
   useEffect(() => {
-    const fetchData = async () => {
-      const [productsData, servicesData, categoriesData, materialsData, finishesData] = await Promise.all([
-        getProducts(),
-        getServices(),
-        getCategories(),
-        getMaterials(),
-        getFinishes(),
-      ])
-      setItems(showProducts ? productsData : servicesData)
-      setCategories(categoriesData)
-      setMaterials(materialsData)
-      setFinishes(finishesData)
+    const fetchProducts = async () => {
+      try {
+        setIsLoading(true)
+        const response = await getProducts(productsPerPage, currentPage)
+        setProducts(response.data)
+        setTotalPages(Math.ceil(response.total / productsPerPage))
+      } catch (err) {
+        setError("Error al cargar los productos. Por favor, intente de nuevo más tarde.")
+      } finally {
+        setIsLoading(false)
+      }
     }
-    fetchData()
-  }, [showProducts])
+
+    fetchProducts()
+  }, [currentPage])
 
   const handleFilterChange = (type: string, value: string) => {
     setActiveFilters((prev) => ({
@@ -51,20 +59,17 @@ export default function StorePage() {
         ? prev[type].filter((item) => item !== value)
         : [...(prev[type] || []), value],
     }))
+    setCurrentPage(1)
   }
 
-  const filteredItems = items.filter((item: any) => {
+  const filteredProducts = products.filter((product) => {
     return (
-      (activeFilters.category.length === 0 || activeFilters.category.includes(item.categoryName)) &&
-      (showProducts
-        ? (activeFilters.material.length === 0 || activeFilters.material.includes(item.materialName)) &&
-          (activeFilters.finish.length === 0 || activeFilters.finish.includes(item.finishName))
-        : true) &&
-      (activeFilters.availability.length === 0 || activeFilters.availability.includes(item.availability))
+      (activeFilters.type.length === 0 || activeFilters.type.includes(product.type)) &&
+      (activeFilters.vendor.length === 0 || activeFilters.vendor.includes(product.vendor))
     )
   })
 
-  const sortedItems = [...filteredItems].sort((a: any, b: any) => {
+  const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
       case "price-asc":
         return a.price - b.price
@@ -77,6 +82,19 @@ export default function StorePage() {
     }
   })
 
+  const handlePageChange = (newPage: number) => {
+    setCurrentPage(newPage)
+    window.scrollTo(0, 0)
+  }
+
+  if (isLoading) {
+    return <div className="text-center py-24">Cargando productos...</div>
+  }
+
+  if (error) {
+    return <div className="text-center py-24 text-red-500">{error}</div>
+  }
+
   return (
     <main className={`${openSans.className}`}>
       <Header />
@@ -85,22 +103,6 @@ export default function StorePage() {
           <div className="flex items-center justify-between pb-4">
             <h1 className="text-2xl font-bold tracking-tight text-gray-900">Tienda</h1>
             <div className="flex items-center space-x-4">
-              <div className="flex items-center space-x-2">
-                <label htmlFor="toggle-view" className="inline-flex items-center cursor-pointer">
-                  <span className="mr-3 text-sm font-medium text-gray-900">Productos</span>
-                  <div className="relative">
-                    <input
-                      type="checkbox"
-                      id="toggle-view"
-                      className="sr-only peer"
-                      checked={!showProducts}
-                      onChange={() => setShowProducts(!showProducts)}
-                    />
-                    <div className="w-11 h-6 rounded-full peer bg-primary peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-0.5 after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-5 after:w-5 after:transition-all dark:border-gray-600 peer-checked:bg-blue-800"></div>
-                  </div>
-                  <span className="ml-3 text-sm font-medium text-gray-900">Servicios</span>
-                </label>
-              </div>
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
@@ -117,29 +119,58 @@ export default function StorePage() {
           <div className="mt-6 grid grid-cols-1 gap-x-8 gap-y-10 lg:grid-cols-4">
             <div className="lg:col-span-1">
               <FilterSidebar
-                categories={categories}
-                materials={materials}
-                finishes={finishes}
+                types={Array.from(new Set(products.map((p) => p.type)))}
+                vendors={Array.from(new Set(products.map((p) => p.vendor)))}
                 onFilterChange={handleFilterChange}
                 activeFilters={activeFilters}
-                showProductFilters={showProducts}
               />
             </div>
 
             <div className="lg:col-span-3">
               <AnimatePresence mode="wait">
                 <motion.div
-                  key={JSON.stringify(activeFilters) + sortBy + showProducts}
+                  key={JSON.stringify(activeFilters) + sortBy + currentPage}
                   initial={{ opacity: 0 }}
                   animate={{ opacity: 1 }}
                   exit={{ opacity: 0 }}
                   className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3"
                 >
-                  {sortedItems.map((item: any) =>
-                    showProducts ? <ProductCard key={item._id} {...item} /> : <ServiceCard key={item._id} {...item} />,
-                  )}
+                  {sortedProducts.map((product) => (
+                    <ProductCard key={product.id} {...product} />
+                  ))}
                 </motion.div>
               </AnimatePresence>
+
+              {/* Pagination */}
+              <div className="mt-8 flex justify-center">
+                <nav className="flex items-center space-x-2">
+                  <button
+                    onClick={() => handlePageChange(currentPage - 1)}
+                    disabled={currentPage === 1}
+                    className="px-3 py-2 rounded-md bg-gray-200 text-gray-700 disabled:opacity-50"
+                  >
+                    <ChevronLeft size={20} />
+                  </button>
+                  {Array.from({ length: totalPages }, (_, i) => i + 1).map((page) => (
+                    <button
+                      key={page}
+                      onClick={() => handlePageChange(page)}
+                      className={`px-3 py-2 rounded-md ${
+                        currentPage === page ? "bg-primary text-white" : "bg-gray-200 text-gray-700 hover:bg-gray-300"
+                      }`}
+                    >
+                      {page}
+                    </button>
+                  ))}
+                  <button
+                    onClick={() => handlePageChange(currentPage + 1)}
+                    disabled={currentPage === totalPages}
+                    className="px-3 py-2 rounded-md bg-gray-200 text-gray-700 disabled:opacity-50"
+                  >
+                    <ChevronRight size={20} />
+                  </button>
+                </nav>
+              </div>
             </div>
           </div>
         </div>

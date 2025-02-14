@@ -1,19 +1,17 @@
 "use client"
 
+import { getProducts } from "@/utils/api"
 import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
-import { getFeaturedProducts } from "../../../sanity/sanityQueries"
-
 
 interface FeaturedProduct {
-  _id: string
+  id: number
   name: string
-  slug: string
+  image: string
   description: string
-  imageUrl: string
   price: number
 }
 
@@ -35,14 +33,16 @@ const item = {
 export default function FeaturedProductsElegant() {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     async function loadFeaturedProducts() {
       try {
-        const products = await getFeaturedProducts()
-        setFeaturedProducts(products)
+        const response = await getProducts(6, 1) // Fetch 6 products from the first page
+        setFeaturedProducts(response.data)
       } catch (error) {
         console.error("Error fetching featured products:", error)
+        setError("Error al cargar los productos destacados. Por favor, intente de nuevo más tarde.")
       } finally {
         setIsLoading(false)
       }
@@ -53,6 +53,10 @@ export default function FeaturedProductsElegant() {
 
   if (isLoading) {
     return <div className="text-center py-24">Cargando productos destacados...</div>
+  }
+
+  if (error) {
+    return <div className="text-center py-24 text-red-500">{error}</div>
   }
 
   return (
@@ -79,11 +83,11 @@ export default function FeaturedProductsElegant() {
           className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-12"
         >
           {featuredProducts.map((product) => (
-            <motion.div key={product._id} variants={item} className="group">
-              <Link href={`/store/products/${product.slug}`} className="block">
+            <motion.div key={product.id} variants={item} className="group">
+              <Link href={`/store/products/${product.id}`} className="block">
                 <div className="aspect-square overflow-hidden bg-gray-100 mb-6">
                   <Image
-                    src={product.imageUrl || "/placeholder.svg"}
+                    src={product.image || "/placeholder.svg"}
                     alt={product.name}
                     width={400}
                     height={400}
