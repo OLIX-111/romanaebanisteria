@@ -20,7 +20,7 @@ export default function ServiceHero() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="relative isolate flex flex-col justify-between overflow-hidden bg-cover bg-fixed bg-no-repeat min-h-[80vh]"
+      className="relative isolate flex flex-col justify-between overflow-hidden bg-cover bg-fixed bg-no-repeat min-h-[22rem] lg:min-h-[38rem]"
     >
       {/* Video de fondo */}
       <div className="absolute object-cover w-full h-full -z-30">

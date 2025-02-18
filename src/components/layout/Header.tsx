@@ -171,8 +171,8 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               /* { href: "/about", text: header?.nav?.about }, */
               { href: "/store/services", text: header?.nav?.services },
               { href: "/store", text: header?.nav?.store },
-              { href: "/proyectos", text: header?.nav?.projects },
-              { href: "/news", text: header?.nav?.news },
+              { href: "/gallery", text: header?.nav?.projects },
+              { href: "/contact", text: header?.nav?.contact },
             ].map((item, index) => (
               <motion.div key={index} variants={navItemVariants}>
                 <Link href={item.href} className="hover:text-primary transition-colors duration-200">

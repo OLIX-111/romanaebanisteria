@@ -5,7 +5,7 @@ const en = {
     nav: {
       home: "Home",
       about: "About Us",
-      projects: "Projects",
+      projects: "Gallery",
       companies: "Companies",
       brands: "Brands",
       news: "News",

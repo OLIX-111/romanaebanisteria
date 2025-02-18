@@ -43,7 +43,7 @@ const Footer = () => {
               Tienda
             </Link>
             <Link href="/proyectos" className="hover:text-gray-900 transition-colors">
-              Proyectos
+              Galería
             </Link>
             <Link href="/contacto" className="hover:text-gray-900 transition-colors">
               Contacto

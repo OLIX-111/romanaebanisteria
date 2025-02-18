@@ -5,7 +5,7 @@ const es = {
     nav: {
       home: "Inicio",
       about: "Nosotros",
-      projects: "Proyectos",
+      projects: "Gallería",
       companies: "Empresas",
       brands: "Marcas",
       news: "Noticias",

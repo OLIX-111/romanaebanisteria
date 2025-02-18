@@ -21,6 +21,7 @@ const config: Config = {
       green: colors.green,
       blue: colors.blue,
       slate: colors.slate,
+      orange: colors.orange,
      },     
     extend: {
       backgroundImage: {

@@ -70,7 +70,7 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
         >
           <div>
             <h1 className="text-3xl font-bold text-gray-900">{service.name}</h1>
-            <p className="mt-2 text-xl font-semibold text-gray-900">RD$ {service.price.toLocaleString()}</p>
+            {/* <p className="mt-2 text-xl font-semibold text-gray-900">RD$ {service.price.toLocaleString()}</p> */}
           </div>
 
           <div className="space-y-4 rounded-lg bg-gray-50 p-6">
@@ -101,11 +101,8 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
           </div>
 
           <div className="flex gap-4">
-            <button className="flex-1 rounded-lg bg-gray-900 px-8 py-3 text-sm font-medium text-white hover:bg-gray-800">
+            <button className="flex-1 rounded-lg bg-primary px-8 py-4 text-sm font-medium text-white hover:bg-orange-400 duration-200">
               Solicitar cotización
-            </button>
-            <button className="rounded-lg border border-gray-300 px-8 py-3 text-sm font-medium hover:bg-gray-50">
-              Consultar disponibilidad
             </button>
           </div>
         </motion.div>
