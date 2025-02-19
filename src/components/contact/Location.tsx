@@ -1,8 +1,13 @@
 "use client"
 
-import type React from "react"
-import { useState } from "react"
-import GoogleMapReact from "google-map-react"
+import React, { useState } from "react"
+import dynamic from "next/dynamic"
+
+// Import dinámico sin SSR
+const GoogleMapReact = dynamic(() => import("google-map-react"), {
+  ssr: false,
+})
+
 import { MapPin, Navigation, X } from "lucide-react"
 import { motion } from "framer-motion"
 
@@ -127,10 +132,11 @@ export default function ElegantLocationSection() {
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
             className="bg-white rounded-xl overflow-hidden shadow-2xl relative"
-            style={{ height: "500px" }}
+            style={{ width: "100%", height: "500px" }}
           >
+            {/* Aquí el componente de GoogleMapReact cargado dinámicamente */}
             <GoogleMapReact
-              bootstrapURLKeys={{ key: "AIzaSyBzThRkDOyyClUmtYw8NNtOmWkUk4A8Kew" }}
+              bootstrapURLKeys={{ key: "TU_API_KEY_AQUI" }}
               defaultCenter={mapCenter}
               defaultZoom={16}
               options={mapOptions}
@@ -182,4 +188,3 @@ export default function ElegantLocationSection() {
     </section>
   )
 }
-
