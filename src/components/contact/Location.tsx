@@ -85,8 +85,8 @@ export default function ElegantLocationSection() {
   const [showInfo, setShowInfo] = useState(false)
 
   const mapCenter = {
-    lat: 18.428,
-    lng: -68.972,
+    lat: 18.4363419,
+    lng: -68.9984306,
   }
 
   const mapOptions = {
