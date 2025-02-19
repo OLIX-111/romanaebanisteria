@@ -167,7 +167,7 @@ export default function ElegantLocationSection() {
               </div>
             </div>
 
-            <div className="bg-gray-50 rounded-lg p-6 shadow-inner">
+            <div className="rounded-lg p-6 shadow-inner">
               <p className="text-gray-700 mb-4">
                 Atendemos a clientes en toda la región este y a nivel nacional. Visítanos para conocer nuestras
                 instalaciones y soluciones en ebanistería.
