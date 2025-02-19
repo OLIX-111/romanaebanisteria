@@ -136,7 +136,7 @@ export default function ElegantLocationSection() {
           >
             {/* Aquí el componente de GoogleMapReact cargado dinámicamente */}
             <GoogleMapReact
-              bootstrapURLKeys={{ key: "TU_API_KEY_AQUI" }}
+              bootstrapURLKeys={{ key: "AIzaSyBzThRkDOyyClUmtYw8NNtOmWkUk4A8Kew" }}
               defaultCenter={mapCenter}
               defaultZoom={16}
               options={mapOptions}
