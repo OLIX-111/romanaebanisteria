@@ -107,7 +107,7 @@ export default function ElegantLocationSection() {
   }
 
   return (
-    <section className="bg-gradient-to-br from-gray-50 to-white py-24">
+    <section className="py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -130,7 +130,7 @@ export default function ElegantLocationSection() {
             style={{ height: "500px" }}
           >
             <GoogleMapReact
-              bootstrapURLKeys={{ key: "YOUR_GOOGLE_MAPS_API_KEY" }}
+              bootstrapURLKeys={{ key: "AIzaSyBzThRkDOyyClUmtYw8NNtOmWkUk4A8Kew" }}
               defaultCenter={mapCenter}
               defaultZoom={16}
               options={mapOptions}
