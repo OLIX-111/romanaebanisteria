@@ -4,11 +4,12 @@ import Image from "next/image"
 import { motion } from "framer-motion"
 import { Clock, Calendar, ArrowLeft } from "lucide-react"
 import Link from "next/link"
-import { useState } from "react"
+import { useEffect, useState } from "react"
 
 interface ServiceDetailProps {
   service: {
     name: string
+    slug: string;
     imageUrl: string
     gallery: string[]
     price: number
@@ -21,6 +22,10 @@ interface ServiceDetailProps {
 
 export function ServiceDetail({ service }: ServiceDetailProps) {
   const [currentImage, setCurrentImage] = useState(service.imageUrl)
+
+  useEffect(() => {
+    console.log(service);
+  }, [service])
 
   return (
     <div className="container mx-auto px-4 py-8">
@@ -101,9 +106,11 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
           </div>
 
           <div className="flex gap-4">
-            <button className="flex-1 rounded-lg bg-primary px-8 py-4 text-sm font-medium text-white hover:bg-orange-400 duration-200">
-              Solicitar cotización
-            </button>
+            <Link href={`/store/cotizacion/${service.slug}`} passHref className="w-full">
+              <button className="flex-1 w-full rounded-lg bg-primary px-8 py-4 text-sm font-medium text-white hover:bg-orange-400 duration-200">
+                Solicitar cotización
+              </button>
+            </Link>
           </div>
         </motion.div>
       </div>

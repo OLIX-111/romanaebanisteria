@@ -11,6 +11,7 @@ interface ServicePageProps {
   service: {
     name: string
     imageUrl: string
+    slug: string
     gallery: string[]
     price: number
     categoryName: string
