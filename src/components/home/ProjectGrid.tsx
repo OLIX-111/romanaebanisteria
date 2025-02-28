@@ -32,7 +32,7 @@ function getRandomProjects(category: string, count = 11): Project[] {
   return projects
 }
 
-const categories = ["Todos", "Residencial", "Villas", "Hoteles"]
+const categories = ["Todos"/* , "Residencial", "Villas", "Hoteles" */]
 
 export default function ProjectGrid() {
   const { ProjectGrid: projTrans } = useTranslation()
@@ -57,7 +57,7 @@ export default function ProjectGrid() {
           <h2 className="text-3xl font-medium text-gray-900 mb-6">{projTrans.title}</h2>
         </motion.div>
 
-        <div className="flex flex-wrap justify-center gap-6 mb-12">
+        {/* <div className="flex flex-wrap justify-center gap-6 mb-12">
           {categories.map((cat) => (
             <button
               key={cat}
@@ -74,7 +74,7 @@ export default function ProjectGrid() {
               {cat}
             </button>
           ))}
-        </div>
+        </div> */}
 
         <AnimatePresence mode="wait">
           <motion.div
@@ -104,7 +104,7 @@ export default function ProjectGrid() {
             ))}
 
             <Link
-              href="/projects"
+              href="/gallery"
               className="relative aspect-square bg-gray-900 text-white flex flex-col justify-between p-6 group"
             >
               <span className="text-2xl font-light max-w-[80%]">{projTrans.seeAll}</span>

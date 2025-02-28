@@ -24,7 +24,7 @@ export default function GalleryHero() {
             animate="animate"
             exit="exit"
             className="relative isolate overflow-hidden bg-cover bg-fixed bg-no-repeat"
-            style={{ backgroundImage: "url('https://abraham-solutions.vercel.app/hero.jpg')", backgroundPosition: "0px" }}
+            style={{ backgroundImage: "url('/projects/romana_ebanisteria_grupo_chavon42.png')", backgroundPosition: "0px" }}
         >
             {/* imagen de fondo v2 */}
             {/* <div className="absolute object-cover w-full h-full -z-30">

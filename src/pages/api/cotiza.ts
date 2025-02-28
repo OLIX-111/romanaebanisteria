@@ -14,7 +14,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     }
 
     const transporter = nodemailer.createTransport({
-      host: "smtp.dreamhost.com",
+      /* host: "smtp.dreamhost.com", */
+      host: 'smtp.mailgun.org',
       port: 587,
       secure: false,
       auth: {

@@ -1,3 +1,4 @@
+import { useTranslation } from "@/hook/UseTranslation";
 import { motion } from "framer-motion";
 import Link from "next/link";
 import { useInView } from "react-intersection-observer";
@@ -7,6 +8,9 @@ const Footer = () => {
     threshold: 0.1,
     triggerOnce: true,
   });
+
+  const dict = useTranslation()
+  const { header } = dict 
 
   return (
     <motion.footer
@@ -31,23 +35,29 @@ const Footer = () => {
             </Link>
           </div>
 
-          {/* Navegación principal (texto un poco más grande) */}
+          {/* Navegación principal (texto un poco más grande) 
+          [
+            { href: "/", text: header?.nav?.home },
+            { href: "/store/services", text: header?.nav?.services },
+            { href: "/store", text: header?.nav?.store },
+            { href: "/gallery", text: header?.nav?.projects },
+            { href: "/contact", text: header?.nav?.contact },
+          ]
+          */}
           <nav className="flex flex-wrap gap-8 text-base font-medium">
-            <Link href="/empresa" className="hover:text-gray-900 transition-colors">
-              Empresa
-            </Link>
-            <Link href="/servicios" className="hover:text-gray-900 transition-colors">
-              Servicios
-            </Link>
-            <Link href="/tienda" className="hover:text-gray-900 transition-colors">
-              Tienda
-            </Link>
-            <Link href="/proyectos" className="hover:text-gray-900 transition-colors">
-              Galería
-            </Link>
-            <Link href="/contacto" className="hover:text-gray-900 transition-colors">
-              Contacto
-            </Link>
+            {
+              [
+                { href: "/", text: header?.nav?.home },
+                { href: "/store/services", text: header?.nav?.services },
+                { href: "/store", text: header?.nav?.store },
+                { href: "/gallery", text: header?.nav?.projects },
+                { href: "/contact", text: header?.nav?.contact },
+              ].map((item, index) => (
+                <Link key={index} href={`/${item.href}`} className="hover:text-gray-900 transition-colors">
+                  {item.text}
+                </Link>
+              ))
+            }
           </nav>
 
           {/* Redes Sociales (texto un poco más grande) */}

@@ -110,7 +110,9 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ShoppingCart className={`h-8 w-8 ${isScrolled ? "text-gray-800" : "text-gray-50"}`} />
+              <Link href="/store/cart">
+                <ShoppingCart className={`h-8 w-8 ${isScrolled ? "text-gray-800" : "text-gray-50"}`} />
+              </Link>
             </motion.button>
           </div>
           {/* Logo centrado */}
@@ -167,8 +169,8 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             variants={headerVariants}
           >
             {[
+            /* { href: "/about", text: header?.nav?.about }, */
               { href: "/", text: header?.nav?.home },
-              /* { href: "/about", text: header?.nav?.about }, */
               { href: "/store/services", text: header?.nav?.services },
               { href: "/store", text: header?.nav?.store },
               { href: "/gallery", text: header?.nav?.projects },
@@ -232,7 +234,9 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <ShoppingCart className="h-6 w-6 mr-[1px]" />
+              <Link href="/store/cart">
+                <ShoppingCart className="h-6 w-6 mr-[1px]" />
+              </Link>
             </motion.button>
           </div>
         </div>
@@ -369,7 +373,9 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <ShoppingCart className="h-6 w-6" />
+                  <Link href="/store/cart">
+                    <ShoppingCart className="h-6 w-6" />
+                  </Link>
                 </motion.button>
               </div>
             </Dialog.Panel>

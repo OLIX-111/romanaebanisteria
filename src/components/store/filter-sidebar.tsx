@@ -48,7 +48,10 @@ export function FilterSidebar({ types, vendors, onFilterChange, activeFilters }:
             className="overflow-hidden"
           >
             <div className="mt-2 space-y-2">
-              {options.map((option) => (
+              {options.map((option) => {
+                console.log(option);
+                
+                return(
                 <label key={option} className="flex items-center space-x-2">
                   <input
                     type="checkbox"
@@ -58,7 +61,7 @@ export function FilterSidebar({ types, vendors, onFilterChange, activeFilters }:
                   />
                   <span className="text-sm text-gray-600">{option}</span>
                 </label>
-              ))}
+              )})}
             </div>
           </motion.div>
         )}

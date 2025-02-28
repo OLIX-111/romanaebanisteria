@@ -2,8 +2,45 @@
 
 import { useFormik } from "formik"
 import * as Yup from "yup"
-import { motion } from "framer-motion"
-import { Loader2 } from "lucide-react"
+import { motion, AnimatePresence } from "framer-motion"
+import { Loader2, CheckCircle, AlertCircle, X } from "lucide-react"
+import { useState } from "react"
+
+// Definición del tipo de notificación
+type NotificationType = {
+  type: "success" | "error"
+  message: string
+}
+
+// Componente Toast para mostrar notificaciones
+const Toast = ({ notification, onClose }: { notification: NotificationType; onClose: () => void }) => {
+  return (
+    <motion.div
+      initial={{ opacity: 0, y: -20 }}
+      animate={{ opacity: 1, y: 0 }}
+      exit={{ opacity: 0, y: -20 }}
+      className={`fixed top-4 right-4 z-50 flex items-center p-4 rounded-md shadow-lg ${
+        notification.type === "success" ? "bg-green-50 text-green-800" : "bg-red-50 text-red-800"
+      }`}
+    >
+      <div className="flex items-center">
+        {notification.type === "success" ? (
+          <CheckCircle className="w-5 h-5 mr-2 text-green-500" />
+        ) : (
+          <AlertCircle className="w-5 h-5 mr-2 text-red-500" />
+        )}
+        <p>{notification.message}</p>
+      </div>
+      <button
+        onClick={onClose}
+        className="ml-4 p-1 rounded-full hover:bg-gray-200 transition-colors"
+        aria-label="Cerrar notificación"
+      >
+        <X className="w-4 h-4" />
+      </button>
+    </motion.div>
+  )
+}
 
 const validationSchema = Yup.object({
   firstName: Yup.string().required("El nombre es requerido"),
@@ -16,6 +53,9 @@ const validationSchema = Yup.object({
 })
 
 export function ContactForm() {
+  // Estado para manejar las notificaciones
+  const [notification, setNotification] = useState<NotificationType | null>(null)
+
   const formik = useFormik({
     initialValues: {
       firstName: "",
@@ -25,26 +65,66 @@ export function ContactForm() {
       message: "",
     },
     validationSchema,
-    onSubmit: async (values, { setSubmitting }) => {
+    onSubmit: async (values, { setSubmitting, resetForm }) => {
       try {
-        // Handle form submission here
-        console.log("Form values:", values)
-        await new Promise((resolve) => setTimeout(resolve, 1000)) // Simulated API call
+        const response = await fetch("/api/contact", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        })
+
+        const data = await response.json()
+
+        if (response.ok) {
+          setNotification({
+            type: "success",
+            message: "Solicitud enviada exitosamente. Nos pondremos en contacto pronto.",
+          })
+          resetForm()
+        } else {
+          setNotification({
+            type: "error",
+            message: `Error: ${data.message || "No se pudo procesar tu solicitud."}`,
+          })
+        }
       } catch (error) {
         console.error("Error submitting form:", error)
+        setNotification({
+          type: "error",
+          message: "Ocurrió un error al enviar la solicitud. Inténtalo nuevamente.",
+        })
       } finally {
         setSubmitting(false)
       }
     },
   })
 
+  // Función para cerrar la notificación
+  const closeNotification = () => {
+    setNotification(null)
+  }
+
+  // Configurar un temporizador para cerrar automáticamente la notificación después de 5 segundos
+  if (notification) {
+    setTimeout(() => {
+      closeNotification()
+    }, 5000)
+  }
+
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-white  shadow-lg p-8"
+      className="bg-white shadow-lg p-8"
     >
+      {/* Sistema de notificaciones */}
+      <AnimatePresence>
+        {notification && <Toast notification={notification} onClose={closeNotification} />}
+      </AnimatePresence>
+
       <h2 className="text-2xl font-bold text-gray-900 mb-2">Solicita tu Cotización</h2>
       <p className="text-gray-600 mb-6">
         Déjanos tus datos y uno de nuestros asesores se pondrá en contacto contigo lo antes posible.
@@ -57,7 +137,7 @@ export function ContactForm() {
               type="text"
               placeholder="Nombre"
               {...formik.getFieldProps("firstName")}
-              className={`w-full px-4 py-3  border ${
+              className={`w-full px-4 py-3 border ${
                 formik.touched.firstName && formik.errors.firstName
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : "border-gray-200 focus:border-primary focus:ring-primary"
@@ -72,7 +152,7 @@ export function ContactForm() {
               type="text"
               placeholder="Apellido"
               {...formik.getFieldProps("lastName")}
-              className={`w-full px-4 py-3  border ${
+              className={`w-full px-4 py-3 border ${
                 formik.touched.lastName && formik.errors.lastName
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
                   : "border-gray-200 focus:border-primary focus:ring-primary"
@@ -148,13 +228,8 @@ export function ContactForm() {
         </button>
 
         <div className="flex items-center justify-center gap-4 text-sm text-gray-600 mt-6">
-          <p className="flex items-center">
-            Atendemos proyectos a nivel nacional
-          </p>
-          |
-          <p className="flex items-center">
-            Resolvemos solicitudes en 24-48 horas
-          </p>
+          <p className="flex items-center">Atendemos proyectos a nivel nacional</p>|
+          <p className="flex items-center">Resolvemos solicitudes en 24-48 horas</p>
         </div>
       </form>
     </motion.div>

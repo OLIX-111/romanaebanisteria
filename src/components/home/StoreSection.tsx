@@ -1,6 +1,6 @@
 "use client"
 
-import { getProducts } from "@/utils/api"
+import { getProductsTableros } from "@/utils/api"
 import { motion } from "framer-motion"
 import { ArrowRight } from "lucide-react"
 import Image from "next/image"
@@ -13,6 +13,7 @@ interface FeaturedProduct {
   image: string
   description: string
   price: number
+  type: string
 }
 
 const container = {
@@ -38,8 +39,12 @@ export default function FeaturedProductsElegant() {
   useEffect(() => {
     async function loadFeaturedProducts() {
       try {
-        const response = await getProducts(6, 1) // Fetch 6 products from the first page
-        setFeaturedProducts(response.data)
+        const response = await getProductsTableros()
+
+        // Obtener solo los primeros 6 productos con type === "Tableros"
+        const tablerosProducts = response.data.filter((product: FeaturedProduct) => product.type === "Tableros").slice(0, 6)
+
+        setFeaturedProducts(tablerosProducts)
       } catch (error) {
         console.error("Error fetching featured products:", error)
         setError("Error al cargar los productos destacados. Por favor, intente de nuevo más tarde.")
@@ -69,9 +74,9 @@ export default function FeaturedProductsElegant() {
           transition={{ duration: 0.5 }}
           className="mb-16 text-center"
         >
-          <h2 className="text-3xl font-medium text-gray-900 mb-4">Productos Destacados</h2>
+          <h2 className="text-3xl font-medium text-gray-900 mb-4">Tableros Destacados</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Selección de alta calidad en ebanistería y carpintería en aluminio
+            Selección de alta calidad en tableros para carpintería y ebanistería.
           </p>
         </motion.div>
 
@@ -115,4 +120,3 @@ export default function FeaturedProductsElegant() {
     </section>
   )
 }
-

@@ -1,3 +1,4 @@
+// products/[slug].tsx
 "use client"
 
 import { useEffect, useState } from "react"
