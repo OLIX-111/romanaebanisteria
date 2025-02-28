@@ -3,7 +3,7 @@
 import Footer from "@/components/layout/Footer"
 import Header from "@/components/layout/Header"
 import { Open_Sans } from "next/font/google"
-import { useEffect, useState } from "react"
+import { useEffect, useState, useCallback } from "react"
 import Image from "next/image"
 import { X } from "lucide-react"
 
@@ -34,33 +34,34 @@ interface Cart {
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
+  // const [error, setError] = useState("") // Removed error state
 
   // Función para obtener el carrito desde la API interna
-  const fetchCart = async () => {
+  const fetchCart = useCallback(async () => {
     const user_ns = localStorage.getItem("falitech_user_ns")
     if (!user_ns) {
-      setError("No se ha autenticado el usuario. Por favor, agrega un producto al carrito primero.")
+      setCart(null)
       setLoading(false)
       return
     }
     try {
       const res = await fetch(`/api/ecommerce/cart?user_ns=${encodeURIComponent(user_ns)}`)
       if (!res.ok) {
-        throw new Error("Error al obtener el carrito")
+        setCart(null)
+      } else {
+        const data = await res.json()
+        setCart(data)
       }
-      const data = await res.json()
-      setCart(data)
     } catch (err: any) {
-      setError(err.message || "Error desconocido")
+      setCart(null)
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
   useEffect(() => {
     fetchCart()
-  }, [])
+  }, [fetchCart])
 
   // Función para remover un ítem (se utiliza product_id como variant_id)
   const removeItem = async (variant_id: number) => {
@@ -70,16 +71,17 @@ export default function CartPage() {
       const res = await fetch("/api/ecommerce/cart-item", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_ns, variant_id })
+        body: JSON.stringify({ user_ns, variant_id }),
       })
       if (!res.ok) {
-        throw new Error("Error al remover el ítem")
+        console.error("Error al remover el ítem")
       }
       await res.json()
       // Actualizamos el carrito después de remover
       fetchCart()
     } catch (err: any) {
-      alert(err.message || "Error desconocido al remover el ítem")
+      console.error("Error al remover el ítem:", err.message || "Error desconocido")
+      fetchCart() // Actualizamos el carrito de todas formas para mantener la sincronización
     }
   }
 
@@ -91,15 +93,16 @@ export default function CartPage() {
       const res = await fetch("/api/ecommerce/cart", {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_ns })
+        body: JSON.stringify({ user_ns }),
       })
       if (!res.ok) {
-        throw new Error("Error al vaciar el carrito")
+        console.error("Error al vaciar el carrito")
       }
       await res.json()
       fetchCart()
     } catch (err: any) {
-      alert(err.message || "Error desconocido al vaciar el carrito")
+      console.error("Error al vaciar el carrito:", err.message || "Error desconocido")
+      fetchCart() // Actualizamos el carrito de todas formas para mantener la sincronización
     }
   }
 
@@ -108,29 +111,34 @@ export default function CartPage() {
     ? {
         subtotal: cart.items.reduce((sum, item) => sum + item.price * item.num, 0),
         tax: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 0.025, // 2.5% de impuestos
-        total: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 1.025
+        total: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 1.025,
       }
     : { subtotal: 0, tax: 0, total: 0 }
 
-  // Función para proceder al checkout (puedes integrarla más adelante)
+  // Función para proceder al checkout
   const checkout = () => {
     console.log("Procediendo al checkout", { cart, summary: orderSummary })
-    alert("Procediendo al checkout")
+    // Aquí iría la lógica para redirigir al proceso de pago
+    window.location.href = "/checkout" // O la ruta que corresponda
   }
 
   if (loading) {
     return <div className="text-center mt-8">Cargando carrito...</div>
   }
 
-  if (error) {
-    return <div className="text-center mt-8 text-red-500">{error}</div>
-  }
+  // Removed error rendering condition
+  // if (error) {
+  //   return <div className="text-center mt-8 text-red-500">{error}</div>
+  // }
+
+  // Añadir esta constante cerca del inicio de la función del componente
+  const isCartEmpty = !cart || cart.items.length === 0
 
   return (
     <main className={openSans.className}>
       <Header />
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <h1 className="text-3xl font-bold mb-8 uppercase">SHOPPING CART</h1>
+      <div className="max-w-6xl mx-auto px-4 py-8 mt-24">
+        <h1 className="text-3xl font-bold mb-8 uppercase">CARRITO DE COMPRA</h1>
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Lista de productos */}
@@ -153,7 +161,10 @@ export default function CartPage() {
                     <div className="flex-grow">
                       <div className="flex justify-between items-start">
                         <h3 className="font-medium text-lg mb-2">{item.name}</h3>
-                        <button onClick={() => removeItem(item.product_id)} className="text-gray-500 hover:text-gray-700">
+                        <button
+                          onClick={() => removeItem(item.product_id)}
+                          className="text-gray-500 hover:text-gray-700"
+                        >
                           <X size={20} />
                         </button>
                       </div>
@@ -176,14 +187,14 @@ export default function CartPage() {
           {/* Resumen del pedido */}
           <div className="lg:col-span-1">
             <div className="border p-6">
-              <h2 className="text-lg font-medium mb-4">ORDER SUMMARY</h2>
+              <h2 className="text-lg font-medium mb-4">RESUMEN DEL PEDIDO</h2>
               <div className="space-y-2 mb-4">
                 <div className="flex justify-between">
                   <span>SUBTOTAL</span>
                   <span>${orderSummary.subtotal.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between">
-                  <span>TAX</span>
+                  <span>IMPUESTOS</span>
                   <span>${orderSummary.tax.toFixed(2)}</span>
                 </div>
                 <div className="flex justify-between font-medium">
@@ -193,13 +204,19 @@ export default function CartPage() {
               </div>
               <button
                 onClick={checkout}
-                className="w-full bg-black text-white py-3 uppercase font-medium hover:bg-gray-800 transition-colors"
+                disabled={isCartEmpty}
+                className={`w-full py-3 uppercase font-medium transition-colors ${
+                  isCartEmpty ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-black text-white hover:bg-gray-800"
+                }`}
               >
-                CHECKOUT
+                FINALIZAR COMPRA
               </button>
               <button
                 onClick={clearCart}
-                className="mt-4 w-full border py-3 uppercase font-medium hover:bg-gray-50 transition-colors"
+                disabled={isCartEmpty}
+                className={`mt-4 w-full border py-3 uppercase font-medium transition-colors ${
+                  isCartEmpty ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-gray-50"
+                }`}
               >
                 Vaciar Carrito
               </button>
@@ -211,3 +228,4 @@ export default function CartPage() {
     </main>
   )
 }
+

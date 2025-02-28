@@ -72,7 +72,7 @@ export function FilterSidebar({ types, vendors, onFilterChange, activeFilters }:
   return (
     <div className="w-64 space-y-4">
       <FilterSection title="Tipo de Producto" options={types} type="type" />
-      <FilterSection title="Vendedor" options={vendors} type="vendor" />
+      {/* <FilterSection title="Vendedor" options={vendors} type="vendor" /> */}
     </div>
   )
 }

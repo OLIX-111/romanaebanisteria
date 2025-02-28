@@ -44,21 +44,37 @@ const Footer = () => {
             { href: "/contact", text: header?.nav?.contact },
           ]
           */}
-          <nav className="flex flex-wrap gap-8 text-base font-medium">
-            {
-              [
-                { href: "/", text: header?.nav?.home },
-                { href: "/store/services", text: header?.nav?.services },
-                { href: "/store", text: header?.nav?.store },
-                { href: "/gallery", text: header?.nav?.projects },
-                { href: "/contact", text: header?.nav?.contact },
-              ].map((item, index) => (
-                <Link key={index} href={`/${item.href}`} className="hover:text-gray-900 transition-colors">
-                  {item.text}
-                </Link>
-              ))
-            }
-          </nav>
+          <div className="">
+            <nav className="flex flex-wrap gap-8 text-base font-medium">
+              {
+                [
+                  { href: "/", text: header?.nav?.home },
+                  { href: "/store/services", text: header?.nav?.services },
+                  { href: "/store", text: header?.nav?.store },
+                  { href: "/gallery", text: header?.nav?.projects },
+                  { href: "/contact", text: header?.nav?.contact },
+                ].map((item, index) => (
+                  <Link key={index} href={`/${item.href}`} className="hover:text-gray-900 transition-colors">
+                    {item.text}
+                  </Link>
+                ))
+              }
+            </nav>
+            <div className="flex gap-4 justify-center mt-5 text-sm">
+              <Link
+                href="/terms"
+                className="hover:text-gray-900 transition-colors"
+              >
+                Terminos y Condiciones
+              </Link>
+              <Link
+                href="/privacy"
+                className="hover:text-gray-900 transition-colors"
+              >
+                Política de Privacidad
+              </Link>
+            </div>
+          </div>
 
           {/* Redes Sociales (texto un poco más grande) */}
           <div className="flex items-center space-x-6 text-base font-medium">
