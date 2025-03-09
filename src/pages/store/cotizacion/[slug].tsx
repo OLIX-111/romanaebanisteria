@@ -9,6 +9,7 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { getServiceBySlug } from "../../../../sanity/sanityQueries"
 import { CheckCircle, AlertTriangle, Clock, Calendar, DollarSign, Tag } from "lucide-react"
+import Link from "next/link"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -46,9 +47,9 @@ export default function ServicePage({ service }: ServicePageProps) {
           <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
           <h2 className="text-2xl font-semibold text-gray-800 mb-2">Servicio no encontrado</h2>
           <p className="text-gray-600 mb-4">Lo sentimos, no pudimos encontrar el servicio solicitado.</p>
-          <a href="/" className="inline-block bg-primary text-white px-4 py-2">
+          <Link href="/" className="inline-block bg-primary text-white px-4 py-2">
             Volver al inicio
-          </a>
+          </Link>
         </div>
       </div>
     )
