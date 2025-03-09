@@ -12,6 +12,7 @@
     "@headlessui/react": "^2.2.0",
     "@heroicons/react": "^2.2.0",
     "@phosphor-icons/react": "^2.1.7",
+    "@sanity/block-content-to-react": "^3.0.0",
     "@sanity/client": "^6.10.0",
     "@sanity/image-url": "^1.0.2",
     "@sanity/vision": "^3.23.4",

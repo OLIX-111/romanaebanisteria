@@ -55,12 +55,19 @@ export default {
           'Modalidad de disponibilidad (ej: "Previa cita", "Inmediata")',
         validation: (Rule: any) => Rule.required(),
       },
-      {
+      /* {
         name: 'description',
         title: 'Descripción',
         type: 'text',
         description: 'Descripción detallada del servicio',
         validation: (Rule: any) => Rule.required(),
+      }, */
+      {
+        name: 'description',
+        title: 'Descripción',
+        description: 'Descripción detallada del servicio',
+        type: 'array',
+        of: [{ type: 'block' }, { type: 'image' }],
       },
       {
         name: 'shortdescription',
