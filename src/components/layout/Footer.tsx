@@ -10,7 +10,7 @@ const Footer = () => {
   });
 
   const dict = useTranslation()
-  const { header } = dict 
+  const { header, footer } = dict 
 
   return (
     <motion.footer
@@ -65,13 +65,13 @@ const Footer = () => {
                 href="/terms"
                 className="hover:text-gray-900 transition-colors"
               >
-                Terminos y Condiciones
+                {footer?.nav?.terms}
               </Link>
               <Link
                 href="/privacy"
                 className="hover:text-gray-900 transition-colors"
               >
-                Política de Privacidad
+                {footer?.nav?.privacy}
               </Link>
             </div>
           </div>
@@ -84,7 +84,7 @@ const Footer = () => {
               rel="noopener noreferrer"
               className="hover:text-gray-900 transition-colors"
             >
-              Instagram
+              {footer?.social?.instagram}
             </Link>
             <Link
               href="https://facebook.com/romanaebanisteria"
@@ -92,14 +92,14 @@ const Footer = () => {
               rel="noopener noreferrer"
               className="hover:text-gray-900 transition-colors"
             >
-              Facebook
+              {footer?.social?.facebook}
             </Link>
           </div>
         </div>
 
         {/* Fila final: Derechos reservados */}
         <div className="mt-12 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} ROMAna Ebanistería. Todos los derechos reservados.
+          &copy; {new Date().getFullYear()} ROMAna Ebanistería. {footer?.copy}
         </div>
       </div>
     </motion.footer>

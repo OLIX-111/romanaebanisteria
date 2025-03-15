@@ -20,7 +20,7 @@ export default function Privacy() {
       </Head>
       <main className={`${openSans.className}`}>
         <Header />
-        <section className="container mx-auto px-6 py-16">
+        <section className="container mx-auto px-6 py-16 mt-20">
           <h1 className="text-3xl font-bold text-gray-900 mb-6">Política de Privacidad</h1>
 
           <p className="text-gray-700 mb-4">Última actualización: 28/02/2025</p>

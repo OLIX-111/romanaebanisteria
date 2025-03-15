@@ -6,6 +6,7 @@ import { ArrowRight, Factory, Home, Plus } from "lucide-react"
 
 export default function Hero() {
   const dict = useTranslation()
+  const { hero } = dict
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -73,7 +74,7 @@ export default function Hero() {
       >
         <motion.div variants={stagger} className="mx-auto mb-12 w-full max-w-4xl text-center md:mb-16 lg:mb-20">
           <motion.h1 variants={fadeInUp} className="mb-4 text-2xl lg:text-4xl w-full font-semibold text-gray-50">
-            Puertas <span className="text-primary">|</span> Cocinas <span className="text-primary">|</span> Mobiliario Para Grandes Proyectos
+            {hero?.bigTitlePart1} <span className="text-primary">|</span> {hero?.bigTitlePart2} <span className="text-primary">|</span> {hero?.bigTitlePart3}
           </motion.h1>
         </motion.div>
       </motion.div>
@@ -86,9 +87,21 @@ export default function Hero() {
       >
         <motion.div variants={stagger} className="w-full max-w-3xl mx-auto px-4 grid grid-cols-3 gap-12">
           {[
-            { Icon: <Plus className="opacity-0 h-8" />, title: "39,027 ft2", subtitle: "Fábrica" },
-            { Icon: <img src="/home/ebanisteria.png" className=" h-8" />, title: "48+ Años", subtitle: "de experiencia" },
-            { Icon: <Plus className="opacity-0 h-8" />, title: "Territorio", subtitle: "Nacional | Internacional" },
+            {
+              Icon: <Plus className="opacity-0 h-8" />,
+              title: hero?.stats?.factorySize,
+              subtitle: hero?.stats?.factory
+            },
+            {
+              Icon: <img src="/home/ebanisteria.png" className=" h-8" />,
+              title: hero?.stats?.experience,
+              subtitle: hero?.stats?.experienceSubtitle
+            },
+            {
+              Icon: <Plus className="opacity-0 h-8" />,
+              title: hero?.stats?.territory,
+              subtitle: hero?.stats?.territorySubtitle
+            },
           ].map((item, index) => (
             <motion.div key={index} variants={fadeInUp} className="flex flex-col items-center text-center">
               <motion.div

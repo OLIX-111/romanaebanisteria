@@ -23,8 +23,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
   const router = useRouter()
   const { locale }: any = router
   const [scrollPosition, setScrollPosition] = useState(0)
-  const [empresas, setEmpresas] = useState([])
-  const [proyectos, setProyectos] = useState([])
+
   const [marcas, setMarcas] = useState([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
 
@@ -291,24 +290,6 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                 >
                   {header?.nav?.store}
                 </Link>
-                <MobileNavDisclosure
-                  items={proyectos}
-                  title={header?.nav?.projects}
-                  indexPath="/projects"
-                  setMobileMenuOpen={setMobileMenuOpen}
-                />
-                <MobileNavDisclosure
-                  items={empresas}
-                  title={header?.nav?.companies}
-                  indexPath="/companies"
-                  setMobileMenuOpen={setMobileMenuOpen}
-                />
-                <MobileNavDisclosure
-                  items={marcas}
-                  title={header?.nav?.brands}
-                  indexPath="/brands"
-                  setMobileMenuOpen={setMobileMenuOpen}
-                />
                 <Link
                   href="/news"
                   className="block text-lg font-medium text-gray-800"
