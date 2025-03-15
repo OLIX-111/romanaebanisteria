@@ -9,6 +9,7 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { ChevronLeft, ChevronRight } from "lucide-react"
 import { getProducts } from "@/utils/api"
+import { useTranslation } from "@/hook/UseTranslation"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -23,6 +24,9 @@ interface Product {
 }
 
 export default function StorePage() {
+  const dict = useTranslation()
+  const { storePage } = dict
+
   const [products, setProducts] = useState<Product[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -88,11 +92,11 @@ export default function StorePage() {
   }
 
   if (isLoading) {
-    return <div className="text-center py-24">Cargando productos...</div>
+    return <div className="text-center py-24">{storePage.loading}</div>
   }
 
   if (error) {
-    return <div className="text-center py-24 text-red-500">{error}</div>
+    return <div className="text-center py-24 text-red-500">{storePage.error}</div>
   }
 
   return (
@@ -101,17 +105,17 @@ export default function StorePage() {
       <div className="px-4 py-8 sm:px-6 lg:px-8 mt-24">
         <div className="mx-auto container lg:px-2">
           <div className="flex items-center justify-between pb-4">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900">Tienda</h1>
+            <h1 className="text-2xl font-bold tracking-tight text-gray-900">{storePage.title}</h1>
             <div className="flex items-center space-x-4">
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
                 className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               >
-                <option value="featured">Destacados</option>
-                <option value="price-asc">Precio: Menor a Mayor</option>
-                <option value="price-desc">Precio: Mayor a Menor</option>
-                <option value="name">Nombre</option>
+                <option value="featured">{storePage.featured}</option>
+                <option value="price-asc">{storePage.priceAsc}</option>
+                <option value="price-desc">{storePage.priceDesc}</option>
+                <option value="name">{storePage.name}</option>
               </select>
             </div>
           </div>

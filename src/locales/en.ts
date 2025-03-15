@@ -56,6 +56,15 @@ const en = {
     featuredSubtitle: "High quality selection of boards for carpentry and ebanistería.",
     viewMore: "View More"
   },
+  storePage: {
+    loading: "Loading products...",
+    error: "Error loading products. Please try again later.",
+    title: "Store",
+    featured: "Featured",
+    priceAsc: "Price: Low to High",
+    priceDesc: "Price: High to Low",
+    name: "Name",
+  },
   aboutUs: {
     title: "About ROMAna Ebanistería",
     paragraph1: "With over 48 years of experience, we take pride in being the largest aluminum carpentry and ebanistería factory in La Romana.",
@@ -145,6 +154,59 @@ const en = {
     visitMessage: "We serve customers throughout the eastern region and nationwide. Visit us to learn more about our facilities and cabinetry solutions.",
     howToGetThere: "Get Directions",
   },
-  // otras traducciones...
+  serviceDetail: {
+    backToServices: "Back to services",
+    description: "Description",
+    category: "Category",
+    estimatedDuration: "Estimated duration",
+    availability: "Availability",
+    requestQuote: "Request quote",
+    imageAlt: "image", // Used in the alt text with number: "image 1", "image 2", etc.
+  },
+  quoteRequest: {
+    notFound: {
+      title: "Service not found",
+      message: "Sorry, we couldn't find the requested service.",
+      backHome: "Back to home"
+    },
+    form: {
+      title: "Request Quote",
+      subtitle: "Complete the form to receive a personalized quote",
+      formIntro: "Complete the form and you will receive a personalized quote for",
+      requiredFields: "Fields marked with an asterisk (*) are required to correctly process your request.",
+      fields: {
+        fullName: "Full Name",
+        email: "Email Address",
+        phone: "Phone Number",
+        company: "Company / Project (optional)",
+        projectDescription: "Project Description",
+        projectDescriptionPlaceholder: "Briefly describe your project and specific needs..."
+      },
+      validation: {
+        fullName: "Full name is required",
+        email: "Invalid email",
+        emailRequired: "Email is required",
+        phone: "Phone number is required",
+        projectDescription: "Project description is required"
+      },
+      sending: "Sending...",
+      submit: "Request Quote Now",
+      privacyPolicy: "By submitting this form, you agree to our privacy policy and terms of service.",
+      success: {
+        title: "Request sent successfully",
+        message: "Thank you for your interest. We will contact you shortly to discuss your project details."
+      },
+      error: {
+        title: "Error sending request",
+        message: "An error occurred while sending the request. Please try again later."
+      },
+      trust: {
+        title: "Why request a quote with us?",
+        fastResponse: "Guaranteed quick response",
+        customQuotes: "Custom quotes tailored to your needs",
+        experiencedProfessionals: "Experienced professionals"
+      }
+    }
+  },
 };
 export default en;

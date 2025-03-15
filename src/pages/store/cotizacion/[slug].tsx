@@ -10,6 +10,7 @@ import Footer from "@/components/layout/Footer"
 import { getServiceBySlug } from "../../../../sanity/sanityQueries"
 import { CheckCircle, AlertTriangle, Clock, Calendar, DollarSign, Tag } from "lucide-react"
 import Link from "next/link"
+import { useTranslation } from "@/hook/UseTranslation"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -27,15 +28,19 @@ interface ServicePageProps {
   }
 }
 
-const QuoteSchema = Yup.object().shape({
-  fullName: Yup.string().required("Nombre completo es requerido"),
-  email: Yup.string().email("Correo electrónico inválido").required("Correo electrónico es requerido"),
-  phone: Yup.string().required("Número de teléfono es requerido"),
+const QuoteSchema = (dict: any) => Yup.object().shape({
+  fullName: Yup.string().required(dict.quoteRequest.form.validation.fullName),
+  email: Yup.string()
+    .email(dict.quoteRequest.form.validation.email)
+    .required(dict.quoteRequest.form.validation.emailRequired),
+  phone: Yup.string().required(dict.quoteRequest.form.validation.phone),
   company: Yup.string(),
-  projectDescription: Yup.string().required("Descripción del proyecto es requerida"),
+  projectDescription: Yup.string().required(dict.quoteRequest.form.validation.projectDescription),
 })
 
 export default function ServicePage({ service }: ServicePageProps) {
+  const dict = useTranslation()
+  const { quoteRequest } = dict
   const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [activeImage, setActiveImage] = useState<string>(service?.imageUrl || "")
@@ -45,10 +50,10 @@ export default function ServicePage({ service }: ServicePageProps) {
       <div className="min-h-screen flex items-center justify-center bg-gray-50">
         <div className="text-center p-8 max-w-md">
           <AlertTriangle className="mx-auto h-12 w-12 text-yellow-500 mb-4" />
-          <h2 className="text-2xl font-semibold text-gray-800 mb-2">Servicio no encontrado</h2>
-          <p className="text-gray-600 mb-4">Lo sentimos, no pudimos encontrar el servicio solicitado.</p>
+          <h2 className="text-2xl font-semibold text-gray-800 mb-2">{quoteRequest.notFound.title}</h2>
+          <p className="text-gray-600 mb-4">{quoteRequest.notFound.message}</p>
           <Link href="/" className="inline-block bg-primary text-white px-4 py-2">
-            Volver al inicio
+            {quoteRequest.notFound.backHome}
           </Link>
         </div>
       </div>
@@ -96,7 +101,7 @@ export default function ServicePage({ service }: ServicePageProps) {
             <div className="mb-6">
               <h1 className="text-3xl sm:text-4xl font-bold text-gray-900">{service.name}</h1>
               <p className="text-lg text-gray-600 mt-2">
-                Complete el formulario para recibir una cotización personalizada
+                {quoteRequest.form.subtitle}
               </p>
             </div>
 
@@ -203,16 +208,16 @@ export default function ServicePage({ service }: ServicePageProps) {
               <div className="w-full lg:w-1/2" id="cotizacion-form">
                 <div className="bg-gray-50 border border-gray-200 shadow-sm">
                   <div className="p-6 border-b border-gray-200 bg-primary text-white">
-                    <h2 className="text-2xl font-semibold">Solicitar Cotización</h2>
+                    <h2 className="text-2xl font-semibold">{quoteRequest.form.title}</h2>
                     <p className="mt-2 text-white/90">
-                      Complete el formulario y recibirá una cotización personalizada para {service.name}
+                      {quoteRequest.form.formIntro} {service.name}
                     </p>
                   </div>
                   <div className="p-6">
                     <div className="flex items-center gap-2 mb-6 text-gray-700 bg-blue-50 p-3 border-l-4 border-blue-500">
                       <AlertTriangle className="h-5 w-5 text-blue-500 flex-shrink-0" />
                       <p className="text-sm">
-                        Los campos marcados son obligatorios para poder procesar su solicitud correctamente.
+                        {quoteRequest.form.requiredFields}
                       </p>
                     </div>
 
@@ -224,14 +229,14 @@ export default function ServicePage({ service }: ServicePageProps) {
                         company: "",
                         projectDescription: "",
                       }}
-                      validationSchema={QuoteSchema}
+                      validationSchema={QuoteSchema(dict)}
                       onSubmit={handleSubmit}
                     >
                       {({ errors, touched, isSubmitting }) => (
                         <Form className="space-y-5">
                           <div>
                             <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                              Nombre completo <span className="text-red-500">*</span>
+                              {quoteRequest.form.fields.fullName} <span className="text-red-500">*</span>
                             </label>
                             <Field
                               id="fullName"
@@ -246,7 +251,7 @@ export default function ServicePage({ service }: ServicePageProps) {
 
                           <div>
                             <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                              Correo electrónico <span className="text-red-500">*</span>
+                              {quoteRequest.form.fields.email} <span className="text-red-500">*</span>
                             </label>
                             <Field
                               id="email"
@@ -261,7 +266,7 @@ export default function ServicePage({ service }: ServicePageProps) {
 
                           <div>
                             <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                              Número de teléfono <span className="text-red-500">*</span>
+                              {quoteRequest.form.fields.phone} <span className="text-red-500">*</span>
                             </label>
                             <Field
                               id="phone"
@@ -276,7 +281,7 @@ export default function ServicePage({ service }: ServicePageProps) {
 
                           <div>
                             <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
-                              Empresa / Proyecto (opcional)
+                              {quoteRequest.form.fields.company}
                             </label>
                             <Field
                               id="company"
@@ -291,7 +296,7 @@ export default function ServicePage({ service }: ServicePageProps) {
                               htmlFor="projectDescription"
                               className="block text-sm font-medium text-gray-700 mb-1"
                             >
-                              Descripción del proyecto <span className="text-red-500">*</span>
+                              {quoteRequest.form.fields.projectDescription} <span className="text-red-500">*</span>
                             </label>
                             <Field
                               id="projectDescription"
@@ -299,7 +304,7 @@ export default function ServicePage({ service }: ServicePageProps) {
                               as="textarea"
                               rows={4}
                               className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900 resize-none"
-                              placeholder="Describa brevemente su proyecto y necesidades específicas..."
+                              placeholder={quoteRequest.form.fields.projectDescriptionPlaceholder}
                             />
                             {errors.projectDescription && touched.projectDescription && (
                               <div className="text-red-500 text-sm mt-1">{errors.projectDescription}</div>
@@ -313,11 +318,11 @@ export default function ServicePage({ service }: ServicePageProps) {
                               (isSubmitting || submitStatus === "loading") && "opacity-70 cursor-not-allowed"
                             }`}
                           >
-                            {isSubmitting || submitStatus === "loading" ? "Enviando..." : "Solicitar Cotización Ahora"}
+                            {isSubmitting || submitStatus === "loading" ? quoteRequest.form.sending : quoteRequest.form.submit}
                           </button>
 
                           <p className="text-xs text-center text-gray-500 mt-2">
-                            Al enviar este formulario, acepta nuestra política de privacidad y términos de servicio.
+                            {quoteRequest.form.privacyPolicy}
                           </p>
                         </Form>
                       )}
@@ -327,10 +332,9 @@ export default function ServicePage({ service }: ServicePageProps) {
                       <div className="mt-6 p-4 bg-green-50 border-l-4 border-green-500 flex items-start">
                         <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
                         <div>
-                          <h3 className="text-green-800 font-medium">Solicitud enviada exitosamente</h3>
+                          <h3 className="text-green-800 font-medium">{quoteRequest.form.success.title}</h3>
                           <p className="text-green-700 text-sm mt-1">
-                            Gracias por su interés. Nos pondremos en contacto con usted a la brevedad para discutir los
-                            detalles de su proyecto.
+                            {quoteRequest.form.success.message}
                           </p>
                         </div>
                       </div>
@@ -340,10 +344,9 @@ export default function ServicePage({ service }: ServicePageProps) {
                       <div className="mt-6 p-4 bg-red-50 border-l-4 border-red-500 flex items-start">
                         <AlertTriangle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
                         <div>
-                          <h3 className="text-red-800 font-medium">Error al enviar la solicitud</h3>
+                          <h3 className="text-red-800 font-medium">{quoteRequest.form.error.title}</h3>
                           <p className="text-red-700 text-sm mt-1">
-                            {errorMessage ||
-                              "Ocurrió un error al enviar la solicitud. Por favor, intenta de nuevo más tarde."}
+                            {errorMessage || quoteRequest.form.error.message}
                           </p>
                         </div>
                       </div>
@@ -352,20 +355,20 @@ export default function ServicePage({ service }: ServicePageProps) {
                     {/* Trust Indicators */}
                     <div className="mt-8 pt-6 border-t border-gray-200">
                       <h3 className="text-sm font-medium text-gray-700 mb-3">
-                        ¿Por qué solicitar una cotización con nosotros?
+                        {quoteRequest.form.trust.title}
                       </h3>
                       <div className="grid grid-cols-1 gap-3">
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <CheckCircle className="h-4 w-4 text-primary" />
-                          <span>Respuesta rápida garantizada</span>
+                          <span>{quoteRequest.form.trust.fastResponse}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <CheckCircle className="h-4 w-4 text-primary" />
-                          <span>Presupuestos personalizados a su medida</span>
+                          <span>{quoteRequest.form.trust.customQuotes}</span>
                         </div>
                         <div className="flex items-center gap-2 text-sm text-gray-600">
                           <CheckCircle className="h-4 w-4 text-primary" />
-                          <span>Profesionales con amplia experiencia</span>
+                          <span>{quoteRequest.form.trust.experiencedProfessionals}</span>
                         </div>
                       </div>
                     </div>

@@ -11,7 +11,7 @@ const es = {
       news: "Noticias",
       contact: "Contacto",
       services: "Servicios",
-      store: "Tienda"
+      store: "Tienda",
     },
     cta: "Contactanos",
   },
@@ -23,12 +23,14 @@ const es = {
   // Agregamos las traducciones para el componente ProjectGrid
   ProjectGrid: {
     title: "Nuestros Proyectos",
-    seeAll: "Ver todos los proyectos"
+    seeAll: "Ver todos los proyectos",
   },
   aboutUs: {
     title: "Acerca de ROMAna Ebanistería",
-    paragraph1: "Con más de 48 años de trayectoria, nos enorgullecemos de ser la fábrica de ebanistería y carpintería en aluminio más grande de La Romana. Fundada en 1977, ROMAna Ebanistería ha evolucionado desde la fabricación tradicional de puertas y muebles en madera, hasta convertirse en un referente en la innovación con materiales modernos como melamina y MDF.",
-    paragraph2: "Hoy, colaboramos con desarrolladores inmobiliarios, cadenas hoteleras y proyectos residenciales de alto nivel, brindando soluciones integrales y personalizadas. Nuestro compromiso es ofrecer resultados excepcionales, cuidando cada detalle para garantizar precisión, calidad y durabilidad.",
+    paragraph1:
+      "Con más de 48 años de trayectoria, nos enorgullecemos de ser la fábrica de ebanistería y carpintería en aluminio más grande de La Romana. Fundada en 1977, ROMAna Ebanistería ha evolucionado desde la fabricación tradicional de puertas y muebles en madera, hasta convertirse en un referente en la innovación con materiales modernos como melamina y MDF.",
+    paragraph2:
+      "Hoy, colaboramos con desarrolladores inmobiliarios, cadenas hoteleras y proyectos residenciales de alto nivel, brindando soluciones integrales y personalizadas. Nuestro compromiso es ofrecer resultados excepcionales, cuidando cada detalle para garantizar precisión, calidad y durabilidad.",
   },
   hero: {
     bigTitlePart1: "Puertas",
@@ -48,23 +50,33 @@ const es = {
     error: "Error al cargar los productos destacados. Por favor, intente de nuevo más tarde.",
     featuredTitle: "Tableros Destacados",
     featuredSubtitle: "Selección de alta calidad en tableros para carpintería y ebanistería.",
-    viewMore: "Ver Más"
+    viewMore: "Ver Más",
+  },
+  storePage: {
+    loading: "Cargando productos...",
+    error: "Error al cargar los productos. Por favor, intente de nuevo más tarde.",
+    title: "Tienda",
+    featured: "Destacados",
+    priceAsc: "Precio: Menor a Mayor",
+    priceDesc: "Precio: Mayor a Menor",
+    name: "Nombre",
   },
   ctaSection: {
     title: "Descubre Nuestra Tienda",
-    subTitle: "Encuentra materiales, mobiliario y accesorios de ebanistería y carpintería en aluminio con la calidad que nos distingue.",
-    buttonText: "Ir a la Tienda"
+    subTitle:
+      "Encuentra materiales, mobiliario y accesorios de ebanistería y carpintería en aluminio con la calidad que nos distingue.",
+    buttonText: "Ir a la Tienda",
   },
   footer: {
     nav: {
       terms: "Términos y Condiciones",
-      privacy: "Política de Privacidad"
+      privacy: "Política de Privacidad",
     },
     social: {
       instagram: "Instagram",
-      facebook: "Facebook"
+      facebook: "Facebook",
     },
-    copy: "Todos los derechos reservados."
+    copy: "Todos los derechos reservados.",
   },
   // otras traducciones...
   whyUs: {
@@ -93,7 +105,7 @@ const es = {
     ],
   },
   galleryHero: {
-    heading: "Explora Nuestros Proyectos"
+    heading: "Explora Nuestros Proyectos",
   },
   contactForm: {
     heading: "Solicita tu Cotización",
@@ -129,7 +141,8 @@ const es = {
   },
   contactInfo: {
     heading: "Contáctanos",
-    subheading: "Si necesitas asesoría, cotizaciones o más información sobre nuestros servicios, estamos listos para ayudarte.",
+    subheading:
+      "Si necesitas asesoría, cotizaciones o más información sobre nuestros servicios, estamos listos para ayudarte.",
     emailLabel: "Correo Electrónico",
     phoneLabel: "Teléfono | WhatsApp",
     scheduleLabel: "Horario de Atención",
@@ -143,8 +156,66 @@ const es = {
     companyTitle: "ROMAna Ebanistería",
     addressLine1: "Calle 4, No. 7, Sector Reparto Torres",
     addressLine2: "La Romana, República Dominicana",
-    visitMessage: "Atendemos a clientes en toda la región este y a nivel nacional. Visítanos para conocer nuestras instalaciones y soluciones en ebanistería.",
+    visitMessage:
+      "Atendemos a clientes en toda la región este y a nivel nacional. Visítanos para conocer nuestras instalaciones y soluciones en ebanistería.",
     howToGetThere: "Cómo llegar",
   },
-};
-export default es;
+  serviceDetail: {
+    backToServices: "Volver a servicios",
+    description: "Descripción",
+    category: "Categoría",
+    estimatedDuration: "Duración estimada",
+    availability: "Disponibilidad",
+    requestQuote: "Solicitar cotización",
+    imageAlt: "imagen", // Used in the alt text with number: "imagen 1", "imagen 2", etc.
+  },
+  quoteRequest: {
+    notFound: {
+      title: "Servicio no encontrado",
+      message: "Lo sentimos, no pudimos encontrar el servicio solicitado.",
+      backHome: "Volver al inicio",
+    },
+    form: {
+      title: "Solicitar Cotización",
+      subtitle: "Complete el formulario para recibir una cotización personalizada",
+      formIntro: "Complete el formulario y recibirá una cotización personalizada para",
+      requiredFields:
+        "Los campos marcados con asterisco (*) son obligatorios para poder procesar su solicitud correctamente.",
+      fields: {
+        fullName: "Nombre completo",
+        email: "Correo electrónico",
+        phone: "Número de teléfono",
+        company: "Empresa / Proyecto (opcional)",
+        projectDescription: "Descripción del proyecto",
+        projectDescriptionPlaceholder: "Describa brevemente su proyecto y necesidades específicas...",
+      },
+      validation: {
+        fullName: "Nombre completo es requerido",
+        email: "Correo electrónico inválido",
+        emailRequired: "Correo electrónico es requerido",
+        phone: "Número de teléfono es requerido",
+        projectDescription: "Descripción del proyecto es requerida",
+      },
+      sending: "Enviando...",
+      submit: "Solicitar Cotización Ahora",
+      privacyPolicy: "Al enviar este formulario, acepta nuestra política de privacidad y términos de servicio.",
+      success: {
+        title: "Solicitud enviada exitosamente",
+        message:
+          "Gracias por su interés. Nos pondremos en contacto con usted a la brevedad para discutir los detalles de su proyecto.",
+      },
+      error: {
+        title: "Error al enviar la solicitud",
+        message: "Ocurrió un error al enviar la solicitud. Por favor, intenta de nuevo más tarde.",
+      },
+      trust: {
+        title: "¿Por qué solicitar una cotización con nosotros?",
+        fastResponse: "Respuesta rápida garantizada",
+        customQuotes: "Presupuestos personalizados a su medida",
+        experiencedProfessionals: "Profesionales con amplia experiencia",
+      },
+    },
+  },
+}
+export default es
+

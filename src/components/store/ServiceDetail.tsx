@@ -7,6 +7,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 // @ts-ignore
 import BlockContent from "@sanity/block-content-to-react"
+import { useTranslation } from "@/hook/UseTranslation"
 
 interface ServiceDetailProps {
   service: {
@@ -23,6 +24,8 @@ interface ServiceDetailProps {
 }
 
 export function ServiceDetail({ service }: ServiceDetailProps) {
+  const dict = useTranslation()
+  const { serviceDetail } = dict
   const [currentImage, setCurrentImage] = useState(service.imageUrl)
 
   useEffect(() => {
@@ -33,7 +36,7 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
     <div className="container mx-auto px-4 py-8">
       <Link href="/store" className="mb-8 inline-flex items-center text-sm text-gray-600 hover:text-gray-900">
         <ArrowLeft className="mr-2 h-4 w-4" />
-        Volver a servicios
+        {serviceDetail.backToServices}
       </Link>
 
       <div className="grid gap-8 lg:grid-cols-2">
@@ -59,7 +62,7 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
               >
                 <Image
                   src={img || "/placeholder.svg"}
-                  alt={`${service.name} - imagen ${index + 1}`}
+                  alt={`${service.name} - ${serviceDetail.imageAlt} ${index + 1}`}
                   width={100}
                   height={100}
                   className="h-full w-full object-cover object-center"
@@ -96,7 +99,7 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
           </div> */}
 
           <div className="space-y-4">
-            <h2 className="text-lg font-semibold">Descripción</h2>
+            <h2 className="text-lg font-semibold">{serviceDetail.description}</h2>
             <div className="prose prose-lg text-gray-600">
               {service.description && (
                 <BlockContent
@@ -166,7 +169,7 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
 
           <div className="space-y-4">
             <div className="flex items-center justify-between rounded-lg bg-gray-50 p-4">
-              <span className="text-sm font-medium">Disponibilidad</span>
+              <span className="text-sm font-medium">{serviceDetail.availability}</span>
               <span className="text-sm text-blue-600">{service.availability}</span>
             </div>
           </div>
@@ -174,7 +177,7 @@ export function ServiceDetail({ service }: ServiceDetailProps) {
           <div className="flex gap-4">
             <Link href={`/store/cotizacion/${service.slug}`} passHref className="w-full">
               <button className="flex-1 w-full rounded-lg bg-primary px-8 py-4 text-sm font-medium text-white hover:bg-orange-400 duration-200">
-                Solicitar cotización
+                {serviceDetail.requestQuote}
               </button>
             </Link>
           </div>
