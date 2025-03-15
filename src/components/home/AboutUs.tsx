@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { Calendar, Building, Users } from "lucide-react"
+import { useTranslation } from "@/hook/UseTranslation"
 
 const fadeIn = {
     hidden: { opacity: 0, y: 20 },
@@ -64,6 +65,9 @@ function CTA() {
 }
 
 export default function AboutUs() {
+    const dict = useTranslation();
+    const { aboutUs } = dict;
+
     return (
         <section className="w-full bg-white py-24">
             <CTA />
@@ -76,7 +80,7 @@ export default function AboutUs() {
                     variants={fadeIn}
                     className="lg:mb-16"
                 >
-                    <h2 className="text-3xl font-medium text-gray-900 mb-6">Acerca de ROMAna Ebanistería</h2>
+                    <h2 className="text-3xl font-medium text-gray-900 mb-6">{aboutUs.title}</h2>
                     <div className="w-24 h-1 bg-gray-900 mb-8" />
                 </motion.div>
                 <motion.div
@@ -87,17 +91,8 @@ export default function AboutUs() {
                     variants={fadeIn}
                     className="space-y-6 text-gray-600"
                 >
-                    <p>
-                        Con más de 48 años de trayectoria, nos enorgullecemos de ser la fábrica de ebanistería y carpintería en
-                        aluminio más grande de La Romana. Fundada en 1977, ROMAna Ebanistería ha evolucionado desde la fabricación
-                        tradicional de puertas y muebles en madera, hasta convertirse en un referente en la innovación con
-                        materiales modernos como melamina y MDF.
-                    </p>
-                    <p>
-                        Hoy, colaboramos con desarrolladores inmobiliarios, cadenas hoteleras y proyectos residenciales de alto
-                        nivel, brindando soluciones integrales y personalizadas. Nuestro compromiso es ofrecer resultados
-                        excepcionales, cuidando cada detalle para garantizar precisión, calidad y durabilidad.
-                    </p>
+                    <p>{aboutUs.paragraph1}</p>
+                    <p>{aboutUs.paragraph2}</p>
                 </motion.div>
             </div>
         </section>

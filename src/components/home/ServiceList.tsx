@@ -73,6 +73,7 @@ const ServiceList = () => {
   })
 
   const dict = useTranslation()
+  const { serviceList } = dict;
   const [services, setServices] = useState<Service[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -93,11 +94,11 @@ const ServiceList = () => {
   }, [])
 
   if (isLoading) {
-    return <div className="text-center py-24">Cargando servicios...</div>
+    return <div className="text-center py-24">{serviceList.loading}</div>
   }
 
   if (error) {
-    return <div className="text-center py-24 text-red-500">{error}</div>
+    return <div className="text-center py-24 text-red-500">{serviceList.error}</div>
   }
 
   return (
@@ -110,7 +111,7 @@ const ServiceList = () => {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl font-medium text-gray-900 mb-6">{dict.serviceList.title}</h2>
+          <h2 className="text-3xl font-medium text-gray-900 mb-6">{serviceList.title}</h2>
           <div className="w-24 h-1 bg-gray-900 mx-auto" />
         </motion.div>
 

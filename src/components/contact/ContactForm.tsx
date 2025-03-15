@@ -5,6 +5,7 @@ import * as Yup from "yup"
 import { motion, AnimatePresence } from "framer-motion"
 import { Loader2, CheckCircle, AlertCircle, X } from "lucide-react"
 import { useState } from "react"
+import { useTranslation } from "@/hook/UseTranslation"
 
 // Definición del tipo de notificación
 type NotificationType = {
@@ -42,19 +43,26 @@ const Toast = ({ notification, onClose }: { notification: NotificationType; onCl
   )
 }
 
-const validationSchema = Yup.object({
-  firstName: Yup.string().required("El nombre es requerido"),
-  lastName: Yup.string().required("El apellido es requerido"),
-  email: Yup.string().email("Correo electrónico inválido").required("El correo electrónico es requerido"),
-  phone: Yup.string()
-    .matches(/^\+?[0-9]{10,}$/, "Número de teléfono inválido")
-    .required("El teléfono es requerido"),
-  message: Yup.string().min(10, "El mensaje debe tener al menos 10 caracteres").required("El mensaje es requerido"),
-})
-
 export function ContactForm() {
+  const dict = useTranslation()
+  const { contactForm } = dict
+
   // Estado para manejar las notificaciones
   const [notification, setNotification] = useState<NotificationType | null>(null)
+
+  const validationSchema = Yup.object({
+    firstName: Yup.string().required(contactForm.validationErrors.nameRequired),
+    lastName: Yup.string().required(contactForm.validationErrors.lastNameRequired),
+    email: Yup.string()
+      .email(contactForm.validationErrors.emailInvalid)
+      .required(contactForm.validationErrors.emailRequired),
+    phone: Yup.string()
+      .matches(/^\+?[0-9]{10,}$/, contactForm.validationErrors.phoneInvalid)
+      .required(contactForm.validationErrors.phoneRequired),
+    message: Yup.string()
+      .min(10, contactForm.validationErrors.messageMinLength)
+      .required(contactForm.validationErrors.messageRequired),
+  })
 
   const formik = useFormik({
     initialValues: {
@@ -80,20 +88,20 @@ export function ContactForm() {
         if (response.ok) {
           setNotification({
             type: "success",
-            message: "Solicitud enviada exitosamente. Nos pondremos en contacto pronto.",
+            message: contactForm.notifications.success,
           })
           resetForm()
         } else {
           setNotification({
             type: "error",
-            message: `Error: ${data.message || "No se pudo procesar tu solicitud."}`,
+            message: `Error: ${data.message || contactForm.notifications.processErrorDefault}`,
           })
         }
       } catch (error) {
         console.error("Error submitting form:", error)
         setNotification({
           type: "error",
-          message: "Ocurrió un error al enviar la solicitud. Inténtalo nuevamente.",
+          message: contactForm.notifications.generalError,
         })
       } finally {
         setSubmitting(false)
@@ -125,17 +133,15 @@ export function ContactForm() {
         {notification && <Toast notification={notification} onClose={closeNotification} />}
       </AnimatePresence>
 
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">Solicita tu Cotización</h2>
-      <p className="text-gray-600 mb-6">
-        Déjanos tus datos y uno de nuestros asesores se pondrá en contacto contigo lo antes posible.
-      </p>
+      <h2 className="text-2xl font-bold text-gray-900 mb-2">{contactForm.heading}</h2>
+      <p className="text-gray-600 mb-6">{contactForm.subheading}</p>
 
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
           <div>
             <input
               type="text"
-              placeholder="Nombre"
+              placeholder={contactForm.placeholders.firstName}
               {...formik.getFieldProps("firstName")}
               className={`w-full px-4 py-3 border ${
                 formik.touched.firstName && formik.errors.firstName
@@ -150,7 +156,7 @@ export function ContactForm() {
           <div>
             <input
               type="text"
-              placeholder="Apellido"
+              placeholder={contactForm.placeholders.lastName}
               {...formik.getFieldProps("lastName")}
               className={`w-full px-4 py-3 border ${
                 formik.touched.lastName && formik.errors.lastName
@@ -167,7 +173,7 @@ export function ContactForm() {
         <div>
           <input
             type="email"
-            placeholder="Correo Electrónico"
+            placeholder={contactForm.placeholders.email}
             {...formik.getFieldProps("email")}
             className={`w-full px-4 py-3 border ${
               formik.touched.email && formik.errors.email
@@ -183,7 +189,7 @@ export function ContactForm() {
         <div>
           <input
             type="tel"
-            placeholder="Teléfono de Contacto"
+            placeholder={contactForm.placeholders.phone}
             {...formik.getFieldProps("phone")}
             className={`w-full px-4 py-3 border ${
               formik.touched.phone && formik.errors.phone
@@ -198,7 +204,7 @@ export function ContactForm() {
 
         <div>
           <textarea
-            placeholder="Mensaje"
+            placeholder={contactForm.placeholders.message}
             rows={4}
             {...formik.getFieldProps("message")}
             className={`w-full px-4 py-3 border ${
@@ -220,16 +226,16 @@ export function ContactForm() {
           {formik.isSubmitting ? (
             <>
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span>Enviando...</span>
+              <span>{contactForm.sendingText}</span>
             </>
           ) : (
-            <span>Enviar Consulta</span>
+            <span>{contactForm.buttonText}</span>
           )}
         </button>
 
         <div className="flex items-center justify-center gap-4 text-sm text-gray-600 mt-6">
-          <p className="flex items-center">Atendemos proyectos a nivel nacional</p>|
-          <p className="flex items-center">Resolvemos solicitudes en 24-48 horas</p>
+          <p className="flex items-center">{contactForm.disclaimers.location}</p>|
+          <p className="flex items-center">{contactForm.disclaimers.responseTime}</p>
         </div>
       </form>
     </motion.div>

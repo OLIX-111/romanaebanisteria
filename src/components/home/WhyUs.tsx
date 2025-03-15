@@ -3,29 +3,7 @@
 import { motion, useInView } from "framer-motion"
 import Image from "next/image"
 import { useRef } from "react"
-
-const reasons = [
-  {
-    title: "Atención Personalizada",
-    description:
-      "Cada proyecto recibe un trato único, adaptado al estilo y las necesidades de cada cliente, asegurando resultados a la medida.",
-  },
-  {
-    title: "Innovación Constante",
-    description:
-      "Incorporamos maquinaria de última generación y materiales modernos (melamina, MDF, aluminio), garantizando calidad y durabilidad.",
-  },
-  {
-    title: "Soluciones Integrales",
-    description:
-      "Desde el diseño y la fabricación hasta la instalación y el mantenimiento, abarcamos todo el ciclo del proyecto para brindar una experiencia sin complicaciones.",
-  },
-  {
-    title: "Compromiso y Garantía",
-    description:
-      "Cada pieza está respaldada por nuestro riguroso control de calidad y un servicio postventa dedicado, reflejando la seriedad y profesionalismo que nos distinguen.",
-  },
-]
+import { useTranslation } from "@/hook/UseTranslation";
 
 const fadeInUp = {
   hidden: { opacity: 0, y: 20 },
@@ -47,6 +25,8 @@ const staggerContainer = {
 export default function WhyUs() {
   const ref = useRef(null)
   const isInView = useInView(ref, { margin: "-100px" })
+  const dict = useTranslation();
+  const { whyUs } = dict;
 
   return (
     <section ref={ref} className="w-full bg-black py-28">
@@ -59,7 +39,7 @@ export default function WhyUs() {
           transition={{ duration: 0.4 }}
           className="mb-16"
         >
-          <h2 className="text-3xl font-medium text-gray-50 mb-2">¿Por qué elegir ROMAna Ebanistería?</h2>
+          <h2 className="text-3xl font-medium text-gray-50 mb-2">{whyUs.heading}</h2>
           <motion.div
             className="w-16 h-px bg-gray-500"
             initial={{ width: 0 }}
@@ -75,7 +55,7 @@ export default function WhyUs() {
           animate={isInView ? "visible" : "hidden"}
           exit="exit"
         >
-          {reasons.map((reason, index) => (
+          {whyUs.reasons.map((reason, index) => (
             <motion.div key={index} variants={fadeInUp} transition={{ duration: 0.4 }}>
               <h3 className="text-xl font-medium text-gray-100 mb-3">{reason.title}</h3>
               <p className="text-gray-400 leading-relaxed">{reason.description}</p>

@@ -2,6 +2,7 @@
 
 import React, { useState } from "react"
 import dynamic from "next/dynamic"
+import { useTranslation } from "@/hook/UseTranslation"
 
 // Import dinámico sin SSR
 const GoogleMapReact = dynamic(() => import("google-map-react"), {
@@ -25,7 +26,7 @@ const LocationMarker = ({ onClick }: MarkerProps) => (
     onClick={onClick}
     className="relative -translate-x-1/2 -translate-y-1/2 cursor-pointer"
   >
-    <div className="bg-primary rounded-full p-3 shadow-lg hover:shadow-xl transition-shadow">
+    <div className="bg-primary rounded-full h-10 flex justify-center items-center w-10 shadow-lg hover:shadow-xl transition-shadow">
       <MapPin className="w-6 h-6 text-white" />
     </div>
   </motion.div>
@@ -83,6 +84,8 @@ const MarkerWrapper: React.FC<MarkerWrapperProps> = ({ lat, lng, onClick, showIn
 
 export default function ElegantLocationSection() {
   const [showInfo, setShowInfo] = useState(false)
+  const dict = useTranslation()
+  const { locationSection } = dict
 
   const mapCenter = {
     lat: 18.4363419,
@@ -120,9 +123,9 @@ export default function ElegantLocationSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">Nuestra Ubicación</h2>
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{locationSection.heading}</h2>
           <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-            Descubre nuestro showroom y fábrica en el corazón de La Romana
+            {locationSection.subheading}
           </p>
         </motion.div>
 
@@ -159,27 +162,26 @@ export default function ElegantLocationSection() {
             className="space-y-8"
           >
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">Showroom & Fábrica</h3>
+              <h3 className="text-2xl font-bold text-gray-900 mb-4">{locationSection.showroomHeading}</h3>
               <div className="space-y-2 text-gray-600">
-                <p className="font-medium text-lg">ROMAna Ebanistería</p>
-                <p>Calle 4, No. 7, Sector Reparto Torres</p>
-                <p>La Romana, República Dominicana</p>
+                <p className="font-medium text-lg">{locationSection.companyTitle}</p>
+                <p>{locationSection.addressLine1}</p>
+                <p>{locationSection.addressLine2}</p>
               </div>
             </div>
 
             <div className="rounded-lg p-6 shadow-inner">
               <p className="text-gray-700 mb-4">
-                Atendemos a clientes en toda la región este y a nivel nacional. Visítanos para conocer nuestras
-                instalaciones y soluciones en ebanistería.
+                {locationSection.visitMessage}
               </p>
               <a
                 href="https://maps.google.com/?q=Calle+4,+No.+7,+Sector+Reparto+Torres,+La+Romana,+República+Dominicana"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
+                className="inline-flex items-center gap-2 px-6 w- py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
               >
                 <Navigation className="w-5 h-5" />
-                <span>Cómo llegar</span>
+                <span>{locationSection.howToGetThere}</span>
               </a>
             </div>
           </motion.div>

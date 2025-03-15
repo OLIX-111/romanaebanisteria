@@ -7,6 +7,7 @@ import Link from "next/link"
 
 export default function GalleryHero() {
     const dict = useTranslation()
+    const { galleryHero } = dict;
 
     const fadeInUp = {
         initial: { opacity: 0, y: 20 },
@@ -26,12 +27,7 @@ export default function GalleryHero() {
             className="relative isolate overflow-hidden bg-cover bg-fixed bg-no-repeat"
             style={{ backgroundImage: "url('/projects/romana_ebanisteria_grupo_chavon42.png')", backgroundPosition: "0px" }}
         >
-            {/* imagen de fondo v2 */}
-            {/* <div className="absolute object-cover w-full h-full -z-30">
-                <img src="/hero.jpg" className="absolute object-cover w-full h-full -z-30" />
-            </div> */}
-
-            {/* Elementos de fondo */}
+            
             <div
                 className="hidden sm:absolute sm:-top-10 sm:right-1/2 sm:-z-10 sm:mr-10 sm:block sm:transform-gpu sm:blur-3xl"
                 aria-hidden="true"
@@ -69,7 +65,7 @@ export default function GalleryHero() {
             >
                 <motion.div variants={stagger} className="mx-auto w-full max-w-4xl text-center mb-8">
                     <motion.h1 variants={fadeInUp} className="mb-4 text-2xl lg:text-4xl w-full font-semibold text-gray-50">
-                        Explora Nuestros Proyectos
+                        {galleryHero.heading}
                     </motion.h1>
                 </motion.div>
             </motion.div>

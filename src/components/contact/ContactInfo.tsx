@@ -2,8 +2,12 @@
 
 import { motion } from "framer-motion"
 import { Mail, Phone, Clock } from "lucide-react"
+import { useTranslation } from "@/hook/UseTranslation"
 
 export function ContactInfo() {
+  const dict = useTranslation()
+  const { contactInfo } = dict
+  
   return (
     <motion.div
       initial={{ opacity: 0, y: 20 }}
@@ -12,9 +16,9 @@ export function ContactInfo() {
       className="space-y-8"
     >
       <div>
-        <h1 className="text-4xl font-bold text-gray-900 mb-4">Contáctanos</h1>
+        <h1 className="text-4xl font-bold text-gray-900 mb-4">{contactInfo.heading}</h1>
         <p className="text-gray-600 text-lg">
-          Si necesitas asesoría, cotizaciones o más información sobre nuestros servicios, estamos listos para ayudarte.
+          {contactInfo.subheading}
         </p>
       </div>
 
@@ -24,7 +28,7 @@ export function ContactInfo() {
             <Mail className="w-6 h-6 text-orange-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Correo Electrónico</p>
+            <p className="text-sm font-medium text-gray-600">{contactInfo.emailLabel}</p>
             <a href="mailto:romanaebanisteriar@hotmail.com" className="text-lg hover:text-primary">
               romanaebanisteriar@hotmail.com
             </a>
@@ -36,7 +40,7 @@ export function ContactInfo() {
             <Phone className="w-6 h-6 text-orange-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Teléfono | WhatsApp</p>
+            <p className="text-sm font-medium text-gray-600">{contactInfo.phoneLabel}</p>
             <a href="tel:+18292222483" className="text-lg hover:text-primary">
               +1 (829) 222-2483
             </a>
@@ -48,10 +52,10 @@ export function ContactInfo() {
             <Clock className="w-6 h-6 text-orange-600" />
           </div>
           <div>
-            <p className="text-sm font-medium text-gray-600">Horario de Atención</p>
+            <p className="text-sm font-medium text-gray-600">{contactInfo.scheduleLabel}</p>
             <div className="space-y-1">
-              <p className="text-gray-900">Lunes - Viernes: 8:00 AM - 6:00 PM</p>
-              <p className="text-gray-900">Sábados: 8:00 AM - 1:00 PM</p>
+              <p className="text-gray-900">{contactInfo.schedule1}</p>
+              <p className="text-gray-900">{contactInfo.schedule2}</p>
             </div>
           </div>
         </div>

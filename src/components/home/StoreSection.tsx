@@ -6,6 +6,7 @@ import { ArrowRight } from "lucide-react"
 import Image from "next/image"
 import Link from "next/link"
 import { useEffect, useState } from "react"
+import { useTranslation } from "@/hook/UseTranslation"
 
 interface FeaturedProduct {
   id: number
@@ -35,6 +36,8 @@ export default function FeaturedProductsElegant() {
   const [featuredProducts, setFeaturedProducts] = useState<FeaturedProduct[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const dict = useTranslation()
+  const { storeSection } = dict
 
   useEffect(() => {
     async function loadFeaturedProducts() {
@@ -57,11 +60,11 @@ export default function FeaturedProductsElegant() {
   }, [])
 
   if (isLoading) {
-    return <div className="text-center py-24">Cargando productos destacados...</div>
+    return <div className="text-center py-24">{storeSection?.loading}</div>
   }
 
   if (error) {
-    return <div className="text-center py-24 text-red-500">{error}</div>
+    return <div className="text-center py-24 text-red-500">{storeSection?.error}</div>
   }
 
   return (
@@ -74,9 +77,9 @@ export default function FeaturedProductsElegant() {
           transition={{ duration: 0.5 }}
           className="mb-16 text-center"
         >
-          <h2 className="text-3xl font-medium text-gray-900 mb-4">Tableros Destacados</h2>
+          <h2 className="text-3xl font-medium text-gray-900 mb-4">{storeSection?.featuredTitle}</h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
-            Selección de alta calidad en tableros para carpintería y ebanistería.
+            {storeSection?.featuredSubtitle}
           </p>
         </motion.div>
 
@@ -113,7 +116,7 @@ export default function FeaturedProductsElegant() {
             whileHover={{ gap: "0.75rem" }}
             className="bg-white backdrop-blur-lg text-black border-black hover:border-black hover:bg-black w-fit flex items-center gap-2 py-3 px-8 border-2 rounded-md hover:text-white duration-300"
           >
-            Ver Más <ArrowRight size={18} />
+            {storeSection?.viewMore} <ArrowRight size={18} />
           </motion.button>
         </Link>
       </div>
