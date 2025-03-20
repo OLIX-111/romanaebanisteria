@@ -1,23 +1,14 @@
 import { useTranslation } from "@/hook/UseTranslation";
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { useInView } from "react-intersection-observer";
 
 const Footer = () => {
-  const { ref, inView } = useInView({
-    threshold: 0.1,
-    triggerOnce: true,
-  });
+ 
 
   const dict = useTranslation()
   const { header, footer } = dict 
 
   return (
-    <motion.footer
-      ref={ref}
-      initial={{ opacity: 0, y: 50 }}
-      animate={inView ? { opacity: 1, y: 0 } : {}}
-      transition={{ duration: 0.5 }}
+    <footer
       className="bg-white text-gray-700 border-t border-gray-200 pt-16 pb-20 md:pt-24 md:pb-28"
       style={{ borderRadius: 0 }}
     >
@@ -35,15 +26,6 @@ const Footer = () => {
             </Link>
           </div>
 
-          {/* Navegación principal (texto un poco más grande) 
-          [
-            { href: "/", text: header?.nav?.home },
-            { href: "/store/services", text: header?.nav?.services },
-            { href: "/store", text: header?.nav?.store },
-            { href: "/gallery", text: header?.nav?.projects },
-            { href: "/contact", text: header?.nav?.contact },
-          ]
-          */}
           <div className="">
             <nav className="flex flex-wrap gap-8 text-base font-medium">
               {
@@ -54,7 +36,7 @@ const Footer = () => {
                   { href: "/gallery", text: header?.nav?.projects },
                   { href: "/contact", text: header?.nav?.contact },
                 ].map((item, index) => (
-                  <Link key={index} href={`/${item.href}`} className="hover:text-gray-900 transition-colors">
+                  <Link key={index} href={`${item.href}`} className="hover:text-gray-900 transition-colors">
                     {item.text}
                   </Link>
                 ))
@@ -102,7 +84,7 @@ const Footer = () => {
           &copy; {new Date().getFullYear()} ROMAna Ebanistería. {footer?.copy}
         </div>
       </div>
-    </motion.footer>
+    </footer>
   );
 };
 

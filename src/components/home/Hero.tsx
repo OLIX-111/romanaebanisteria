@@ -23,7 +23,7 @@ export default function Hero() {
       initial="initial"
       animate="animate"
       exit="exit"
-      className="relative isolate flex flex-col justify-between overflow-hidden bg-cover bg-fixed bg-no-repeat min-h-[88vh]"
+      className="relative isolate flex flex-col justify-between overflow-hidden bg-cover bg-fixed bg-no-repeat h-[89vh] max-h-[53rem]"
     >
       {/* Video de fondo */}
       <video
