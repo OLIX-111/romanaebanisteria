@@ -85,7 +85,7 @@ export function SuspendedBanner() {
 
             <button
               onClick={() => window.open("https://app.lemonsqueezy.com/my-orders", "_blank")}
-              className="px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white rounded-md transition-colors w-full sm:w-auto order-1 sm:order-2 font-medium flex items-center justify-center gap-2"
+              className="px-4 py-2 bg-gray-600 hover:bg-amber-700 text-white rounded-md transition-colors w-full sm:w-auto order-1 sm:order-2 font-medium flex items-center justify-center gap-2"
             >
               Actualizar información de pago
               <svg

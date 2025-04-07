@@ -30,7 +30,7 @@ export default function Home() {
       <main
         className={`${openSans.className}`}
       >
-        <SuspendedBanner/>
+        {/* <SuspendedBanner/> */}
         <Header enableScroll/>
         <Hero/>
         <StoreSection/>
