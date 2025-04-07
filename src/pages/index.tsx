@@ -12,6 +12,7 @@ import StoreSection from '@/components/home/StoreSection';
 import Cta from '@/components/home/Cta';
 import Footer from '@/components/layout/Footer';
 import Head from 'next/head';
+import { SuspendedBanner } from '@/components/Suspended';
 
 export default function Home() {
 
@@ -29,6 +30,7 @@ export default function Home() {
       <main
         className={`${openSans.className}`}
       >
+        <SuspendedBanner/>
         <Header enableScroll/>
         <Hero/>
         <StoreSection/>

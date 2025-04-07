@@ -1,6 +1,22 @@
 // pages/api/ecommerce/cart.ts
 import type { NextApiRequest, NextApiResponse } from "next"
-import { getCart, emptyCart } from "@/lib/falitechApi"
+import { emptyCart } from "@/lib/falitechApi"
+
+export async function getCart(user_ns: string) {
+  const url = `${process.env.FALITECH_API_URL}/subscriber/cart?user_ns=f80195u246646323`
+  const res = await fetch(url, {
+    headers: {
+      Authorization: `Bearer ${process.env.FALITECH_API_KEY}`
+    }
+  })
+
+  if (!res.ok) {
+    const errorBody = await res.json().catch(() => ({}))
+    throw new Error(`getCart failed: ${res.status} - ${JSON.stringify(errorBody)}`)
+  }
+
+  return res.json()
+}
 
 export default async function cartHandler(req: NextApiRequest, res: NextApiResponse) {
   try {
