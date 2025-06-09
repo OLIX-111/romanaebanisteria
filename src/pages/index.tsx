@@ -22,7 +22,7 @@ export default function Home() {
     <>
       <Head>
         <title>
-        Ebanistería y Carpintería en Aluminio de Alta Calidad | ROMAna Ebanistería
+          Ebanistería y Carpintería en Aluminio de Alta Calidad | ROMAna Ebanistería
         </title>
         <meta name="description" content={"ROMAna Ebanistería, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana."} />
         <link rel="icon" href="/home/ebanisteria.png" />
@@ -31,7 +31,27 @@ export default function Home() {
         className={`${openSans.className}`}
       >
         {/* <SuspendedBanner/> */}
-        <Header enableScroll/>
+        <div className="min-h-screen bg-black flex flex-col items-center justify-center text-center px-6">
+          <div className="flex flex-col items-center gap-4">
+            {/* Ícono o logo opcional */}
+            <img src="https://www.hosting.geekguysstudio.com/gg-studio-logo.svg" className='pb-4' alt="" />
+
+            <h1 className="text-2xl md:text-3xl font-semibold text-white">
+              Sitio Temporalmente Suspendido
+            </h1>
+            <p className="text-gray-400 max-w-xl">
+              Este sitio no está disponible actualmente. El servicio de hosting ha sido pausado debido a una falta de renovación en la suscripción.
+            </p>
+
+            <a
+              href="https://www.hosting.geekguysstudio.com/login"
+              className="mt-6 inline-block bg-white text-black font-medium px-5 py-3 rounded hover:bg-gray-200 transition"
+            >
+              Ir al Panel de Cliente →
+            </a>
+          </div>
+        </div>
+        {/* <Header enableScroll/>
         <Hero/>
         <StoreSection/>
         <AboutUs/>
@@ -39,7 +59,7 @@ export default function Home() {
         <WhyUs/>
         <ProjectGrid/>
         <Cta/>
-        <Footer/>
+        <Footer/> */}
       </main>
     </>
   )
