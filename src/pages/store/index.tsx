@@ -41,9 +41,13 @@ export default function StorePage() {
   useEffect(() => {
     const fetchProducts = async () => {
       try {
-        setIsLoading(true)
-        const response = await fetch(`https://chat.falitech.com/api/shop/products?limit=${productsPerPage}&page=${currentPage}`, {
-          method: 'GET',
+        setIsLoading(true) /* https://chat.falitech.com/ */
+        //const response = await fetch(`https://chat.falitech.com/api/shop/products?limit=${productsPerPage}&page=${currentPage}`, {
+        const response = await fetch(`https://chat.falitech.com/account`, {
+          method: 'POST',
+          body: JSON.stringify({
+            id: "53095",
+          }),
           headers: {
             'accept': 'application/json',
             'Authorization': 'Bearer AhB18akNiusd3VVey7KbOTqDWwZ9SmJd23FrDT4tLgmjYSJRkSI4MWtT0Vv9'
