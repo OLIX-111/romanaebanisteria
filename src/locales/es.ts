@@ -13,7 +13,7 @@ const es = {
       services: "Servicios",
       store: "Tienda",
     },
-    cta: "Contactanos",
+    cta: "Contáctanos",
   },
   serviceList: {
     title: "Nuestros Servicios",

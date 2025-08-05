@@ -8,7 +8,6 @@ import { Open_Sans } from "next/font/google"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { ChevronLeft, ChevronRight } from "lucide-react"
-import { getProducts } from "@/utils/api"
 import { useTranslation } from "@/hook/UseTranslation"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
@@ -43,9 +42,21 @@ export default function StorePage() {
     const fetchProducts = async () => {
       try {
         setIsLoading(true)
-        const response = await getProducts(productsPerPage, currentPage)
-        setProducts(response.data)
-        setTotalPages(Math.ceil(response.total / productsPerPage))
+        const response = await fetch(`https://chat.falitech.com/api/shop/products?limit=${productsPerPage}&page=${currentPage}`, {
+          method: 'GET',
+          headers: {
+            'accept': 'application/json',
+            'Authorization': 'Bearer AhB18akNiusd3VVey7KbOTqDWwZ9SmJd23FrDT4tLgmjYSJRkSI4MWtT0Vv9'
+          }
+        })
+        
+        if (!response.ok) {
+          throw new Error(`HTTP error! status: ${response.status}`)
+        }
+        
+        const data = await response.json()
+        setProducts(data.data)
+        setTotalPages(Math.ceil(data.total / productsPerPage))
       } catch (err) {
         setError("Error al cargar los productos. Por favor, intente de nuevo más tarde.")
       } finally {
