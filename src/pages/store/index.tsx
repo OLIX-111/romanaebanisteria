@@ -50,7 +50,7 @@ export default function StorePage() {
           }),
           headers: {
             'accept': 'application/json',
-            'Authorization': 'Bearer AhB18akNiusd3VVey7KbOTqDWwZ9SmJd23FrDT4tLgmjYSJRkSI4MWtT0Vv9'
+            'Authorization': 'Bearer Q1u7loz9mbNj8aNNBo4VY9LtxOhkPunBWy1VhyUU6OGY77UjEsPyXA72ZgsC'
           }
         })
         

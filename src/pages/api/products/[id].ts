@@ -1,7 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 
 const API_BASE_URL = "https://chat.falitech.com/api/shop"
-const API_TOKEN = "AhB18akNiusd3VVey7KbOTqDWwZ9SmJd23FrDT4tLgmjYSJRkSI4MWtT0Vv9"
+const API_TOKEN = "Q1u7loz9mbNj8aNNBo4VY9LtxOhkPunBWy1VhyUU6OGY77UjEsPyXA72ZgsC"
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   if (req.method === "GET") {
