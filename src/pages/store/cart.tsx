@@ -137,88 +137,60 @@ export default function CartPage() {
   return (
     <main className={openSans.className}>
       <Header />
-      <div className="max-w-6xl mx-auto px-4 py-8 mt-24">
-        <h1 className="text-3xl font-bold mb-8 uppercase">CARRITO DE COMPRA</h1>
+      <div className="container mx-auto px-4 py-12 mt-24">
+        <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Carrito</h1>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
           {/* Lista de productos */}
-          <div className="lg:col-span-2 space-y-6">
+          <div className="lg:col-span-2 space-y-0 divide-y divide-gray-200 border border-gray-200">
             {cart && cart.items.length > 0 ? (
               cart.items.map((item) => (
-                <div key={item.id} className="border-b pb-6">
-                  <div className="flex flex-col sm:flex-row gap-4">
-                    {/* Imagen del producto */}
-                    <div className="w-32 h-32 border flex-shrink-0">
-                      <Image
-                        src={item.image || "/placeholder.svg"}
-                        alt={item.name}
-                        width={128}
-                        height={128}
-                        className="w-full h-full object-contain"
-                      />
+                <div key={item.id} className="p-4">
+                  <div className="flex flex-col sm:flex-row gap-6">
+                    <div className="w-28 h-28 border border-gray-200 flex-shrink-0">
+                      <Image src={item.image || "/placeholder.svg"} alt={item.name} width={112} height={112} className="w-full h-full object-cover" />
                     </div>
-                    {/* Detalles del producto */}
-                    <div className="flex-grow">
-                      <div className="flex justify-between items-start">
-                        <h3 className="font-medium text-lg mb-2">{item.name}</h3>
-                        <button
-                          onClick={() => removeItem(item.product_id)}
-                          className="text-gray-500 hover:text-gray-700"
-                        >
-                          <X size={20} />
-                        </button>
+                    <div className="flex-1">
+                      <div className="flex items-start justify-between gap-4">
+                        <h3 className="text-sm font-medium text-gray-900 leading-6">{item.name}</h3>
+                        <button onClick={() => removeItem(item.product_id)} className="text-gray-500 hover:text-gray-800"><X size={18} /></button>
                       </div>
-                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 mt-4">
-                        <div className="flex justify-between items-center">
-                          <div className="text-right">
-                            <span className="font-medium">${(item.price * item.num).toFixed(2)}</span>
-                          </div>
-                        </div>
+                      <div className="mt-3 flex items-center justify-between text-sm">
+                        <div className="text-gray-700">Cantidad: {item.num}</div>
+                        <div className="font-semibold text-gray-900">{new Intl.NumberFormat("es-DO", { style: "currency", currency: item.currency || "DOP" }).format(item.price * item.num)}</div>
                       </div>
                     </div>
                   </div>
                 </div>
               ))
             ) : (
-              <div>No hay productos en el carrito.</div>
+              <div className="p-6 text-sm text-gray-600">No hay productos en el carrito.</div>
             )}
           </div>
 
           {/* Resumen del pedido */}
           <div className="lg:col-span-1">
-            <div className="border p-6">
-              <h2 className="text-lg font-medium mb-4">RESUMEN DEL PEDIDO</h2>
-              <div className="space-y-2 mb-4">
-                <div className="flex justify-between">
-                  <span>SUBTOTAL</span>
-                  <span>${orderSummary.subtotal.toFixed(2)}</span>
+            <div className="border border-gray-200 p-6">
+              <h2 className="text-sm font-semibold tracking-wide text-gray-800">Resumen</h2>
+              <div className="mt-4 space-y-2 text-sm">
+                <div className="flex justify-between text-gray-700">
+                  <span>Subtotal</span>
+                  <span>{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(orderSummary.subtotal)}</span>
                 </div>
-                <div className="flex justify-between">
-                  <span>IMPUESTOS</span>
-                  <span>${orderSummary.tax.toFixed(2)}</span>
+                <div className="flex justify-between text-gray-700">
+                  <span>Impuestos</span>
+                  <span>{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(orderSummary.tax)}</span>
                 </div>
-                <div className="flex justify-between font-medium">
-                  <span>TOTAL</span>
-                  <span>${orderSummary.total.toFixed(2)}</span>
+                <div className="flex justify-between border-t border-gray-200 pt-3 font-semibold text-gray-900">
+                  <span>Total</span>
+                  <span>{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(orderSummary.total)}</span>
                 </div>
               </div>
-              <button
-                onClick={checkout}
-                disabled={isCartEmpty}
-                className={`w-full py-3 uppercase font-medium transition-colors ${
-                  isCartEmpty ? "bg-gray-300 text-gray-500 cursor-not-allowed" : "bg-black text-white hover:bg-gray-800"
-                }`}
-              >
-                FINALIZAR COMPRA
+              <button onClick={checkout} disabled={isCartEmpty} className={`mt-6 w-full ${isCartEmpty ? "bg-gray-400" : "bg-primary hover:bg-primary/90"} px-6 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-primary/40`}>
+                Proceder al pago
               </button>
-              <button
-                onClick={clearCart}
-                disabled={isCartEmpty}
-                className={`mt-4 w-full border py-3 uppercase font-medium transition-colors ${
-                  isCartEmpty ? "bg-gray-100 text-gray-400 cursor-not-allowed" : "hover:bg-gray-50"
-                }`}
-              >
-                Vaciar Carrito
+              <button onClick={clearCart} disabled={isCartEmpty} className={`mt-3 w-full border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 ${isCartEmpty ? "opacity-50 cursor-not-allowed" : ""}`}>
+                Vaciar carrito
               </button>
             </div>
           </div>

@@ -147,9 +147,9 @@ export default function StorePage() {
         <div className="mx-auto container lg:px-2">
           <div className="flex flex-col gap-4 pb-4 md:flex-row md:items-center md:justify-between">
             <div className="flex items-center gap-4">
-              <h1 className="text-2xl font-bold tracking-tight text-gray-900">{storePage.title}</h1>
+              <h1 className="text-2xl font-semibold tracking-tight text-gray-900">{storePage.title}</h1>
               <button
-                className="flex items-center gap-2 rounded-md border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-100 md:hidden"
+                className="flex items-center gap-2 border border-gray-300 px-3 py-2 text-sm text-gray-700 hover:bg-gray-50 md:hidden"
                 onClick={() => setShowMobileFilters(true)}
               >
                 <SlidersHorizontal size={16} /> Filtros
@@ -161,12 +161,12 @@ export default function StorePage() {
                 placeholder="Buscar..."
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-48 lg:w-64 rounded-md border-gray-300 py-2 px-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="w-48 lg:w-64 border border-gray-300 py-2 px-3 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
               />
               <select
                 value={sortBy}
                 onChange={(e) => setSortBy(e.target.value)}
-                className="rounded-md border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+                className="border border-gray-300 py-2 pl-3 pr-10 text-sm focus:border-gray-900 focus:outline-none focus:ring-1 focus:ring-gray-900"
               >
                 <option value="featured">{storePage.featured}</option>
                 <option value="price-asc">{storePage.priceAsc}</option>
@@ -202,7 +202,7 @@ export default function StorePage() {
             )}
           </div>
 
-          <div className="mt-6 grid grid-cols-1 gap-x-10 gap-y-10 lg:grid-cols-4">
+          <div className="mt-6 grid grid-cols-1 gap-x-12 gap-y-12 lg:grid-cols-4">
             <div className="hidden lg:block lg:col-span-1">
               <div className="sticky top-28 max-h-[calc(100vh-10rem)] overflow-auto pr-2 thin-scrollbar">
                 <FilterSidebar
@@ -225,11 +225,11 @@ export default function StorePage() {
                 >
                   {isLoading && paginatedProducts.length === 0 && (
                     Array.from({ length: 9 }).map((_, i) => (
-                      <div key={i} className="animate-pulse rounded-lg border border-gray-200 p-4 shadow-sm">
-                        <div className="mb-4 aspect-square w-full overflow-hidden rounded-md bg-gray-200" />
-                        <div className="h-4 w-3/4 rounded bg-gray-200 mb-2" />
-                        <div className="h-4 w-1/2 rounded bg-gray-200 mb-4" />
-                        <div className="h-6 w-24 rounded bg-gray-300" />
+                      <div key={i} className="animate-pulse border border-gray-200 p-4">
+                        <div className="mb-4 aspect-square w-full overflow-hidden bg-gray-100" />
+                        <div className="h-4 w-3/4 bg-gray-200 mb-2" />
+                        <div className="h-4 w-1/2 bg-gray-200 mb-4" />
+                        <div className="h-6 w-24 bg-gray-300" />
                       </div>
                     ))
                   )}

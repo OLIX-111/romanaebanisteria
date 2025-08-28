@@ -137,6 +137,26 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
     setCalcResult(payment)
   }
 
+  async function handleAddToCart() {
+    try {
+      const user_ns = typeof window !== "undefined" ? localStorage.getItem("falitech_user_ns") : null
+      if (!user_ns) {
+        const returnTo = typeof window !== "undefined" ? window.location.pathname : "/store"
+        window.location.href = `/login?returnTo=${encodeURIComponent(returnTo)}`
+        return
+      }
+      await fetch("/api/ecommerce/cart-item", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ user_ns, variant_id: activeVariant?.id, qty: 1 })
+      })
+      // Optionally navigate to cart
+      // window.location.href = "/store/cart"
+    } catch (e) {
+      console.error(e)
+    }
+  }
+
   return (
     <main className={openSans.className}>
       <Head>
@@ -265,6 +285,7 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
             <div className="mt-6 flex flex-wrap gap-3">
               <button
                 disabled={availability.tone === "out"}
+                onClick={handleAddToCart}
                 className={`px-6 py-3 text-sm font-semibold text-white transition focus:outline-none focus:ring-2 focus:ring-primary/40 ${availability.tone === "out" ? "bg-gray-400 cursor-not-allowed" : "bg-primary hover:bg-primary/90"}`}
                 aria-disabled={availability.tone === "out"}
               >
@@ -423,25 +444,6 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
                 </motion.div>
               )}
             </AnimatePresence>
-          </div>
-        </div>
-
-        {/* Inclusions & Notes */}
-        <div className="mt-16 grid grid-cols-1 gap-8 lg:grid-cols-3">
-          <div className="lg:col-span-2">
-            <h3 className="text-base font-semibold tracking-wide text-gray-800">Incluye</h3>
-            <ul className="mt-3 grid list-disc gap-2 pl-5 text-sm text-gray-700 sm:grid-cols-2">
-              {(activeVariant?.sku_desc || "Sillón, Mesa auxiliar, Garantía, Manual de usuario").split(/[,•\n]/).slice(0, 6).map((it, idx) => (
-                <li key={idx}>{it.trim()}</li>
-              ))}
-            </ul>
-          </div>
-          <div>
-            <h3 className="text-base font-semibold tracking-wide text-gray-800">Notas</h3>
-            <ul className="mt-3 list-disc space-y-2 pl-5 text-sm text-gray-700">
-              <li>Las imágenes son ilustrativas; colores y texturas pueden variar.</li>
-              <li>Tiempo de entrega sujeto a disponibilidad.</li>
-            </ul>
           </div>
         </div>
       </div>
