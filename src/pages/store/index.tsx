@@ -20,6 +20,10 @@ interface Product {
   description: string
   type: string
   vendor: string
+  status?: string
+  track_stock?: boolean
+  total_qty?: number
+  use_variant?: boolean
 }
 // Ahora usamos proxy interno /api/falitech/products (Option A)
 
@@ -84,6 +88,10 @@ export default function StorePage() {
           description: item.description,
           type: item.type,
           vendor: item.vendor,
+          status: item.status,
+          track_stock: item.track_stock,
+          total_qty: item.total_qty,
+          use_variant: item.use_variant,
         }))
         setProducts(list)
         // meta puede venir en formato original (meta.last_page) o simplificado
@@ -112,10 +120,18 @@ export default function StorePage() {
     setCurrentPage(1)
   }
 
-  const filteredProducts = products.filter((product) =>
-    (activeFilters.type.length === 0 || activeFilters.type.includes(product.type)) &&
-    (activeFilters.vendor.length === 0 || activeFilters.vendor.includes(product.vendor))
-  )
+  const filteredProducts = products
+    // Hide out of stock or unavailable
+    .filter((p: any) => {
+      const status = (p.status || '').toString().toLowerCase()
+      const isUnavailable = status.includes('unavailable') || status.includes('out') || status.includes('agot')
+      const hasStock = p.track_stock ? (Number(p.total_qty) > 0) : true
+      return !isUnavailable && hasStock
+    })
+    .filter((product) =>
+      (activeFilters.type.length === 0 || activeFilters.type.includes(product.type)) &&
+      (activeFilters.vendor.length === 0 || activeFilters.vendor.includes(product.vendor))
+    )
 
   const sortedProducts = [...filteredProducts].sort((a, b) => {
     switch (sortBy) {
@@ -196,7 +212,7 @@ export default function StorePage() {
                 onClick={() => setSearch("")}
                 className="flex items-center gap-1 rounded-full bg-indigo-100 px-3 py-1 text-indigo-700 hover:bg-indigo-200"
               >
-                <span>"{debouncedSearch}"</span>
+                <span>&quot;{debouncedSearch}&quot;</span>
                 <span aria-hidden>×</span>
               </button>
             )}

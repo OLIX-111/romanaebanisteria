@@ -68,12 +68,33 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
     months: 12,
   })
   const [calcResult, setCalcResult] = useState<number | null>(null)
+  const [currentImageUrl, setCurrentImageUrl] = useState<string>("")
+  const [toastOpen, setToastOpen] = useState(false)
+  const [toastText, setToastText] = useState("Producto agregado al carrito")
 
   useEffect(() => {
     if (typeof window !== "undefined") {
       setShareUrl(window.location.href)
     }
   }, [])
+
+  useEffect(() => {
+    if (product) {
+      const img = (product.variants?.find(v => v.id === selectedVariantId)?.image) || product.image || ""
+      setCurrentImageUrl(img)
+    }
+  }, [product, selectedVariantId])
+
+  const availability: { label: string; tone: "in" | "out" | "pre" } = useMemo(() => {
+    const pr = product
+    if (!pr) return { label: "", tone: "out" }
+    if (pr.track_stock) {
+      if (pr.total_qty > 0) return { label: "Disponible", tone: "in" }
+      return { label: "Agotado", tone: "out" }
+    }
+    if ((pr.status || "").toLowerCase().includes("pre")) return { label: "Pre-orden", tone: "pre" }
+    return { label: "Disponible", tone: "in" }
+  }, [product])
 
   if (error) {
     return (
@@ -101,22 +122,17 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
     )
   }
 
-  const activeVariant = product.variants.find(v => v.id === selectedVariantId) || product.variants[0]
+  const p = product as ProductDetailData
+
+  const activeVariant = p.variants.find(v => v.id === selectedVariantId) || p.variants[0]
   const currency = activeVariant?.currency || "DOP"
-  const priceNumber = activeVariant?.price ?? product.price
+  const priceNumber = activeVariant?.price ?? p.price
   const priceFormatted = new Intl.NumberFormat("es-DO", { style: "currency", currency }).format(priceNumber)
   const compareFormatted = activeVariant?.compare_price > priceNumber
     ? new Intl.NumberFormat("es-DO", { style: "currency", currency }).format(activeVariant.compare_price)
     : null
 
-  const availability: { label: string; tone: "in" | "out" | "pre" } = useMemo(() => {
-    if (product.track_stock) {
-      if (product.total_qty > 0) return { label: "Disponible", tone: "in" }
-      return { label: "Agotado", tone: "out" }
-    }
-    if ((product.status || "").toLowerCase().includes("pre")) return { label: "Pre-orden", tone: "pre" }
-    return { label: "Disponible", tone: "in" }
-  }, [product])
+  
 
   const colorLabel = activeVariant?.option_1?.toLowerCase().includes("color") ? activeVariant.option_1_value : undefined
   const materialLabel = activeVariant?.option_2?.toLowerCase().includes("material") ? activeVariant.option_2_value : undefined
@@ -145,13 +161,84 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
         window.location.href = `/login?returnTo=${encodeURIComponent(returnTo)}`
         return
       }
-      await fetch("/api/ecommerce/cart-item", {
+      const res = await fetch("/api/ecommerce/cart-item", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({ user_ns, variant_id: activeVariant?.id, qty: 1 })
       })
+      if (res.ok) {
+        // Mirror in localStorage cart
+        try {
+          const localRaw = localStorage.getItem("cart_items")
+          const items: any[] = localRaw ? JSON.parse(localRaw) : []
+          const variantId = activeVariant?.id || p.variants?.[0]?.id || p.id
+          const index = items.findIndex(it => (it.variant_id || it.id) === variantId)
+          const item = {
+            id: variantId,
+            variant_id: variantId,
+            product_id: p.id,
+            name: p.name,
+            desc: "",
+            image: activeVariant?.image || p.image,
+            price: priceNumber,
+            compare_price: 0,
+            currency,
+            num: 1,
+            subtotal: priceNumber
+          }
+          if (index >= 0) {
+            const updated = { ...items[index] }
+            updated.num = (updated.num || 0) + 1
+            updated.subtotal = (updated.price || priceNumber) * updated.num
+            items[index] = updated
+          } else {
+            items.push(item)
+          }
+          localStorage.setItem("cart_items", JSON.stringify(items))
+          // notify listeners (header badge)
+          try { window.dispatchEvent(new Event("cart-updated")) } catch {}
+        } catch (e) {
+          console.warn("No se pudo actualizar el carrito local:", e)
+        }
+        setToastText("Agregado al carrito")
+        setToastOpen(true)
+        setTimeout(() => setToastOpen(false), 3000)
+      } else {
+        setToastText("No se pudo agregar")
+        setToastOpen(true)
+        setTimeout(() => setToastOpen(false), 3000)
+      }
       // Optionally navigate to cart
       // window.location.href = "/store/cart"
+    } catch (e) {
+      console.error(e)
+      setToastText("Error al agregar")
+      setToastOpen(true)
+      setTimeout(() => setToastOpen(false), 3000)
+    }
+  }
+
+  async function handleShareProduct() {
+    try {
+      const url = shareUrl || (typeof window !== "undefined" ? window.location.href : "")
+      const sharePayload: any = {
+        title: p.name,
+        text: p.description?.slice(0, 120) || p.name,
+        url,
+      }
+      const navAny = typeof navigator !== "undefined" ? (navigator as any) : null
+      if (navAny && typeof navAny.share === "function") {
+        await navAny.share(sharePayload)
+        return
+      }
+      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) {
+        await navigator.clipboard.writeText(url)
+        alert("Enlace copiado")
+      } else {
+        // Fallback: open Facebook share
+        const fb = `https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(url)}`
+        window.open(fb, "_blank")
+      }
     } catch (e) {
       console.error(e)
     }
@@ -160,82 +247,89 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
   return (
     <main className={openSans.className}>
       <Head>
-        <title>{product.name} | Romana Ebanistería</title>
-        <meta name="description" content={product.description?.slice(0, 150)} />
-        <meta property="og:title" content={product.name} />
-        <meta property="og:image" content={product.image} />
+        <title>{p.name} | Romana Ebanistería</title>
+        <meta name="description" content={p.description?.slice(0, 150) || "Producto"} />
+        <meta property="og:title" content={p.name} />
+        <meta property="og:image" content={p.image || ""} />
       </Head>
       <Header />
       <div className="container mx-auto mt-24 px-4 py-12 lg:px-8">
         <nav className="mb-6 text-xs text-gray-500">
           <Link href="/store" className="hover:text-gray-800">{storePage.title}</Link>
           <span className="mx-1">/</span>
-          <span className="text-gray-700 line-clamp-1 align-top">{product.name}</span>
+          <span className="text-gray-700 line-clamp-1 align-top">{p.name}</span>
         </nav>
-        <div className="grid gap-12 lg:grid-cols-2">
+        <div className="grid gap-y-12 gap-x-12 lg:grid-cols-12">
           {/* Gallery */}
-          <div>
-            <div className="relative w-full overflow-hidden border border-gray-200 bg-white">
+          <div className="lg:col-span-7 xl:col-span-8">
+            <div className="relative w-full overflow-hidden bg-white">
               <AnimatePresence mode="wait">
                 <motion.figure
-                  key={activeVariant?.image || product.image}
+                  key={currentImageUrl || p.image}
                   initial={{ opacity: 0, scale: 0.98 }}
                   animate={{ opacity: 1, scale: 1 }}
                   exit={{ opacity: 0, scale: 0.98 }}
                   transition={{ duration: 0.2 }}
                   className="relative"
                 >
-                  <Image
-                    src={activeVariant?.image || product.image || "/placeholder.svg"}
-                    alt={product.name}
+              <Image
+                src={currentImageUrl || p.image || "/placeholder.svg"}
+                alt={p.name}
                     width={1000}
                     height={1000}
-                    className="h-auto w-full object-cover"
-                    priority
-                  />
+                className="h-auto w-full object-cover"
+                priority
+              />
                 </motion.figure>
               </AnimatePresence>
               {/* Social share button overlay */}
               <div className="absolute right-3 top-3 flex gap-2">
-                <a
-                  href={`https://www.facebook.com/sharer/sharer.php?u=${encodeURIComponent(shareUrl)}`}
-                  target="_blank" rel="noopener noreferrer"
-                  aria-label="Compartir en Facebook"
+                <button
+                  type="button"
+                  onClick={handleShareProduct}
+                  aria-label="Compartir producto"
                   className="bg-white/90 p-2 text-gray-700 hover:bg-white focus:outline-none focus:ring-2 focus:ring-primary/40"
                 >
                   <Share2 size={16} />
-                </a>
+                </button>
               </div>
             </div>
-            {product.variants.length > 1 && (
-              <div className="mt-4 grid grid-cols-4 gap-4 sm:grid-cols-6">
-                {product.variants.map(v => (
-                  <button
-                    key={v.id}
-                    onClick={() => setSelectedVariantId(v.id)}
-                    className={`group relative aspect-square overflow-hidden border text-[10px] transition ${selectedVariantId === v.id ? "border-gray-900" : "border-gray-200 hover:border-gray-300"}`}
-                    aria-label={v.name}
-                    role="button"
-                  >
-                    <Image src={v.image || "/placeholder.svg"} alt={v.name} fill className="object-cover" />
-                  </button>
-                ))}
-              </div>
-            )}
+            {(() => {
+              const images = Array.from(new Set([
+                currentImageUrl,
+                p.image,
+                ...(p.variants || []).map(v => v.image)
+              ].filter(Boolean))) as string[]
+              return images.length > 1 ? (
+                <div className="mt-4 grid grid-cols-5 gap-3">
+                  {images.slice(0, 10).map((src, idx) => (
+                    <button
+                      key={src + idx}
+                      onClick={() => setCurrentImageUrl(src)}
+                      aria-label={`Vista ${idx + 1}`}
+                      className={`relative aspect-square border ${currentImageUrl === src ? "border-gray-900" : "border-gray-200 hover:border-gray-300"}`}
+                    >
+                      <Image src={src || "/placeholder.svg"} alt={`${p.name} ${idx + 1}`} fill className="object-cover" />
+                    </button>
+                  ))}
+                </div>
+              ) : null
+            })()}
           </div>
 
           {/* Buy Box */}
-          <div className="lg:sticky lg:top-28 lg:self-start">
-            <h1 className="text-2xl font-bold tracking-tight text-gray-900 lg:text-3xl">{product.name}</h1>
+          <div className="lg:col-span-5 xl:col-span-4 lg:sticky lg:top-28 lg:self-start">
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900 lg:text-4xl">{p.name}</h1>
             <div className="mt-2 flex flex-wrap items-center gap-2 text-xs text-gray-600">
-              {product.type && <span className="rounded bg-gray-100 px-2 py-1 font-medium text-gray-700">{product.type}</span>}
-              {product.vendor && <span className="rounded bg-gray-100 px-2 py-1 font-medium text-gray-700">{product.vendor}</span>}
-              {(activeVariant?.sku || product.sku) && (
-                <span className="rounded bg-gray-50 px-2 py-1 font-medium">SKU: {activeVariant?.sku || product.sku}</span>
+              {p.type && <span>{p.type}</span>}
+              {p.vendor && p.type && <span className="text-gray-400">·</span>}
+              {p.vendor && <span>{p.vendor}</span>}
+              {(activeVariant?.sku || p.sku) && (p.type || p.vendor) && <span className="text-gray-400">·</span>}
+              {(activeVariant?.sku || p.sku) && (
+                <span>SKU {activeVariant?.sku || p.sku}</span>
               )}
-              <span
-                className={`rounded px-2 py-1 font-medium ${availability.tone === "in" ? "bg-emerald-100 text-emerald-700" : availability.tone === "pre" ? "bg-amber-100 text-amber-700" : "bg-red-100 text-red-700"}`}
-              >
+              <span className="inline-flex items-center gap-1 text-xs font-medium text-gray-800">
+                <span className={`h-1.5 w-1.5 rounded-full ${availability.tone === "in" ? "bg-emerald-600" : availability.tone === "pre" ? "bg-amber-600" : "bg-red-600"}`} aria-hidden />
                 {availability.label}
               </span>
             </div>
@@ -251,22 +345,22 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
             {(colorLabel || materialLabel) && (
               <div className="mt-4 flex flex-wrap gap-3 text-sm">
                 {colorLabel && (
-                  <span className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1 text-gray-700">
-                    <span className="h-4 w-4 rounded-full border" style={{ backgroundColor: colorLabel }} aria-hidden />
+                  <span className="inline-flex items-center gap-2 border border-gray-200 px-3 py-1 text-gray-700">
+                    <span className="h-4 w-4 border" style={{ backgroundColor: colorLabel }} aria-hidden />
                     Color: {colorLabel}
                   </span>
                 )}
                 {materialLabel && (
-                  <span className="inline-flex items-center gap-2 rounded-md border border-gray-200 px-3 py-1 text-gray-700">Material: {materialLabel}</span>
+                  <span className="inline-flex items-center gap-2 border border-gray-200 px-3 py-1 text-gray-700">Material: {materialLabel}</span>
                 )}
-              </div>
+            </div>
             )}
 
-            {product.variants.length > 1 && (
-              <div className="mt-6">
+            {p.variants.length > 1 && (
+              <div className="mt-6 border-t border-gray-200 pt-6">
                 <h2 className="mb-2 text-sm font-semibold tracking-wide text-gray-800">Variantes</h2>
                 <ul className="space-y-2 text-sm">
-                  {product.variants.map(v => (
+                  {p.variants.map(v => (
                     <li key={v.id} className={`flex items-center justify-between border px-3 py-2 ${selectedVariantId === v.id ? "border-gray-900 bg-gray-50" : "border-gray-200"}`}>
                       <span className="line-clamp-1 pr-4">{v.name}</span>
                       <button
@@ -297,30 +391,30 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
               <Link href="/store" className="border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50">Seguir comprando</Link>
             </div>
 
-            {/* Quick Benefits - slim row with dividers */}
-            <div className="mt-8 grid grid-cols-2 items-start gap-y-3 gap-x-6 border border-gray-200 p-4 text-sm lg:grid-cols-4">
-              <div className="flex items-center gap-2">
+            {/* Quick Benefits - divider row */}
+            <div className="mt-14 grid grid-cols-2 items-center gap-y-12 gap-x-2 text-md lg:grid-cols-2 divide-gray-200">
+              <div className="flex items-center gap-2 lg:px-0">
                 <Truck className="text-primary" size={20} />
                 <span className="text-gray-800">Envío gratis</span>
               </div>
-              <div className="flex items-center gap-2 lg:border-l lg:border-gray-200 lg:pl-6">
+              <div className="flex items-center gap-2 lg:px-0">
                 <Wrench className="text-primary" size={20} />
                 <span className="text-gray-800">Instalación incluida</span>
               </div>
-              <div className="flex items-center gap-2 lg:border-l lg:border-gray-200 lg:pl-6">
+              <div className="flex items-center gap-2 lg:px-0">
                 <CreditCard className="text-primary" size={20} />
                 <span className="text-gray-800">Financiamiento</span>
               </div>
-              <div className="flex items-center gap-2 lg:border-l lg:border-gray-200 lg:pl-6">
+              <div className="flex items-center gap-2 lg:px-0">
                 <Shield className="text-primary" size={20} />
                 <span className="text-gray-800">Garantía total</span>
               </div>
             </div>
 
             {/* Finance Calculator - minimalist */}
-            <div className="mt-8 border border-gray-200 p-4">
-              <h2 className="text-sm font-semibold tracking-wide text-gray-800">Calculadora de financiamiento</h2>
-              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-2">
+            <div className="mt-10 border border-gray-200 p-4 flex flex-col gap-4">
+              <h2 className="text-lg font-semibold tracking-wide text-gray-800">Calculadora de financiamiento</h2>
+              <div className="mt-4 grid grid-cols-1 gap-4 sm:grid-cols-1">
                 <label className="text-xs text-gray-600">
                   Total (DOP)
                   <input
@@ -358,10 +452,25 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
                   />
                 </label>
               </div>
-              <div className="mt-4 flex items-center justify-between">
-                <button onClick={calculateMonthlyPayment} className="bg-primary px-4 py-2.5 text-sm font-semibold text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/40">Calcular</button>
+              <div className="mt-4 flex flex-col gap-3 sm:items-center sm:justify-between">
+                <button onClick={calculateMonthlyPayment} className="bg-gray-100 border border-gray-300 px-4 w-full py-2.5 text-sm font-semibold text-black hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/40">Calcular</button>
                 {calcResult !== null && (
-                  <p className="text-sm text-gray-900">Cuota mensual: <span className="font-semibold tabular-nums">{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(calcResult)}</span></p>
+                  <div className="flex flex-col justify-between w-full items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
+                    <p className="text-sm text-gray-900">Cuota mensual: <span className="font-semibold tabular-nums">{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(calcResult)}</span></p>
+                    <Link
+                      href={{
+                        pathname: "/financing",
+                        query: {
+                          amount: String(calcInputs.total || priceNumber),
+                          down: String(Math.round((calcInputs.total || priceNumber) * ((calcInputs.downPaymentPct || 0) / 100))),
+                          currency: currency
+                        }
+                      }}
+                      className="border border-gray-300 bg-primary px-4 py-2.5 text-sm font-semibold text-gray-50 hover:bg-primary/90"
+                    >
+                      Aplicar a financiamiento
+                    </Link>
+                  </div>
                 )}
               </div>
             </div>
@@ -370,7 +479,7 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
 
         {/* Tabs Section */}
         <div className="mt-16">
-          <div role="tablist" aria-label="Detalles del producto" className="flex flex-wrap gap-6 border-b border-gray-200">
+          <div role="tablist" aria-label="Detalles del producto" className="relative flex flex-wrap gap-6 border-b border-gray-200">
             {[
               { key: "description", label: "Descripción" },
               { key: "info", label: "Información adicional" },
@@ -381,10 +490,13 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
                 role="tab"
                 aria-selected={activeTab === t.key}
                 aria-controls={`tab-panel-${t.key}`}
-                onClick={() => setActiveTab(t.key as any)}
-                className={`-mb-px px-0 pb-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 ${activeTab === t.key ? "border-b-2 border-gray-900 text-gray-900" : "text-gray-600 hover:text-gray-800"}`}
+                onClick={(e) => setActiveTab(t.key as any)}
+                className={`relative -mb-px px-0 pb-3 text-sm font-medium focus:outline-none focus-visible:ring-2 focus-visible:ring-gray-900 ${activeTab === t.key ? "text-gray-900" : "text-gray-600 hover:text-gray-800"}`}
               >
                 {t.label}
+                {activeTab === t.key && (
+                  <motion.span layoutId="tab-underline" className="absolute -bottom-[1px] left-0 right-0 h-[2px] bg-gray-900" />
+                )}
               </button>
             ))}
           </div>
@@ -401,7 +513,7 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
                   transition={{ duration: 0.18 }}
                   className="prose prose-sm mt-6 max-w-none text-gray-700"
                 >
-                  <p>{product.description}</p>
+                  <p>{p.description}</p>
                 </motion.div>
               )}
               {activeTab === "info" && (
@@ -415,10 +527,10 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
                   transition={{ duration: 0.18 }}
                   className="mt-6 grid grid-cols-1 gap-4 text-sm text-gray-700 sm:grid-cols-2"
                 >
-                  <div className="border border-gray-200 p-4"><span className="text-gray-500">Categoría</span><div className="mt-1 font-medium">{product.type || "-"}</div></div>
-                  <div className="border border-gray-200 p-4"><span className="text-gray-500">Proveedor</span><div className="mt-1 font-medium">{product.vendor || "-"}</div></div>
-                  <div className="border border-gray-200 p-4"><span className="text-gray-500">SKU</span><div className="mt-1 font-medium">{activeVariant?.sku || product.sku || "-"}</div></div>
-                  <div className="border border-gray-200 p-4"><span className="text-gray-500">Stock</span><div className="mt-1 font-medium">{product.track_stock ? product.total_qty : "—"}</div></div>
+                  <div className="border border-gray-200 p-4"><span className="text-gray-500">Categoría</span><div className="mt-1 font-medium">{p.type || "-"}</div></div>
+                  <div className="border border-gray-200 p-4"><span className="text-gray-500">Proveedor</span><div className="mt-1 font-medium">{p.vendor || "-"}</div></div>
+                  <div className="border border-gray-200 p-4"><span className="text-gray-500">SKU</span><div className="mt-1 font-medium">{activeVariant?.sku || p.sku || "-"}</div></div>
+                  <div className="border border-gray-200 p-4"><span className="text-gray-500">Stock</span><div className="mt-1 font-medium">{p.track_stock ? p.total_qty : "—"}</div></div>
                 </motion.div>
               )}
               {activeTab === "reviews" && (
@@ -457,6 +569,7 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
           </div>
           <button
             disabled={availability.tone === "out"}
+            onClick={handleAddToCart}
             className={`flex-1 px-5 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-primary/40 ${availability.tone === "out" ? "bg-gray-400" : "bg-primary hover:bg-primary/90"}`}
             aria-disabled={availability.tone === "out"}
           >
@@ -464,6 +577,13 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
           </button>
         </div>
       </div>
+
+      {/* Toast */}
+      {toastOpen && (
+        <div className="fixed bottom-20 right-4 z-50 bg-gray-900 text-white px-4 py-3 text-sm">
+          {toastText}
+        </div>
+      )}
 
       <Footer />
     </main>

@@ -34,7 +34,7 @@ const SingleService = ({ service, index }: { service: Service; index: number }) 
       initial={{ opacity: 0, y: 50 }}
       animate={inView ? { opacity: 1, y: 0 } : {}}
       transition={{ duration: 0.5, delay: index * 0.1 }}
-      className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-2 relative overflow-hidden group rounded-lg shadow-sm hover:shadow-md transition-shadow duration-300"
+      className="col-span-1 md:col-span-2 lg:col-span-3 xl:col-span-2 relative overflow-hidden group shadow-sm hover:shadow-md transition-shadow duration-300"
     >
       <Link href={`/store/services/${service.slug.current}`} className="block h-full">
         <div className="relative h-[30rem]">

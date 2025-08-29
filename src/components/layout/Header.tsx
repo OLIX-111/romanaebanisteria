@@ -23,6 +23,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
   const router = useRouter()
   const { locale }: any = router
   const [scrollPosition, setScrollPosition] = useState(0)
+  const [cartCount, setCartCount] = useState(0)
 
   const [marcas, setMarcas] = useState([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
@@ -31,6 +32,31 @@ export default function Header({ enableScroll = false }: HeaderProps) {
     const handleScroll = () => setScrollPosition(window.scrollY)
     window.addEventListener("scroll", handleScroll)
     return () => window.removeEventListener("scroll", handleScroll)
+  }, [])
+
+  // Cart count from localStorage
+  useEffect(() => {
+    const readCount = () => {
+      try {
+        const raw = localStorage.getItem("cart_items")
+        const items: any[] = raw ? JSON.parse(raw) : []
+        const count = items.reduce((sum, it) => sum + (Number(it?.num) || 0), 0)
+        setCartCount(count)
+      } catch {
+        setCartCount(0)
+      }
+    }
+    readCount()
+    const onStorage = (e: StorageEvent) => {
+      if (e.key === "cart_items") readCount()
+    }
+    const onCustom = () => readCount()
+    window.addEventListener("storage", onStorage)
+    window.addEventListener("cart-updated", onCustom as any)
+    return () => {
+      window.removeEventListener("storage", onStorage)
+      window.removeEventListener("cart-updated", onCustom as any)
+    }
   }, [])
 
 
@@ -109,8 +135,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link href="/store/cart">
+              <Link href="/store/cart" className="relative inline-block" aria-label={`Carrito, ${cartCount} artículos`}>
                 <ShoppingCart className={`h-8 w-8 ${isScrolled ? "text-gray-800" : "text-gray-50"}`} />
+                {cartCount > 0 && (
+                  <span className="absolute -right-2 -top-1 bg-gray-900 text-white text-[10px] leading-none px-1.5 py-0.5 font-semibold" aria-hidden>
+                    {cartCount}
+                  </span>
+                )}
               </Link>
             </motion.button>
           </div>
@@ -184,12 +215,12 @@ export default function Header({ enableScroll = false }: HeaderProps) {
           </motion.div>
           <div className="flex items-center space-x-4">
             <Menu as="div" className="relative">
-              <Menu.Button className={`flex items-center gap-1 ${isScrolled ? "text-gray-800" : "text-gray-50"}`}>
+              {/* <Menu.Button className={`flex items-center gap-1 ${isScrolled ? "text-gray-800" : "text-gray-50"}`}>
                 <Globe className="w-5 h-5" />
                 <span className="uppercase">{locale}</span>
                 <ChevronDownIcon className="w-4 h-4" />
-              </Menu.Button>
-              <Transition
+              </Menu.Button> */}
+              {/* <Transition
                 as={Fragment}
                 enter="transition ease-out duration-200"
                 enterFrom="opacity-0 scale-95"
@@ -226,15 +257,20 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                     )}
                   </Menu.Item>
                 </Menu.Items>
-              </Transition>
+              </Transition> */}
             </Menu>
             <motion.button
               className={`rounded-full transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link href="/store/cart">
+              <Link href="/store/cart" className="relative inline-block" aria-label={`Carrito, ${cartCount} artículos`}>
                 <ShoppingCart className="h-6 w-6 mr-[1px]" />
+                {cartCount > 0 && (
+                  <span className="absolute -right-2 -top-2 bg-gray-900 text-white text-[10px] leading-none px-1.5 py-0.5 font-semibold" aria-hidden>
+                    {cartCount}
+                  </span>
+                )}
               </Link>
             </motion.button>
           </div>
@@ -299,7 +335,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                 </Link>
               </div>
               <div className="mt-8 space-y-4">
-                <Menu as="div" className="relative">
+                {/* <Menu as="div" className="relative">
                   <Menu.Button className="flex w-full items-center justify-between bg-gray-100 px-4 py-5 text-lg font-medium text-gray-800">
                     {locale.toUpperCase()}
                     <ChevronDown className="h-6 w-6 text-gray-500" />
@@ -348,7 +384,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                       </Menu.Item>
                     </Menu.Items>
                   </Transition>
-                </Menu>
+                </Menu> */}
                 <motion.button
                   className="w-full bg-primary text-white px-4 py-5 transition-transform flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}

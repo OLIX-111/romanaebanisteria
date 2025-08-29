@@ -34,75 +34,55 @@ interface Cart {
 export default function CartPage() {
   const [cart, setCart] = useState<Cart | null>(null)
   const [loading, setLoading] = useState(true)
-  // const [error, setError] = useState("") // Removed error state
 
-  // Función para obtener el carrito desde la API interna
-  const fetchCart = useCallback(async () => {
-    const user_ns = localStorage.getItem("falitech_user_ns")
-    if (!user_ns) {
-      setCart(null)
-      setLoading(false)
-      return
-    }
+  // Cargar carrito desde localStorage
+  const loadLocalCart = useCallback(() => {
     try {
-      const res = await fetch(`/api/ecommerce/cart?user_ns=${encodeURIComponent(user_ns)}`)
-      if (!res.ok) {
-        setCart(null)
-      } else {
-        const data = await res.json()
-        setCart(data)
+      const raw = localStorage.getItem("cart_items")
+      const items: any[] = raw ? JSON.parse(raw) : []
+      const mapped: Cart = {
+        id: 0,
+        created_at: "",
+        updated_at: "",
+        items: items as any,
+        num_of_items: items.reduce((s, it) => s + (it.num || 0), 0),
+        total_price: items.reduce((s, it) => s + (it.subtotal || 0), 0)
       }
-    } catch (err: any) {
-      setCart(null)
+      setCart(mapped)
+      try { window.dispatchEvent(new Event("cart-updated")) } catch {}
+    } catch {
+      setCart({ id: 0, created_at: "", updated_at: "", items: [], num_of_items: 0, total_price: 0 })
     } finally {
       setLoading(false)
     }
   }, [])
 
   useEffect(() => {
-    fetchCart()
-  }, [fetchCart])
+    loadLocalCart()
+  }, [loadLocalCart])
 
   // Función para remover un ítem (se utiliza product_id como variant_id)
-  const removeItem = async (variant_id: number) => {
-    const user_ns = localStorage.getItem("falitech_user_ns")
-    if (!user_ns) return
+  const removeItem = (variant_id: number) => {
     try {
-      const res = await fetch("/api/ecommerce/cart-item", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_ns, variant_id }),
-      })
-      if (!res.ok) {
-        console.error("Error al remover el ítem")
-      }
-      await res.json()
-      // Actualizamos el carrito después de remover
-      fetchCart()
-    } catch (err: any) {
-      console.error("Error al remover el ítem:", err.message || "Error desconocido")
-      fetchCart() // Actualizamos el carrito de todas formas para mantener la sincronización
+      const raw = localStorage.getItem("cart_items")
+      const items: any[] = raw ? JSON.parse(raw) : []
+      const filtered = items.filter(it => (it.variant_id || it.id) !== variant_id)
+      localStorage.setItem("cart_items", JSON.stringify(filtered))
+      loadLocalCart()
+      try { window.dispatchEvent(new Event("cart-updated")) } catch {}
+    } catch (e) {
+      console.error("Error al remover localmente:", e)
     }
   }
 
   // Función para vaciar el carrito
-  const clearCart = async () => {
-    const user_ns = localStorage.getItem("falitech_user_ns")
-    if (!user_ns) return
+  const clearCart = () => {
     try {
-      const res = await fetch("/api/ecommerce/cart", {
-        method: "DELETE",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ user_ns }),
-      })
-      if (!res.ok) {
-        console.error("Error al vaciar el carrito")
-      }
-      await res.json()
-      fetchCart()
-    } catch (err: any) {
-      console.error("Error al vaciar el carrito:", err.message || "Error desconocido")
-      fetchCart() // Actualizamos el carrito de todas formas para mantener la sincronización
+      localStorage.removeItem("cart_items")
+      loadLocalCart()
+      try { window.dispatchEvent(new Event("cart-updated")) } catch {}
+    } catch (e) {
+      console.error("Error al limpiar carrito local:", e)
     }
   }
 
@@ -110,8 +90,8 @@ export default function CartPage() {
   const orderSummary = cart
     ? {
         subtotal: cart.items.reduce((sum, item) => sum + item.price * item.num, 0),
-        tax: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 0.025, // 2.5% de impuestos
-        total: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 1.025,
+        tax: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 0.0,
+        total: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 1.0,
       }
     : { subtotal: 0, tax: 0, total: 0 }
 

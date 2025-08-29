@@ -13,7 +13,7 @@ interface FilterSidebarProps {
   compact?: boolean
 }
 
-export function FilterSidebar({ types, vendors, counts = {}, onFilterChange, activeFilters, compact }: FilterSidebarProps) {
+export function FilterSidebar({ types = [], vendors = [], counts = {}, onFilterChange, activeFilters, compact }: FilterSidebarProps) {
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     type: true,
     vendor: false,
@@ -68,8 +68,14 @@ export function FilterSidebar({ types, vendors, counts = {}, onFilterChange, act
     </div>
   )
 
-  const filteredTypes = useMemo(() => types.filter(t => t.toLowerCase().includes(filterSearch.toLowerCase())), [types, filterSearch])
-  const filteredVendors = useMemo(() => vendors.filter(v => v.toLowerCase().includes(filterSearch.toLowerCase())), [vendors, filterSearch])
+  const filteredTypes = useMemo(
+    () => (types || []).filter((t) => (t ?? '').toString().toLowerCase().includes(filterSearch.toLowerCase())),
+    [types, filterSearch]
+  )
+  const filteredVendors = useMemo(
+    () => (vendors || []).filter((v) => (v ?? '').toString().toLowerCase().includes(filterSearch.toLowerCase())),
+    [vendors, filterSearch]
+  )
 
   return (
     <div className={`space-y-4 ${compact ? 'w-full' : 'w-64'} text-gray-800`}>
