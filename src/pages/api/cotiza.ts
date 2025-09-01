@@ -2,6 +2,12 @@ import nodemailer from "nodemailer";
 import { NextApiRequest, NextApiResponse } from "next";
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
+
+  const SMTP_HOST = "smtp.sendgrid.net"
+const SMTP_PORT = 465 // SSL
+const SMTP_SECURE = true
+const SMTP_USER = "apikey"
+const SMTP_PASS = "***SENDGRID_KEY_REMOVED***"
   try {
     if (req.method !== "POST") {
       return res.status(405).send({ message: "Solo se permiten solicitudes POST." });
@@ -15,18 +21,18 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     const transporter = nodemailer.createTransport({
       /* host: 'smtp.mailgun.org', */
-      host: "smtp.dreamhost.com",
-      port: 587,
-      secure: false,
+      host: SMTP_HOST,
+      port: SMTP_PORT,
+      secure: SMTP_SECURE,
       auth: {
-        user: "info@romanaebanisteria.com",
-        pass: "TJ4XBTyNx,*3kWQ",
+        user: SMTP_USER,
+        pass: SMTP_PASS,
       },
     });
 
     // **Correo para la empresa**
     await transporter.sendMail({
-      from: '"Solicitud de Cotización" <info@romanaebanisteria.com>',
+      from: '"Solicitud de Cotización" <info@grupochavon.com>',
       to: ["info@romanaebanisteria.com", "jheremy802@gmail.com"],
       subject: `Nueva solicitud de cotización de ${fullName}`,
       html: `
@@ -66,7 +72,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // **Correo de confirmación al cliente**
     await transporter.sendMail({
-      from: '"ROMAna Ebanistería" <info@romanaebanisteria.com>',
+      from: '"ROMAna Ebanistería" <info@grupochavon.com>',
       to: [email, "jheremy802@gmail.com"],
       subject: "Confirmación de Solicitud de Cotización",
       html: `
@@ -94,10 +100,10 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   <p><strong>Teléfono:</strong> ${phone}</p>
                   ${company ? `<p><strong>Empresa / Proyecto:</strong> ${company}</p>` : ""}
                   <p><strong>Descripción:</strong> ${projectDescription}</p>
-                  <p>Si necesitas más información, puedes escribirnos a <a href="mailto:info@romanaebanisteria.com">info@romanaebanisteria.com</a>.</p>
+                    <p>Si necesitas más información, puedes escribirnos a <a href="mailto:info@grupochavon.com">info@grupochavon.com</a>.</p>
               </div>
               <div class="footer">
-                  ROMAna Ebanistería | La Romana, República Dominicana
+                  ROMAna Ebanistería | La Romana, República Dominicana | info@grupochavon.com
               </div>
           </div>
       </body>

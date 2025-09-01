@@ -1,6 +1,6 @@
 "use client"
 
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { Open_Sans } from "next/font/google"
 import { Formik, Form, Field } from "formik"
 import * as Yup from "yup"
@@ -44,6 +44,24 @@ export default function ServicePage({ service }: ServicePageProps) {
   const [submitStatus, setSubmitStatus] = useState<"idle" | "loading" | "success" | "error">("idle")
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [activeImage, setActiveImage] = useState<string>(service?.imageUrl || "")
+  const [currentStep, setCurrentStep] = useState<number>(1)
+
+  const todayStr = useMemo(() => {
+    const d = new Date()
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }, [])
+
+  const minServiceDate = useMemo(() => {
+    const d = new Date()
+    d.setDate(d.getDate() + 1) // no mismo día
+    const yyyy = d.getFullYear()
+    const mm = String(d.getMonth() + 1).padStart(2, '0')
+    const dd = String(d.getDate()).padStart(2, '0')
+    return `${yyyy}-${mm}-${dd}`
+  }, [])
 
   if (!service) {
     return (
@@ -83,6 +101,7 @@ export default function ServicePage({ service }: ServicePageProps) {
 
       setSubmitStatus("success")
       resetForm()
+      setCurrentStep(4)
     } catch (error: any) {
       setSubmitStatus("error")
       setErrorMessage(error.message)
@@ -223,6 +242,11 @@ export default function ServicePage({ service }: ServicePageProps) {
 
                     <Formik
                       initialValues={{
+                        desiredDate: "",
+                        address: "",
+                        suburb: "",
+                        state: "",
+                        postcode: "",
                         fullName: "",
                         email: "",
                         phone: "",
@@ -232,125 +256,183 @@ export default function ServicePage({ service }: ServicePageProps) {
                       validationSchema={QuoteSchema(dict)}
                       onSubmit={handleSubmit}
                     >
-                      {({ errors, touched, isSubmitting }) => (
-                        <Form className="space-y-5">
-                          <div>
-                            <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
-                              {quoteRequest.form.fields.fullName} <span className="text-red-500">*</span>
-                            </label>
-                            <Field
-                              id="fullName"
-                              name="fullName"
-                              type="text"
-                              className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900"
-                            />
-                            {errors.fullName && touched.fullName && (
-                              <div className="text-red-500 text-sm mt-1">{errors.fullName}</div>
+                      {({ errors, touched, isSubmitting, values, setFieldTouched, validateForm, submitForm }) => {
+                        const goNext = async () => {
+                          // step-specific validation
+                          if (currentStep === 1) {
+                            const vErrors: any = {}
+                            if (!values.desiredDate) vErrors.desiredDate = "Selecciona una fecha"
+                            if (values.desiredDate && values.desiredDate <= todayStr) vErrors.desiredDate = "No puedes elegir el mismo día"
+                            Object.keys(vErrors).forEach((k) => setFieldTouched(k as any, true, false))
+                            if (Object.keys(vErrors).length) return
+                          }
+                          if (currentStep === 2) {
+                            const req: Array<keyof typeof values> = ["address", "suburb", "state", "postcode"]
+                            const vErrors: any = {}
+                            req.forEach((k) => { if (!String(values[k] || "").trim()) vErrors[k] = "Requerido" })
+                            Object.keys(vErrors).forEach((k) => setFieldTouched(k as any, true, false))
+                            if (Object.keys(vErrors).length) return
+                          }
+                          if (currentStep === 3) {
+                            const yErrors = await validateForm()
+                            if (yErrors && Object.keys(yErrors).length) return
+                          }
+                          setCurrentStep((s) => Math.min(4, s + 1))
+                        }
+
+                        const goBack = () => setCurrentStep((s) => Math.max(1, s - 1))
+
+                        return (
+                          <Form className="space-y-6">
+                            {/* Stepper */}
+                            <div className="flex items-center justify-between text-xs text-gray-600">
+                              {[1,2,3,4].map((s) => (
+                                <div key={s} className={`flex-1 flex items-center gap-2 ${s !== 1 ? 'pl-2' : ''}`}>
+                                  {s !== 1 && <span className={`h-px flex-1 ${currentStep >= s ? 'bg-gray-900' : 'bg-gray-200'}`}></span>}
+                                  <span className={`h-6 w-6 flex items-center justify-center rounded-full ${currentStep >= s ? 'bg-gray-900 text-white' : 'bg-gray-200 text-gray-700'}`}>{s}</span>
+                                </div>
+                              ))}
+                            </div>
+
+                            {currentStep === 1 && (
+                              <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-800">Fecha deseada para el servicio</h3>
+                                <div>
+                                  <label htmlFor="desiredDate" className="block text-sm font-medium text-gray-700 mb-1">Fecha *</label>
+                                  <Field id="desiredDate" name="desiredDate" type="date" min={minServiceDate} className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                  {touched.desiredDate && (!values.desiredDate || (values.desiredDate && values.desiredDate <= todayStr)) && (
+                                    <div className="text-red-500 text-sm mt-1">No puedes elegir el mismo día</div>
+                                  )}
+                                </div>
+                              </div>
                             )}
-                          </div>
 
-                          <div>
-                            <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
-                              {quoteRequest.form.fields.email} <span className="text-red-500">*</span>
-                            </label>
-                            <Field
-                              id="email"
-                              name="email"
-                              type="email"
-                              className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900"
-                            />
-                            {errors.email && touched.email && (
-                              <div className="text-red-500 text-sm mt-1">{errors.email}</div>
+                            {currentStep === 2 && (
+                              <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-800">Ubicación del servicio / envío</h3>
+                                <div>
+                                  <label htmlFor="address" className="block text-sm font-medium text-gray-700 mb-1">Dirección *</label>
+                                  <Field id="address" name="address" type="text" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                  {touched.address && !values.address && <div className="text-red-500 text-sm mt-1">Requerido</div>}
+                                </div>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                                  <div>
+                                    <label htmlFor="suburb" className="block text-sm font-medium text-gray-700 mb-1">Sector / Ciudad *</label>
+                                    <Field id="suburb" name="suburb" type="text" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                    {touched.suburb && !values.suburb && <div className="text-red-500 text-sm mt-1">Requerido</div>}
+                                  </div>
+                                  <div>
+                                    <label htmlFor="state" className="block text-sm font-medium text-gray-700 mb-1">Provincia/Estado *</label>
+                                    <Field id="state" name="state" type="text" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                    {touched.state && !values.state && <div className="text-red-500 text-sm mt-1">Requerido</div>}
+                                  </div>
+                                </div>
+                                <div>
+                                  <label htmlFor="postcode" className="block text-sm font-medium text-gray-700 mb-1">Código Postal *</label>
+                                  <Field id="postcode" name="postcode" type="text" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                  {touched.postcode && !values.postcode && <div className="text-red-500 text-sm mt-1">Requerido</div>}
+                                </div>
+                              </div>
                             )}
-                          </div>
 
-                          <div>
-                            <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
-                              {quoteRequest.form.fields.phone} <span className="text-red-500">*</span>
-                            </label>
-                            <Field
-                              id="phone"
-                              name="phone"
-                              type="tel"
-                              className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900"
-                            />
-                            {errors.phone && touched.phone && (
-                              <div className="text-red-500 text-sm mt-1">{errors.phone}</div>
+                            {currentStep === 3 && (
+                              <div className="space-y-5">
+                                <h3 className="text-sm font-semibold text-gray-800">Tus datos</h3>
+                                <div>
+                                  <label htmlFor="fullName" className="block text-sm font-medium text-gray-700 mb-1">
+                                    {quoteRequest.form.fields.fullName} <span className="text-red-500">*</span>
+                                  </label>
+                                  <Field id="fullName" name="fullName" type="text" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                  {errors.fullName && touched.fullName && (<div className="text-red-500 text-sm mt-1">{errors.fullName}</div>)}
+                                </div>
+                                <div>
+                                  <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                                    {quoteRequest.form.fields.email} <span className="text-red-500">*</span>
+                                  </label>
+                                  <Field id="email" name="email" type="email" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                  {errors.email && touched.email && (<div className="text-red-500 text-sm mt-1">{errors.email}</div>)}
+                                </div>
+                                <div>
+                                  <label htmlFor="phone" className="block text-sm font-medium text-gray-700 mb-1">
+                                    {quoteRequest.form.fields.phone} <span className="text-red-500">*</span>
+                                  </label>
+                                  <Field id="phone" name="phone" type="tel" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                  {errors.phone && touched.phone && (<div className="text-red-500 text-sm mt-1">{errors.phone}</div>)}
+                                </div>
+                                <div>
+                                  <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
+                                    {quoteRequest.form.fields.company}
+                                  </label>
+                                  <Field id="company" name="company" type="text" className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900" />
+                                </div>
+                                <div>
+                                  <label htmlFor="projectDescription" className="block text-sm font-medium text-gray-700 mb-1">
+                                    {quoteRequest.form.fields.projectDescription} <span className="text-red-500">*</span>
+                                  </label>
+                                  <Field id="projectDescription" name="projectDescription" as="textarea" rows={4} className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900 resize-none" placeholder={quoteRequest.form.fields.projectDescriptionPlaceholder} />
+                                  {errors.projectDescription && touched.projectDescription && (<div className="text-red-500 text-sm mt-1">{errors.projectDescription}</div>)}
+                                </div>
+                              </div>
                             )}
-                          </div>
 
-                          <div>
-                            <label htmlFor="company" className="block text-sm font-medium text-gray-700 mb-1">
-                              {quoteRequest.form.fields.company}
-                            </label>
-                            <Field
-                              id="company"
-                              name="company"
-                              type="text"
-                              className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900"
-                            />
-                          </div>
-
-                          <div>
-                            <label
-                              htmlFor="projectDescription"
-                              className="block text-sm font-medium text-gray-700 mb-1"
-                            >
-                              {quoteRequest.form.fields.projectDescription} <span className="text-red-500">*</span>
-                            </label>
-                            <Field
-                              id="projectDescription"
-                              name="projectDescription"
-                              as="textarea"
-                              rows={4}
-                              className="w-full px-3 py-3 border border-gray-300 focus:outline-none focus:border-primary bg-white text-gray-900 resize-none"
-                              placeholder={quoteRequest.form.fields.projectDescriptionPlaceholder}
-                            />
-                            {errors.projectDescription && touched.projectDescription && (
-                              <div className="text-red-500 text-sm mt-1">{errors.projectDescription}</div>
+                            {currentStep === 4 && (
+                              <div className="space-y-4">
+                                <h3 className="text-sm font-semibold text-gray-800">Resumen</h3>
+                                <div className="border border-gray-200 p-4 text-sm text-gray-700 space-y-2">
+                                  <div className="flex justify-between"><span>Servicio</span><span className="font-medium">{service.name}</span></div>
+                                  <div className="flex justify-between"><span>Fecha</span><span className="font-medium">{values.desiredDate || '-'}</span></div>
+                                  <div className="flex justify-between"><span>Dirección</span><span className="font-medium">{values.address}, {values.suburb}, {values.state}, {values.postcode}</span></div>
+                                  <div className="flex justify-between"><span>Nombre</span><span className="font-medium">{values.fullName}</span></div>
+                                  <div className="flex justify-between"><span>Correo</span><span className="font-medium">{values.email}</span></div>
+                                  <div className="flex justify-between"><span>Teléfono</span><span className="font-medium">{values.phone}</span></div>
+                                  {values.company && <div className="flex justify-between"><span>Empresa/Proyecto</span><span className="font-medium">{values.company}</span></div>}
+                                  <div>
+                                    <span className="block text-gray-600 mb-1">Descripción</span>
+                                    <p className="font-medium whitespace-pre-wrap">{values.projectDescription}</p>
+                                  </div>
+                                </div>
+                                {submitStatus === "success" && (
+                                  <div className="p-4 bg-green-50 border-l-4 border-green-500 flex items-start">
+                                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <h3 className="text-green-800 font-medium">{quoteRequest.form.success.title}</h3>
+                                      <p className="text-green-700 text-sm mt-1">{quoteRequest.form.success.message}</p>
+                                    </div>
+                                  </div>
+                                )}
+                                {submitStatus === "error" && (
+                                  <div className="p-4 bg-red-50 border-l-4 border-red-500 flex items-start">
+                                    <AlertTriangle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
+                                    <div>
+                                      <h3 className="text-red-800 font-medium">{quoteRequest.form.error.title}</h3>
+                                      <p className="text-red-700 text-sm mt-1">{errorMessage || quoteRequest.form.error.message}</p>
+                                    </div>
+                                  </div>
+                                )}
+                              </div>
                             )}
-                          </div>
 
-                          <button
-                            type="submit"
-                            disabled={isSubmitting || submitStatus === "loading"}
-                            className={`w-full bg-primary text-white font-medium py-4 px-4 hover:bg-primary/90 transition duration-200 text-lg ${
-                              (isSubmitting || submitStatus === "loading") && "opacity-70 cursor-not-allowed"
-                            }`}
-                          >
-                            {isSubmitting || submitStatus === "loading" ? quoteRequest.form.sending : quoteRequest.form.submit}
-                          </button>
+                            {/* Footer buttons */}
+                            <div className="flex items-center justify-between pt-2">
+                              <button type="button" onClick={goBack} disabled={currentStep === 1} className={`px-4 py-2 border text-sm ${currentStep === 1 ? 'opacity-50 cursor-not-allowed' : 'hover:bg-gray-50'} border-gray-300 text-gray-700`}>
+                                Atrás
+                              </button>
+                              {currentStep < 4 ? (
+                                <button type="button" onClick={goNext} className="px-5 py-2 bg-gray-900 text-white text-sm hover:bg-black">
+                                  Siguiente
+                                </button>
+                              ) : (
+                                <button type="button" onClick={() => submitForm()} disabled={isSubmitting || submitStatus === 'loading'} className={`px-5 py-2 bg-primary text-white text-sm ${ (isSubmitting || submitStatus === 'loading') ? 'opacity-70 cursor-not-allowed' : 'hover:bg-primary/90' }`}>
+                                  {isSubmitting || submitStatus === 'loading' ? quoteRequest.form.sending : quoteRequest.form.submit}
+                                </button>
+                              )}
+                            </div>
 
-                          <p className="text-xs text-center text-gray-500 mt-2">
-                            {quoteRequest.form.privacyPolicy}
-                          </p>
-                        </Form>
-                      )}
+                            <p className="text-xs text-center text-gray-500">{quoteRequest.form.privacyPolicy}</p>
+                          </Form>
+                        )
+                      }}
                     </Formik>
-
-                    {submitStatus === "success" && (
-                      <div className="mt-6 p-4 bg-green-50 border-l-4 border-green-500 flex items-start">
-                        <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="text-green-800 font-medium">{quoteRequest.form.success.title}</h3>
-                          <p className="text-green-700 text-sm mt-1">
-                            {quoteRequest.form.success.message}
-                          </p>
-                        </div>
-                      </div>
-                    )}
-
-                    {submitStatus === "error" && (
-                      <div className="mt-6 p-4 bg-red-50 border-l-4 border-red-500 flex items-start">
-                        <AlertTriangle className="h-5 w-5 text-red-500 mr-2 flex-shrink-0 mt-0.5" />
-                        <div>
-                          <h3 className="text-red-800 font-medium">{quoteRequest.form.error.title}</h3>
-                          <p className="text-red-700 text-sm mt-1">
-                            {errorMessage || quoteRequest.form.error.message}
-                          </p>
-                        </div>
-                      </div>
-                    )}
 
                     {/* Trust Indicators */}
                     <div className="mt-8 pt-6 border-t border-gray-200">
