@@ -1,6 +1,7 @@
 "use client"
 
 import type React from "react"
+import InputMask from "react-input-mask"
 
 import { useState, useEffect } from "react"
 import { useRouter } from "next/router"
@@ -12,6 +13,19 @@ import { Open_Sans } from "next/font/google"
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 type Currency = "DOP" | "USD" | "EUR"
+
+const bankOptions = [
+  "Banco Popular Dominicano",
+  "Banco BHD León",
+  "Banco de Reservas",
+  "Scotiabank",
+  "Banco Santa Cruz",
+  "Banco Promerica",
+  "Banco Vimenca",
+  "Banco Ademi",
+  "Banco Caribe",
+  "Banco López de Haro",
+]
 
 interface FormData {
   saleAmount: string
@@ -26,6 +40,10 @@ interface FormData {
   monthlyIncome: string
   incomeCurrency: Currency | ""
   country: string
+  bankOption1: string
+  bankOption2: string
+  acceptTerms: boolean
+  certifyInfo: boolean
 }
 
 interface FormErrors {
@@ -49,6 +67,10 @@ export default function FinancingPage() {
     monthlyIncome: "",
     incomeCurrency: (currency as Currency) || "",
     country: "",
+    bankOption1: "",
+    bankOption2: "",
+    acceptTerms: false,
+    certifyInfo: false,
   })
 
   const [errors, setErrors] = useState<FormErrors>({})
@@ -91,21 +113,14 @@ export default function FinancingPage() {
   }
 
   const handlePhoneInput = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const digits = e.target.value.replace(/\D/g, "")
-    let formatted = "+1 "
-    if (digits.length > 0) formatted += digits.substring(0, 3)
-    if (digits.length > 3) formatted += "-" + digits.substring(3, 6)
-    if (digits.length > 6) formatted += "-" + digits.substring(6, 10)
-
-    setForm((prev) => ({ ...prev, phone: formatted }))
-    if (errors.phone) {
-      setErrors((prev) => ({ ...prev, phone: "" }))
-    }
+    setForm((prev) => ({ ...prev, phone: e.target.value }))
+    if (errors.phone) setErrors((prev) => ({ ...prev, phone: "" }))
   }
 
   const handleInputChange = (key: keyof FormData) => {
     return (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-      setForm((prev) => ({ ...prev, [key]: e.target.value }))
+      const value = e.target.type === "checkbox" ? (e.target as HTMLInputElement).checked : e.target.value
+      setForm((prev) => ({ ...prev, [key]: value as never }))
       if (errors[key]) {
         setErrors((prev) => ({ ...prev, [key]: "" }))
       }
@@ -133,8 +148,8 @@ export default function FinancingPage() {
     if (!form.fullName.trim()) {
       newErrors.fullName = "El nombre completo es requerido"
     }
-    if (!/^\d{2}\/\d{2}\/\d{4}$/.test(form.birthDate)) {
-      newErrors.birthDate = "Formato requerido: dd/mm/yyyy"
+    if (!/^\d{4}-\d{2}-\d{2}$/.test(form.birthDate) || form.birthDate >= "2006-01-01") {
+      newErrors.birthDate = "Selecciona una fecha válida anterior a 2006"
     }
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(form.email)) {
       newErrors.email = "Ingresa un correo electrónico válido"
@@ -151,6 +166,21 @@ export default function FinancingPage() {
     if (!form.country.trim()) {
       newErrors.country = "El país de residencia es requerido"
     }
+    if (!form.bankOption1) {
+      newErrors.bankOption1 = "Selecciona la opción de banco 1"
+    }
+    if (!form.bankOption2) {
+      newErrors.bankOption2 = "Selecciona la opción de banco 2"
+    }
+    if (form.bankOption1 && form.bankOption2 && form.bankOption1 === form.bankOption2) {
+      newErrors.bankOption2 = "El banco 2 debe ser distinto al banco 1"
+    }
+    if (!form.acceptTerms) {
+      newErrors.acceptTerms = "Debes aceptar los Términos de uso y la Política de privacidad"
+    }
+    if (!form.certifyInfo) {
+      newErrors.certifyInfo = "Debes certificar que la información es correcta y autorizas la consulta"
+    }
 
     setErrors(newErrors)
     return Object.keys(newErrors).length === 0
@@ -164,8 +194,37 @@ export default function FinancingPage() {
     setIsSubmitting(true)
 
     try {
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      const payload = {
+        saleAmount: parseNumber(form.saleAmount),
+        saleCurrency: form.saleCurrency,
+        downPayment: parseNumber(form.downPayment),
+        financedAmount: Math.max(0, parseNumber(form.saleAmount) - parseNumber(form.downPayment)),
+        idType: form.idType,
+        idNumber: form.idNumber,
+        fullName: form.fullName,
+        birthDate: form.birthDate,
+        email: form.email,
+        phone: form.phone,
+        monthlyIncome: parseNumber(form.monthlyIncome),
+        incomeCurrency: form.incomeCurrency,
+        country: form.country,
+        bankOption1: form.bankOption1,
+        bankOption2: form.bankOption2,
+        acceptTerms: form.acceptTerms,
+        certifyInfo: form.certifyInfo,
+      }
+
+      const res = await fetch("/api/financing", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      if (!res.ok) {
+        const data = await res.json().catch(() => ({}))
+        throw new Error(data?.message || "No se pudo enviar la solicitud")
+      }
+
       setSubmitted(true)
     } catch (error) {
       console.error("Error submitting form:", error)
@@ -234,7 +293,7 @@ export default function FinancingPage() {
                         >
                           <option value="">Seleccionar moneda</option>
                           <option value="DOP">Peso Dominicano (DOP)</option>
-                          <option value="USD">Dólar Americano (USD)</option>
+                          <option value="USD">Dólar Estadounidense (USD)</option>
                           <option value="EUR">Euro (EUR)</option>
                         </select>
                         {errors.saleCurrency && <p className="text-sm text-red-600">{errors.saleCurrency}</p>}
@@ -253,6 +312,44 @@ export default function FinancingPage() {
                         />
                         <p className="text-xs text-gray-500">Recomendado: 20% del precio de venta</p>
                         {errors.downPayment && <p className="text-sm text-red-600">{errors.downPayment}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-gray-700">Opción de banco 1 *</label>
+                        <select
+                          value={form.bankOption1}
+                          onChange={handleInputChange("bankOption1")}
+                          className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 ${
+                            errors.bankOption1 ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-900"
+                          }`}
+                        >
+                          <option value="">Seleccionar banco</option>
+                          {bankOptions.map((bank) => (
+                            <option key={bank} value={bank}>
+                              {bank}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.bankOption1 && <p className="text-sm text-red-600">{errors.bankOption1}</p>}
+                      </div>
+
+                      <div className="space-y-2">
+                        <label className="block text-xs font-medium text-gray-700">Opción de banco 2 *</label>
+                        <select
+                          value={form.bankOption2}
+                          onChange={handleInputChange("bankOption2")}
+                          className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 ${
+                            errors.bankOption2 ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-900"
+                          }`}
+                        >
+                          <option value="">Seleccionar banco</option>
+                          {bankOptions.map((bank) => (
+                            <option key={bank} value={bank} disabled={form.bankOption1 === bank}>
+                              {bank}
+                            </option>
+                          ))}
+                        </select>
+                        {errors.bankOption2 && <p className="text-sm text-red-600">{errors.bankOption2}</p>}
                       </div>
                     </div>
                   </section>
@@ -309,10 +406,10 @@ export default function FinancingPage() {
                       <div className="space-y-2">
                         <label className="block text-xs font-medium text-gray-700">Fecha de nacimiento *</label>
                         <input
-                          type="text"
+                          type="date"
                           value={form.birthDate}
                           onChange={handleInputChange("birthDate")}
-                          placeholder="dd/mm/yyyy"
+                          max="2005-12-31"
                           className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 ${
                             errors.birthDate ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-900"
                           }`}
@@ -322,15 +419,17 @@ export default function FinancingPage() {
 
                       <div className="space-y-2">
                         <label className="block text-xs font-medium text-gray-700">País de residencia *</label>
-                        <input
-                          type="text"
+                        <select
                           value={form.country}
                           onChange={handleInputChange("country")}
-                          placeholder="República Dominicana"
                           className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 ${
                             errors.country ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-900"
                           }`}
-                        />
+                        >
+                          <option value="">Seleccionar país</option>
+                          <option value="República Dominicana">República Dominicana</option>
+                          <option value="Estados Unidos">Estados Unidos</option>
+                        </select>
                         {errors.country && <p className="text-sm text-red-600">{errors.country}</p>}
                       </div>
                     </div>
@@ -357,15 +456,22 @@ export default function FinancingPage() {
 
                       <div className="space-y-2">
                         <label className="block text-xs font-medium text-gray-700">Número de contacto *</label>
-                        <input
-                          type="text"
+                        <InputMask
+                          mask="+1 999-999-9999"
                           value={form.phone}
                           onChange={handlePhoneInput}
-                          placeholder="+1 809-XXX-XXXX"
-                          className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 ${
-                            errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-900"
-                          }`}
-                        />
+                        >
+                          {(inputProps: any) => (
+                            <input
+                              {...inputProps}
+                              type="text"
+                              placeholder="+1 809-XXX-XXXX"
+                              className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 ${
+                                errors.phone ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-900"
+                              }`}
+                            />
+                          )}
+                        </InputMask>
                         {errors.phone && <p className="text-sm text-red-600">{errors.phone}</p>}
                       </div>
 
@@ -394,11 +500,47 @@ export default function FinancingPage() {
                         >
                           <option value="">Seleccionar moneda</option>
                           <option value="DOP">Peso Dominicano (DOP)</option>
-                          <option value="USD">Dólar Americano (USD)</option>
+                          <option value="USD">Dólar Estadounidense (USD)</option>
                           <option value="EUR">Euro (EUR)</option>
                         </select>
                         {errors.incomeCurrency && <p className="text-sm text-red-600">{errors.incomeCurrency}</p>}
                       </div>
+                    </div>
+                  </section>
+
+                  {/* Consents */}
+                  <section className="border border-gray-200 p-8 bg-white">
+                    <h2 className="text-sm font-semibold tracking-wide text-gray-800 mb-2">Consentimientos</h2>
+                    <div className="space-y-6">
+                      <label className="flex items-start gap-3 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={form.acceptTerms}
+                          onChange={handleInputChange("acceptTerms")}
+                          className={`mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary ${
+                            errors.acceptTerms ? "border-red-500" : ""
+                          }`}
+                        />
+                        <span>
+                          Acepto los <a className="underline" href="/terms" target="_blank" rel="noopener noreferrer">Términos de uso</a> y la <a className="underline" href="/privacy" target="_blank" rel="noopener noreferrer">Política de privacidad</a>.
+                        </span>
+                      </label>
+                      {errors.acceptTerms && <p className="text-sm text-red-600">{errors.acceptTerms}</p>}
+
+                      <label className="flex items-start gap-3 text-sm text-gray-700">
+                        <input
+                          type="checkbox"
+                          checked={form.certifyInfo}
+                          onChange={handleInputChange("certifyInfo")}
+                          className={`mt-1 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary ${
+                            errors.certifyInfo ? "border-red-500" : ""
+                          }`}
+                        />
+                        <span>
+                          Certifico que la información proporcionada anteriormente es correcta, autorizo a nosotros y a las entidades de intermediación financiera a validarla y consultar mi historial crediticio en las bases de datos de los burós de información nacionales o internacionales que considere.
+                        </span>
+                      </label>
+                      {errors.certifyInfo && <p className="text-sm text-red-600">{errors.certifyInfo}</p>}
                     </div>
                   </section>
                 </div>
