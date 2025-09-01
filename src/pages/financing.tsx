@@ -50,6 +50,16 @@ interface FormErrors {
   [key: string]: string
 }
 
+interface CartItemSummary {
+  productId: number
+  name: string
+  qty: number
+  price: number
+  subtotal: number
+  currency?: string
+  image?: string
+}
+
 export default function FinancingPage() {
   const router = useRouter()
   const { amount, down, currency } = router.query
@@ -76,6 +86,7 @@ export default function FinancingPage() {
   const [errors, setErrors] = useState<FormErrors>({})
   const [submitted, setSubmitted] = useState(false)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [cartItems, setCartItems] = useState<CartItemSummary[]>([])
 
   useEffect(() => {
     if (typeof amount === "string") {
@@ -91,6 +102,36 @@ export default function FinancingPage() {
         incomeCurrency: currency as Currency,
       }))
     }
+    // Detectar fuente de financiamiento (producto vs carrito) y cargar items
+    try {
+      const source = typeof window !== "undefined" ? sessionStorage.getItem("financing_source") : null
+      if (source === "product") {
+        const rawItem = sessionStorage.getItem("product_financing_item")
+        if (rawItem) {
+          const item = JSON.parse(rawItem) as CartItemSummary
+          if (item && item.name) setCartItems([item])
+        }
+      } else if (source === "cart") {
+        const rawCart = sessionStorage.getItem("financing_cart_items")
+        if (rawCart) {
+          const items = JSON.parse(rawCart) as CartItemSummary[]
+          if (Array.isArray(items)) setCartItems(items)
+        }
+      } else {
+        // Fallback si no hay source: priorizar item de producto si existe
+        const rawItem = sessionStorage.getItem("product_financing_item")
+        if (rawItem) {
+          const item = JSON.parse(rawItem) as CartItemSummary
+          if (item && item.name) setCartItems([item])
+        } else {
+          const rawCart = sessionStorage.getItem("financing_cart_items")
+          if (rawCart) {
+            const items = JSON.parse(rawCart) as CartItemSummary[]
+            if (Array.isArray(items)) setCartItems(items)
+          }
+        }
+      }
+    } catch {}
   }, [amount, down, currency])
 
   const formatNumber = (value: string | number): string => {
@@ -130,7 +171,7 @@ export default function FinancingPage() {
   const validateForm = (): boolean => {
     const newErrors: FormErrors = {}
 
-    if (!parseNumber(form.saleAmount)) {
+    if (!derivedSaleAmount) {
       newErrors.saleAmount = "El monto solicitado es requerido"
     }
     if (!form.saleCurrency) {
@@ -195,10 +236,10 @@ export default function FinancingPage() {
 
     try {
       const payload = {
-        saleAmount: parseNumber(form.saleAmount),
+        saleAmount: derivedSaleAmount,
         saleCurrency: form.saleCurrency,
         downPayment: parseNumber(form.downPayment),
-        financedAmount: Math.max(0, parseNumber(form.saleAmount) - parseNumber(form.downPayment)),
+        financedAmount: Math.max(0, derivedSaleAmount - parseNumber(form.downPayment)),
         idType: form.idType,
         idNumber: form.idNumber,
         fullName: form.fullName,
@@ -212,6 +253,7 @@ export default function FinancingPage() {
         bankOption2: form.bankOption2,
         acceptTerms: form.acceptTerms,
         certifyInfo: form.certifyInfo,
+        cartItems,
       }
 
       const res = await fetch("/api/financing", {
@@ -226,6 +268,11 @@ export default function FinancingPage() {
       }
 
       setSubmitted(true)
+      try {
+        sessionStorage.removeItem("financing_source")
+        sessionStorage.removeItem("product_financing_item")
+        sessionStorage.removeItem("financing_cart_items")
+      } catch {}
     } catch (error) {
       console.error("Error submitting form:", error)
     } finally {
@@ -239,6 +286,12 @@ export default function FinancingPage() {
     return sale - down
   }
 
+  // Derivar automáticamente el monto desde los items (si existen)
+  const derivedSaleAmount = cartItems.length
+    ? cartItems.reduce((s, it) => s + (Number(it.subtotal) || (Number(it.price) || 0) * (Number(it.qty) || 0)), 0)
+    : parseNumber(form.saleAmount)
+  const formattedDerivedSaleAmount = formatNumber(derivedSaleAmount)
+
   return (
     <main className={openSans.className}>
       <Head>
@@ -249,7 +302,9 @@ export default function FinancingPage() {
       <div className="container mx-auto mt-24 px-4 py-12 lg:px-8">
         <div className="mx-auto max-w-7xl pt-12">
           <div className="mb-12 text-center">
-            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Solicitud de financiamiento</h1>
+            <h1 className="text-3xl font-semibold tracking-tight text-gray-900">
+              {cartItems.length <= 1 ? "Financiamiento de producto" : "Financiamiento de carrito"}
+            </h1>
             <p className="mt-2 text-sm text-gray-600">Completa el formulario para evaluar tu solicitud. Te contactaremos en 24 horas.</p>
           </div>
 
@@ -272,11 +327,11 @@ export default function FinancingPage() {
                         <label className="block text-xs font-medium text-gray-700">Monto solicitado *</label>
                         <input
                           type="text"
-                          value={form.saleAmount}
-                          onChange={handleNumberInput("saleAmount")}
+                          value={formattedDerivedSaleAmount}
+                          readOnly
                           placeholder="250,000"
-                          className={`w-full border px-3 py-2.5 text-sm focus:outline-none focus:ring-1 ${
-                            errors.saleAmount ? "border-red-500 focus:ring-red-500" : "border-gray-300 focus:ring-gray-900"
+                          className={`w-full border px-3 py-2.5 text-sm bg-gray-50 text-gray-700 focus:outline-none ${
+                            errors.saleAmount ? "border-red-500" : "border-gray-300"
                           }`}
                         />
                         {errors.saleAmount && <p className="text-sm text-red-600">{errors.saleAmount}</p>}
@@ -555,7 +610,7 @@ export default function FinancingPage() {
                         <div className="flex justify-between items-center py-3 border-b border-gray-100">
                           <span className="text-sm text-gray-600">Monto solicitado</span>
                           <span className="text-sm font-semibold text-gray-900">
-                            {form.saleCurrency} {form.saleAmount || "—"}
+                            {form.saleCurrency} {formattedDerivedSaleAmount || "—"}
                           </span>
                         </div>
 
@@ -570,9 +625,30 @@ export default function FinancingPage() {
                           <span className="text-sm text-gray-600">Monto a financiar</span>
                           <span className="text-sm font-semibold text-gray-900">
                             {form.saleCurrency}{" "}
-                            {calculateFinancedAmount() > 0 ? formatNumber(calculateFinancedAmount().toString()) : "—"}
+                            {(() => {
+                              const financed = Math.max(0, derivedSaleAmount - parseNumber(form.downPayment))
+                              return financed > 0 ? formatNumber(financed.toString()) : "—"
+                            })()}
                           </span>
                         </div>
+                        {cartItems.length > 0 && (
+                          <div className="mt-4 border-t border-gray-100 pt-4">
+                            <h4 className="text-xs font-semibold tracking-wide text-gray-700 mb-3">Carrito a financiar</h4>
+                            <ul className="space-y-2">
+                              {cartItems.slice(0, 5).map((ci, idx) => (
+                                <li key={idx} className="flex items-center justify-between text-xs text-gray-700">
+                                  <span className="truncate pr-2">{ci.name} × {ci.qty}</span>
+                                  <span className="font-medium">
+                                    {new Intl.NumberFormat("es-DO", { style: "currency", currency: form.saleCurrency || "DOP" }).format(ci.subtotal || (ci.price || 0) * (ci.qty || 0))}
+                                  </span>
+                                </li>
+                              ))}
+                            </ul>
+                            {cartItems.length > 5 && (
+                              <p className="mt-2 text-[11px] text-gray-500">y {cartItems.length - 5} más…</p>
+                            )}
+                          </div>
+                        )}
                       </div>
                       <p className="mt-6 text-xs text-gray-500">Tus datos serán utilizados únicamente para evaluar tu solicitud.</p>
 

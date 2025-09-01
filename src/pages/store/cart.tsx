@@ -102,6 +102,45 @@ export default function CartPage() {
     window.location.href = "/checkout" // O la ruta que corresponda
   }
 
+  // Financiar carrito completo
+  const financeCart = () => {
+    if (!cart || !cart.items || cart.items.length === 0) return
+    try {
+      const snapshot = cart.items.map((it) => ({
+        productId: it.product_id || it.id,
+        name: it.name,
+        qty: it.num,
+        price: it.price,
+        subtotal: (it.price || 0) * (it.num || 0),
+        currency: it.currency || "DOP",
+        image: it.image
+      }))
+      try {
+        sessionStorage.removeItem("product_financing_item")
+        sessionStorage.removeItem("financing_cart_items")
+        sessionStorage.setItem("financing_source", "cart")
+        sessionStorage.setItem("financing_cart_items", JSON.stringify(snapshot))
+      } catch {}
+
+      const amount = Math.round(orderSummary.total || 0)
+      const down = Math.max(0, Math.round(amount * 0.2))
+      const currency = cart.items[0]?.currency || "DOP"
+      const params = new URLSearchParams({
+        amount: String(amount),
+        down: String(down),
+        currency
+      })
+      // Vaciar carrito al iniciar financiamiento
+      try {
+        localStorage.removeItem("cart_items")
+        try { window.dispatchEvent(new Event("cart-updated")) } catch {}
+      } catch {}
+      window.location.href = `/financing/cart?${params.toString()}`
+    } catch (e) {
+      console.error("No se pudo preparar el financiamiento del carrito:", e)
+    }
+  }
+
   if (loading) {
     return <div className="text-center mt-8">Cargando carrito...</div>
   }
@@ -166,6 +205,9 @@ export default function CartPage() {
                   <span>{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(orderSummary.total)}</span>
                 </div>
               </div>
+              <button onClick={financeCart} disabled={isCartEmpty} className={`mt-6 w-full border border-primary text-primary px-6 py-3 text-sm font-semibold hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/20 ${isCartEmpty ? "opacity-50 cursor-not-allowed" : ""}`}>
+                Financiar carrito
+              </button>
               <button onClick={checkout} disabled={isCartEmpty} className={`mt-6 w-full ${isCartEmpty ? "bg-gray-400" : "bg-primary hover:bg-primary/90"} px-6 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-primary/40`}>
                 Proceder al pago
               </button>

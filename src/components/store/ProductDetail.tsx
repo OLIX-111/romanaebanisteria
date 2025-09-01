@@ -149,6 +149,40 @@ export function ProductDetail({ product }: ProductDetailProps) {
   }
 
   // --------------------------------------------------
+  // Financiar este producto (llevar a formulario)
+  // --------------------------------------------------
+  const financeThisProduct = () => {
+    try {
+      const item = {
+        productId: selectedVariant.id,
+        name: selectedVariant.name || product.name,
+        qty: 1,
+        price: selectedVariant.price,
+        subtotal: selectedVariant.price,
+        currency: "DOP",
+        image: selectedVariant.image || product.image
+      }
+      try {
+        sessionStorage.removeItem("financing_cart_items")
+        sessionStorage.removeItem("product_financing_item")
+        sessionStorage.setItem("financing_source", "product")
+        sessionStorage.setItem("product_financing_item", JSON.stringify(item))
+      } catch {}
+
+      const amount = Math.round(selectedVariant.price || 0)
+      const down = Math.max(0, Math.round(amount * 0.2))
+      const params = new URLSearchParams({
+        amount: String(amount),
+        down: String(down),
+        currency: "DOP"
+      })
+      window.location.href = `/financing/product?${params.toString()}`
+    } catch (e) {
+      console.error("No se pudo preparar el financiamiento del producto:", e)
+    }
+  }
+
+  // --------------------------------------------------
   // Render
   // --------------------------------------------------
   return (
@@ -248,6 +282,12 @@ export function ProductDetail({ product }: ProductDetailProps) {
               className="rounded-lg bg-gray-900 px-8 py-3 text-sm font-medium text-white hover:bg-gray-800"
             >
               Agregar al carrito
+            </button>
+            <button
+              onClick={financeThisProduct}
+              className="ml-3 rounded-lg border border-primary px-8 py-3 text-sm font-semibold text-primary hover:bg-primary/5"
+            >
+              Financiar este producto
             </button>
           </div>
         </motion.div>

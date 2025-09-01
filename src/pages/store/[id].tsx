@@ -1,5 +1,6 @@
 import { GetServerSideProps } from "next"
 import Head from "next/head"
+import { useRouter } from "next/router"
 import Image from "next/image"
 import Link from "next/link"
 import Header from "@/components/layout/Header"
@@ -56,6 +57,7 @@ interface ProductDetailProps {
 }
 
 export default function ProductDetailPage({ product, error }: ProductDetailProps) {
+  const router = useRouter()
   const dict = useTranslation()
   const { storePage } = dict
   const [selectedVariantId, setSelectedVariantId] = useState<number | null>(product?.variants?.[0]?.id || null)
@@ -457,19 +459,35 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
                 {calcResult !== null && (
                   <div className="flex flex-col justify-between w-full items-start gap-3 sm:flex-row sm:items-center sm:gap-4">
                     <p className="text-sm text-gray-900">Cuota mensual: <span className="font-semibold tabular-nums">{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(calcResult)}</span></p>
-                    <Link
-                      href={{
-                        pathname: "/financing",
-                        query: {
-                          amount: String(calcInputs.total || priceNumber),
-                          down: String(Math.round((calcInputs.total || priceNumber) * ((calcInputs.downPaymentPct || 0) / 100))),
-                          currency: currency
+                    <button
+                      onClick={() => {
+                        try {
+                          const variantId = activeVariant?.id || p.variants?.[0]?.id || p.id
+                          const item = {
+                            productId: variantId,
+                            name: p.name,
+                            qty: 1,
+                            price: Number(calcInputs.total || priceNumber) || 0,
+                            subtotal: Number(calcInputs.total || priceNumber) || 0,
+                            currency,
+                            image: activeVariant?.image || p.image
+                          }
+                          sessionStorage.removeItem("financing_cart_items")
+                          sessionStorage.setItem("financing_source", "product")
+                          sessionStorage.setItem("product_financing_item", JSON.stringify(item))
+
+                          const amount = Math.round(item.subtotal || 0)
+                          const down = Math.max(0, Math.round(amount * ((calcInputs.downPaymentPct || 0) / 100)))
+                          const params = new URLSearchParams({ amount: String(amount), down: String(down), currency })
+                          window.location.href = `/financing/product?${params.toString()}`
+                        } catch (e) {
+                          console.error("No se pudo preparar el financiamiento del producto:", e)
                         }
                       }}
                       className="border border-gray-300 bg-primary px-4 py-2.5 text-sm font-semibold text-gray-50 hover:bg-primary/90"
                     >
                       Aplicar a financiamiento
-                    </Link>
+                    </button>
                   </div>
                 )}
               </div>

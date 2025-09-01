@@ -2,15 +2,15 @@ import type { NextApiRequest, NextApiResponse } from "next"
 // @ts-ignore nodemailer types may not resolve fully under bundler resolution
 import nodemailer from "nodemailer"
 
-// Using SendGrid SMTP as in send-order-email.ts for consistent deliverability
-const SMTP_HOST = "smtp.sendgrid.net"
-const SMTP_PORT = 465 // SSL
-const SMTP_SECURE = true
-const SMTP_USER = "apikey"
-const SMTP_PASS = "***SENDGRID_KEY_REMOVED***"
+// Using SendGrid SMTP as in send-order-email.ts; allow env overrides for robustness
+const SMTP_HOST = process.env.SMTP_HOST || "smtp.sendgrid.net"
+const SMTP_PORT = Number(process.env.SMTP_PORT || 465)
+const SMTP_SECURE = String(process.env.SMTP_SECURE || "true") === "true"
+const SMTP_USER = process.env.SMTP_USER || "apikey"
+const SMTP_PASS = process.env.SMTP_PASS || "***SENDGRID_KEY_REMOVED***"
 
-const FROM_EMAIL = "info@grupochavon.com"
-const INTERNAL_EMAIL = "tecnologia@grupochavon.com"
+const FROM_EMAIL = process.env.FINANCING_FROM_EMAIL || "info@grupochavon.com"
+const INTERNAL_EMAIL = process.env.FINANCING_INTERNAL_EMAIL || "tecnologia@grupochavon.com"
 
 const transporter = nodemailer.createTransport({
   host: SMTP_HOST,
@@ -31,6 +31,22 @@ function sanitizeString(input: any): string {
   return (typeof input === "string" ? input : "").toString().trim()
 }
 
+function sanitizeCartItems(input: any): Array<{ name: string; qty: number; price: number; subtotal: number; currency: string; productId?: number }>{
+  if (!Array.isArray(input)) return []
+  return input
+    .map((it) => {
+      const name = sanitizeString(it?.name)
+      const qty = Number(it?.qty || 0)
+      const price = Number(it?.price || 0)
+      const subtotal = Number(it?.subtotal || price * qty)
+      const currency = sanitizeString(it?.currency) || "DOP"
+      const productId = typeof it?.productId === "number" ? it.productId : undefined
+      if (!name || !qty || !price) return null
+      return { name, qty, price, subtotal, currency, productId }
+    })
+    .filter(Boolean) as Array<{ name: string; qty: number; price: number; subtotal: number; currency: string; productId?: number }>
+}
+
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
   try {
     if (req.method !== "POST") return res.status(405).json({ message: "Method Not Allowed" })
@@ -41,6 +57,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const downPayment = Number(body.downPayment || 0)
     const financedAmount = Number(body.financedAmount || 0)
     const saleCurrency = sanitizeString(body.saleCurrency) || "DOP"
+    const cartItems = sanitizeCartItems(body.cartItems)
     const idType = sanitizeString(body.idType)
     const idNumber = sanitizeString(body.idNumber)
     const fullName = sanitizeString(body.fullName)
@@ -108,6 +125,42 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         </tr>`)
       .join("")
 
+    // Optional cart section
+    const cartTotal = cartItems.reduce((s, it) => s + (Number(it.subtotal) || 0), 0)
+    const cartRowsHtml = cartItems
+      .map((it) => `
+        <tr>
+          <td style="padding:6px;border-bottom:1px solid #f0f0f0;color:#333;">${it.name}</td>
+          <td style="padding:6px;border-bottom:1px solid #f0f0f0;color:#555;" align="right">${it.qty}</td>
+          <td style="padding:6px;border-bottom:1px solid #f0f0f0;color:#555;" align="right">${formatCurrency(it.price, it.currency)}</td>
+          <td style="padding:6px;border-bottom:1px solid #f0f0f0;color:#111;font-weight:600;" align="right">${formatCurrency(it.subtotal, it.currency)}</td>
+        </tr>`)
+      .join("")
+    const cartHtmlSection = cartItems.length
+      ? `
+        <h3 style="margin:24px 0 8px 0;color:#111;font-size:16px;">Carrito a financiar</h3>
+        <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
+          <thead>
+            <tr>
+              <th align="left" style="padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;">Producto</th>
+              <th align="right" style="padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;">Cant.</th>
+              <th align="right" style="padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;">Precio</th>
+              <th align="right" style="padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;">Subtotal</th>
+            </tr>
+          </thead>
+          <tbody>
+            ${cartRowsHtml}
+          </tbody>
+          <tfoot>
+            <tr>
+              <td colspan="3" style="padding:8px;border-top:2px solid #e5e5e5;color:#111;font-weight:600;">Total del carrito</td>
+              <td align="right" style="padding:8px;border-top:2px solid #e5e5e5;color:#111;font-weight:700;">${formatCurrency(cartTotal, saleCurrency)}</td>
+            </tr>
+          </tfoot>
+        </table>
+      `
+      : ""
+
     const internalHtml = `
       <div style="font-family:Arial, Helvetica, sans-serif;background:#f6f6f6;padding:24px 0;">
         <table width="100%" cellspacing="0" cellpadding="0" style="max-width:720px;margin:0 auto;background:#ffffff;border:1px solid #eaeaea;">
@@ -122,6 +175,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                 ${tableHtml}
               </table>
+              ${cartHtmlSection}
             </td>
           </tr>
         </table>
@@ -143,6 +197,22 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;">
                 ${tableHtml}
               </table>
+              ${cartItems.length ? `
+                <h3 style=\"margin:16px 0 8px 0;color:#111;font-size:16px;\">Detalle de producto(s) a financiar</h3>
+                <table width=\"100%\" cellspacing=\"0\" cellpadding=\"0\" style=\"border-collapse:collapse;\">
+                  <thead>
+                    <tr>
+                      <th align=\"left\" style=\"padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;\">Producto</th>
+                      <th align=\"right\" style=\"padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;\">Cant.</th>
+                      <th align=\"right\" style=\"padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;\">Precio</th>
+                      <th align=\"right\" style=\"padding:6px;border-bottom:2px solid #e5e5e5;color:#555;font-size:12px;\">Subtotal</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    ${cartRowsHtml}
+                  </tbody>
+                </table>
+              ` : ""}
               <p style="margin:16px 0 0 0;color:#777;font-size:12px;">ROMAna Ebanistería</p>
             </td>
           </tr>
