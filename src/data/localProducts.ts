@@ -1,5 +1,13 @@
 // Productos locales para presupuesto/tienda sin llamadas a la API
 
+export interface ProductVariant {
+  id: string
+  name: string
+  price: number
+  description?: string
+  image?: string
+}
+
 export interface LocalProduct {
   id: number
   name: string
@@ -11,6 +19,7 @@ export interface LocalProduct {
   status?: string
   track_stock?: boolean
   total_qty?: number
+  variants?: ProductVariant[]
 }
 
 export const localProducts: LocalProduct[] = [
@@ -25,6 +34,11 @@ export const localProducts: LocalProduct[] = [
     status: "available",
     track_stock: true,
     total_qty: 4,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
   },
   {
     id: 102,
@@ -36,6 +50,11 @@ export const localProducts: LocalProduct[] = [
     vendor: "Chavón",
     status: "available",
     track_stock: false,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
   },
   {
     id: 103,
@@ -48,6 +67,11 @@ export const localProducts: LocalProduct[] = [
     status: "available",
     track_stock: true,
     total_qty: 7,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
   },
   {
     id: 104,
@@ -60,6 +84,11 @@ export const localProducts: LocalProduct[] = [
     status: "available",
     track_stock: true,
     total_qty: 2,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
   },
   {
     id: 105,
@@ -71,6 +100,11 @@ export const localProducts: LocalProduct[] = [
     vendor: "Chavón",
     status: "available",
     track_stock: false,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
   },
   {
     id: 106,
@@ -83,6 +117,11 @@ export const localProducts: LocalProduct[] = [
     status: "available",
     track_stock: true,
     total_qty: 15,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
   },
   {
     id: 107,
@@ -94,7 +133,12 @@ export const localProducts: LocalProduct[] = [
     vendor: "Romana",
     status: "available",
     track_stock: true,
-    total_qty: 0, // sin stock (no se mostrará por regla de tienda)
+    total_qty: 0, // sin stock (no se mostrará por regla de tienda),
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
   },
   {
     id: 108,
@@ -107,5 +151,180 @@ export const localProducts: LocalProduct[] = [
     status: "available",
     track_stock: true,
     total_qty: 5,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
+  },
+  {
+    id: 1,
+    name: "Puerta de Madera Clásica",
+    description: "Puerta de madera maciza con acabado natural, ideal para interiores",
+    price: 8500.0,
+    image: "/wooden-door-classic.png",
+    type: "Puertas",
+    vendor: "Romana",
+    status: "available",
+    track_stock: true,
+    total_qty: 15,
+    variants: [
+      { id: "1-natural", name: "Acabado Natural", price: 8500 },
+      { id: "1-barniz", name: "Acabado Barnizado", price: 9200 },
+      { id: "1-lacado", name: "Acabado Lacado Blanco", price: 9800 },
+    ],
+  },
+  {
+    id: 2,
+    name: "Mueble de Cocina Modular",
+    description: "Mueble de cocina modular con gavetas y puertas, acabado en melamina",
+    price: 32500.0,
+    image: "/modular-kitchen-cabinet.png",
+    type: "Cocina",
+    vendor: "Chavón",
+    status: "available",
+    track_stock: true,
+    total_qty: 8,
+    variants: [
+      { id: "2-blanco", name: "Melamina Blanca", price: 32500 },
+      { id: "2-roble", name: "Melamina Roble", price: 34200 },
+      { id: "2-nogal", name: "Melamina Nogal", price: 35800 },
+    ],
+  },
+  {
+    id: 3,
+    name: "Closet Empotrado Premium",
+    description: "Closet empotrado con sistema de organización completo",
+    price: 28900.0,
+    image: "/built-in-closet-premium.png",
+    type: "Closets",
+    vendor: "Romana",
+    status: "available",
+    track_stock: true,
+    total_qty: 5,
+    variants: [
+      { id: "3-basico", name: "Sistema Básico", price: 28900 },
+      { id: "3-premium", name: "Sistema Premium", price: 35600 },
+      { id: "3-luxury", name: "Sistema Luxury", price: 42300 },
+    ],
+  },
+  {
+    id: 4,
+    name: "Vanity de Baño Minimalista",
+    description: "Vanity de baño con diseño minimalista y lavamanos integrado",
+    price: 14500.0,
+    image: "/minimalist-bathroom-vanity.png",
+    type: "Baños",
+    vendor: "Romana",
+    status: "available",
+    track_stock: true,
+    total_qty: 12,
+    variants: [
+      { id: "4-60cm", name: "60cm de ancho", price: 14500 },
+      { id: "4-80cm", name: "80cm de ancho", price: 17200 },
+      { id: "4-100cm", name: "100cm de ancho", price: 19800 },
+    ],
+  },
+  {
+    id: 5,
+    name: "Mesa de Centro en Roble",
+    description: "Mesa de centro fabricada en madera de roble con acabado natural",
+    price: 9800.0,
+    image: "/oak-wood-center-table.png",
+    type: "Salas",
+    vendor: "Chavón",
+    status: "available",
+    track_stock: true,
+    total_qty: 20,
+    variants: [
+      { id: "5-rectangular", name: "Rectangular", price: 9800 },
+      { id: "5-redonda", name: "Redonda", price: 10500 },
+      { id: "5-ovalada", name: "Ovalada", price: 11200 },
+    ],
+  },
+  {
+    id: 6,
+    name: "Panel Decorativo de Madera",
+    description: "Panel decorativo para paredes con diseño geométrico",
+    price: 6200.0,
+    image: "/decorative-wood-panel-geometric.png",
+    type: "Decoración",
+    vendor: "Romana",
+    status: "available",
+    track_stock: true,
+    total_qty: 25,
+    variants: [
+      { id: "6-geometrico", name: "Diseño Geométrico", price: 6200 },
+      { id: "6-lineal", name: "Diseño Lineal", price: 5800 },
+      { id: "6-ondulado", name: "Diseño Ondulado", price: 6800 },
+    ],
+  },
+  {
+    id: 7,
+    name: "Puerta Corrediza de Granero",
+    description: "Puerta corrediza estilo granero con herrajes incluidos",
+    price: 12400.0,
+    image: "/barn-sliding-door.png",
+    type: "Puertas",
+    vendor: "Chavón",
+    status: "available",
+    track_stock: true,
+    total_qty: 10,
+    variants: [
+      { id: "7-rustico", name: "Estilo Rústico", price: 12400 },
+      { id: "7-moderno", name: "Estilo Moderno", price: 13800 },
+      { id: "7-industrial", name: "Estilo Industrial", price: 15200 },
+    ],
+  },
+  {
+    id: 8,
+    name: "Estantería Modular",
+    description: "Sistema de estantería modular para oficina o hogar",
+    price: 7800.0,
+    image: "/modular-shelving-system.png",
+    type: "Oficina",
+    vendor: "Romana",
+    status: "available",
+    track_stock: true,
+    total_qty: 18,
+    variants: [
+      { id: "8-3niveles", name: "3 Niveles", price: 7800 },
+      { id: "8-4niveles", name: "4 Niveles", price: 9200 },
+      { id: "8-5niveles", name: "5 Niveles", price: 10600 },
+    ],
+  },
+  {
+    id: 9,
+    name: "Cabecera de Cama Tapizada",
+    description: "Cabecera de cama con tapizado en tela y estructura de madera",
+    price: 11200.0,
+    image: "/upholstered-bed-headboard.png",
+    type: "Dormitorios",
+    vendor: "Chavón",
+    status: "available",
+    track_stock: true,
+    total_qty: 14,
+    variants: [
+      { id: "9-individual", name: "Cama Individual", price: 11200 },
+      { id: "9-matrimonial", name: "Cama Matrimonial", price: 13800 },
+      { id: "9-king", name: "Cama King", price: 16400 },
+    ],
+  },
+  {
+    id: 10,
+    name: "Escritorio Ejecutivo",
+    description: "Escritorio ejecutivo con gavetas y acabado en nogal",
+    price: 15600.0,
+    image: "/executive-desk-walnut-finish.png",
+    type: "Oficina",
+    vendor: "Romana",
+    status: "available",
+    track_stock: true,
+    total_qty: 7,
+    variants: [
+      { id: "10-120cm", name: "120cm de ancho", price: 15600 },
+      { id: "10-150cm", name: "150cm de ancho", price: 18200 },
+      { id: "10-180cm", name: "180cm de ancho", price: 21800 },
+    ],
   },
 ]
