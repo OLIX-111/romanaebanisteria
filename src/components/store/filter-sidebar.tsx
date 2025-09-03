@@ -88,8 +88,8 @@ export function FilterSidebar({ types = [], vendors = [], counts = {}, onFilterC
           className="w-full rounded-md border border-gray-300 py-1.5 pl-3 pr-3 text-sm focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
         />
       </div>
-      <FilterSection title="Tipo" options={filteredTypes} type="type" />
-      <FilterSection title="Vendedor" options={filteredVendors} type="vendor" />
+      <FilterSection title="Categoría" options={filteredTypes} type="type" />
+      {/* <FilterSection title="Vendedor" options={filteredVendors} type="vendor" /> */}
     </div>
   )
 }

@@ -11,7 +11,7 @@ import Link from "next/link"
 // Definiciones de Tipos
 // --------------------------------------------------
 interface Variant {
-  id: number
+  id: string | number
   name: string
   price: number
   image: string
@@ -19,7 +19,7 @@ interface Variant {
 }
 
 interface Product {
-  id: number
+  id: string | number
   name: string
   image: string
   price: number
@@ -254,12 +254,12 @@ export function ProductDetail({ product }: ProductDetailProps) {
                 Tipo: <span className="font-medium">{product.type}</span>
               </span>
             </div>
-            <div className="flex items-center gap-2">
+            {/* <div className="flex items-center gap-2">
               <Truck className="h-5 w-5 text-gray-600" />
               <span className="text-sm text-gray-600">
                 Vendedor: <span className="font-medium">{product.vendor}</span>
               </span>
-            </div>
+            </div> */}
             <div className="flex items-center gap-2">
               <Tag className="h-5 w-5 text-gray-600" />
               <span className="text-sm text-gray-600">

@@ -16,7 +16,7 @@ const nextConfig = {
         hostname: 'fontanasrl.odoo.com',
       },
     ],
-    domains: ['cdn.sanity.io', 'scontent-syd2-1.xx.fbcdn.net', 'chatbot.ewr1.vultrobjects.com', 'www.romanaebanisteria.com'],
+    domains: ['cdn.sanity.io', 'i.pinimg.com', 'scontent-syd2-1.xx.fbcdn.net', 'chatbot.ewr1.vultrobjects.com', 'www.romanaebanisteria.com'],
   },
   i18n: {
       locales: ['en', 'es'],

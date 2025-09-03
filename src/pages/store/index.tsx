@@ -9,14 +9,18 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { ChevronLeft, ChevronRight, SlidersHorizontal, Grid as GridIcon, Rows3 } from "lucide-react"
 import { useTranslation } from "@/hook/UseTranslation"
+import { getAllProductsWithDetails } from "@/utils/supabase"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 interface Product {
-  id: number
+  id: string | number
   name: string
   image: string
   price: number
+  compare_price?: number
+  display_variant_id?: string | number
+  display_variant_name?: string
   description: string
   type: string
   vendor: string
@@ -24,8 +28,9 @@ interface Product {
   track_stock?: boolean
   total_qty?: number
   use_variant?: boolean
+  variants?: { id: string | number; name: string; price: number; sale_price?: number | null; is_on_sale?: boolean; image?: string }[]
 }
-// Ahora usamos proxy interno /api/falitech/products (Option A)
+// Ahora usamos Supabase RPC get_all_products_with_details
 
 export default function StorePage() {
   const dict = useTranslation()
@@ -62,52 +67,47 @@ export default function StorePage() {
     }
   }, [search])
 
-  // Cargar productos (paginado server + búsqueda)
+  // Cargar productos desde Supabase RPC
   useEffect(() => {
-    const controller = new AbortController()
+    let cancelled = false
     async function load() {
       setIsLoading(true)
       setError(null)
       try {
-        const params = new URLSearchParams()
-        params.set("page", String(currentPage))
-        params.set("limit", String(productsPerPage))
-        if (debouncedSearch) params.set("name", debouncedSearch)
+        const all = await getAllProductsWithDetails()
 
-        const res = await fetch(`/api/falitech/products?${params.toString()}`, {
-          signal: controller.signal,
-          cache: "no-store",
-        })
-        if (!res.ok) throw new Error(`Error ${res.status}`)
-        const json = await res.json()
-        const list: Product[] = (json.data || []).map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          image: item.image,
-          price: item.price,
-          description: item.description,
-          type: item.type,
-          vendor: item.vendor,
-          status: item.status,
-          track_stock: item.track_stock,
-          total_qty: item.total_qty,
-          use_variant: item.use_variant,
-        }))
-        setProducts(list)
-        // meta puede venir en formato original (meta.last_page) o simplificado
-    const lp = json?.meta?.last_page || json?.meta?.pages || 1
-    const ti = json?.meta?.total || json?.meta?.total_items || list.length
-        setTotalPages(lp)
-    setTotalItems(ti)
+        // Filtro por búsqueda en cliente
+        const bySearch = debouncedSearch
+          ? all.filter((p: any) =>
+              [p.name, p.description, p.type].some((field) =>
+                (field || "").toString().toLowerCase().includes(debouncedSearch.toLowerCase())
+              )
+            )
+          : all
+
+        // Paginación en cliente
+        const start = (currentPage - 1) * productsPerPage
+        const end = start + productsPerPage
+        const pageSlice = bySearch.slice(start, end)
+
+        if (!cancelled) {
+          setProducts(pageSlice as Product[])
+          setTotalItems(bySearch.length)
+          setTotalPages(Math.max(1, Math.ceil(bySearch.length / productsPerPage)))
+        }
       } catch (e: any) {
-        if (e.name !== "AbortError") setError(e.message || "Error al cargar productos")
+        if (!cancelled) setError(e.message || "Error al cargar productos")
       } finally {
-        if (!controller.signal.aborted) setIsLoading(false)
-    setIsRefreshing(false)
+        if (!cancelled) {
+          setIsLoading(false)
+          setIsRefreshing(false)
+        }
       }
     }
     load()
-    return () => controller.abort()
+    return () => {
+      cancelled = true
+    }
   }, [currentPage, debouncedSearch, isRefreshing])
 
   const handleFilterChange = (type: string, value: string) => {

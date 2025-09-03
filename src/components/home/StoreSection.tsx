@@ -7,9 +7,10 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useTranslation } from "@/hook/UseTranslation"
 import { useRouter } from "next/router"
+import { getAllProductsWithDetails } from "@/utils/supabase"
 
 interface FeaturedProduct {
-  id: number
+  id: string | number
   name: string
   image: string
   description: string
@@ -47,30 +48,21 @@ export default function FeaturedProductsElegant() {
   useEffect(() => {
     async function loadFeaturedProducts() {
       try {
-        const res = await fetch(`/api/falitech/products?limit=24`, { cache: 'no-store' })
-        if (!res.ok) throw new Error(`Error ${res.status}`)
-        const json = await res.json()
-        const list: FeaturedProduct[] = (json.data || []).map((item: any) => ({
+        const all = await getAllProductsWithDetails()
+        const list: FeaturedProduct[] = (all as any[]).map((item: any) => ({
           id: item.id,
           name: item.name,
           image: item.image,
           description: item.description,
-          price: item.price,
-          type: item.type,
+          price: item.price || 0,
+          type: item.type || item.category || "",
           status: item.status,
           track_stock: item.track_stock,
           total_qty: item.total_qty,
           currency: item.currency || 'DOP'
         }))
 
-        // Filtrar no disponibles / sin stock y tomar solo 4
-        const available = list.filter((p) => {
-          const status = (p.status || '').toString().toLowerCase()
-          const isUnavailable = status.includes('unavailable') || status.includes('out') || status.includes('agot')
-          const hasStock = p.track_stock ? (Number(p.total_qty) > 0) : true
-          return !isUnavailable && hasStock
-        }).slice(0, 4)
-
+        const available = list.slice(0, 4)
         setFeaturedProducts(available)
       } catch (error) {
         console.error("Error fetching featured products:", error)
