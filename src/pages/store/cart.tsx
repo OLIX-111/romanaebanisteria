@@ -6,11 +6,29 @@ import Footer from "@/components/layout/Footer"
 import { useCart } from "@/hook/useCart"
 import { Open_Sans } from "next/font/google"
 import { X, Plus, Minus } from "lucide-react"
+import { useEffect, useState } from "react"
+import { supabase } from "@/utils/supabase"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function CartPage() {
   const { items, subtotal, compareTotal, savings, updateQty, removeItem, clear, count } = useCart()
+  const [isLoggedIn, setIsLoggedIn] = useState(false)
+
+  useEffect(() => {
+    let mounted = true
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return
+      setIsLoggedIn(!!data?.user)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setIsLoggedIn(!!session?.user)
+    })
+    return () => {
+      mounted = false
+      sub?.subscription.unsubscribe()
+    }
+  }, [])
 
   return (
     <main className={openSans.className}>
@@ -34,27 +52,29 @@ export default function CartPage() {
               Explora nuestros productos y agrega tus piezas favoritas para continuar.
             </p>
 
-            <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 max-w-lg mx-auto mb-8">
-              <h2 className="text-lg font-semibold text-slate-900 mb-3">¿Ya tienes cuenta?</h2>
-              <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                Inicia sesión para dar seguimiento a tus pedidos, acceder a descuentos exclusivos, guardar tus productos
-                favoritos y disfrutar de una experiencia personalizada.
-              </p>
-              <div className="flex flex-col sm:flex-row gap-3 justify-center">
-                <Link
-                  href="/login"
-                  className="inline-block px-6 py-3 bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors text-sm"
-                >
-                  Iniciar sesión
-                </Link>
-                <Link
-                  href="/register"
-                  className="inline-block px-6 py-3 border border-slate-300 text-slate-700 font-semibold tracking-tight hover:bg-slate-50 transition-colors text-sm"
-                >
-                  Crear cuenta
-                </Link>
+            {!isLoggedIn && (
+              <div className="bg-slate-50 border border-slate-200 rounded-lg p-6 max-w-lg mx-auto mb-8">
+                <h2 className="text-lg font-semibold text-slate-900 mb-3">¿Ya tienes cuenta?</h2>
+                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                  Inicia sesión para dar seguimiento a tus pedidos, acceder a descuentos exclusivos, guardar tus productos
+                  favoritos y disfrutar de una experiencia personalizada.
+                </p>
+                <div className="flex flex-col sm:flex-row gap-3 justify-center">
+                  <Link
+                    href="/login"
+                    className="inline-block px-6 py-3 bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors text-sm"
+                  >
+                    Iniciar sesión
+                  </Link>
+                  <Link
+                    href="/register"
+                    className="inline-block px-6 py-3 border border-slate-300 text-slate-700 font-semibold tracking-tight hover:bg-slate-50 transition-colors text-sm"
+                  >
+                    Crear cuenta
+                  </Link>
+                </div>
               </div>
-            </div>
+            )}
 
             <Link
               href="/store"
@@ -78,27 +98,29 @@ export default function CartPage() {
                 </button>
               </header>
 
-              <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
-                <h2 className="text-lg font-semibold text-slate-900 mb-3">¿Ya tienes cuenta?</h2>
-                <p className="text-sm text-slate-600 mb-4 leading-relaxed">
-                  Inicia sesión para dar seguimiento a tus pedidos, acceder a descuentos exclusivos y disfrutar de una
-                  experiencia personalizada.
-                </p>
-                <div className="flex flex-col sm:flex-row gap-3">
-                  <Link
-                    href="/login"
-                    className="inline-block px-6 py-3 bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors text-sm"
-                  >
-                    Iniciar sesión
-                  </Link>
-                  <Link
-                    href="/register"
-                    className="inline-block px-6 py-3 border border-slate-300 text-slate-700 font-semibold tracking-tight hover:bg-slate-50 transition-colors text-sm"
-                  >
-                    Crear cuenta
-                  </Link>
+              {!isLoggedIn && (
+                <div className="bg-slate-50 border border-slate-200 rounded-lg p-6">
+                  <h2 className="text-lg font-semibold text-slate-900 mb-3">¿Ya tienes cuenta?</h2>
+                  <p className="text-sm text-slate-600 mb-4 leading-relaxed">
+                    Inicia sesión para dar seguimiento a tus pedidos, acceder a descuentos exclusivos y disfrutar de una
+                    experiencia personalizada.
+                  </p>
+                  <div className="flex flex-col sm:flex-row gap-3">
+                    <Link
+                      href="/login"
+                      className="inline-block px-6 py-3 bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors text-sm"
+                    >
+                      Iniciar sesión
+                    </Link>
+                    <Link
+                      href="/register"
+                      className="inline-block px-6 py-3 border border-slate-300 text-slate-700 font-semibold tracking-tight hover:bg-slate-50 transition-colors text-sm"
+                    >
+                      Crear cuenta
+                    </Link>
+                  </div>
                 </div>
-              </div>
+              )}
 
               <ul className="divide-y divide-slate-200 border-y border-slate-200">
                 {items.map((item) => (
