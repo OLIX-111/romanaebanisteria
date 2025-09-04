@@ -74,6 +74,7 @@ export async function getProductWithDetailsById(id: string) {
   }
 }
 
+
 export async function getProductDetailMapped(id: string) {
   return getProductWithDetailsById(id);
 }
