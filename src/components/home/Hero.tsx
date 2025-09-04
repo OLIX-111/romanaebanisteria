@@ -93,7 +93,7 @@ export default function Hero() {
               subtitle: hero?.stats?.factory
             },
             {
-              Icon: <img src="/home/ebanisteria.png" className=" h-8" />,
+              Icon: <img src="/home/ebanisteria.png" alt="ebanistería" className="h-8" />,
               title: hero?.stats?.experience,
               subtitle: hero?.stats?.experienceSubtitle
             },

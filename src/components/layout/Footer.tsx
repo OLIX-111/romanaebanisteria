@@ -1,5 +1,6 @@
 import { useTranslation } from "@/hook/UseTranslation";
 import Link from "next/link";
+import Image from "next/image";
 
 const Footer = () => {
  
@@ -18,10 +19,13 @@ const Footer = () => {
           {/* Logo y Nombre */}
           <div className="mb-4 md:mb-0">
             <Link href="/">
-              <img src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png"
+              <Image
+                src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png"
                 alt="ROMAna Ebanistería Logo"
-                className="h-16 w-auto"
-                style={{ borderRadius: 0 }}
+                width={160}
+                height={64}
+                style={{ height: '4rem', width: 'auto', borderRadius: 0 }}
+                priority
               />
             </Link>
           </div>

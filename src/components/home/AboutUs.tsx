@@ -53,11 +53,12 @@ function CTA() {
                 ref={imageRef}
                 className="absolute inset-0 transition-all duration-300 ease-out will-change-transform"
             >
-                <img
+                <Image
                     src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/1grupochavonRomana_Ebanisteria.png"
-                    alt="Students on stairs"
-                    className="object-cover shadow-md aspect-square"
-                    sizes="100vw"
+                    alt="Romana Ebanistería"
+                    fill
+                    className="object-cover shadow-md"
+                    priority
                 />
             </div>
         </div>

@@ -1,4 +1,6 @@
 import { useEffect, useRef, useState } from 'react'
+import Link from 'next/link'
+import Image from 'next/image'
 import { useCart } from '@/hook/useCart'
 
 interface OrderSnapshotItem {
@@ -71,7 +73,10 @@ export default function CardnetSuccess() {
       clearedRef.current = true
     }
 
-    // Trigger order confirmation email once
+  }, [clear])
+
+  // Trigger order confirmation email once when result is available
+  useEffect(() => {
     try {
       const sent = localStorage.getItem('cardnet_order_email_sent')
       if (!sent) {
@@ -92,7 +97,7 @@ export default function CardnetSuccess() {
         }
       }
     } catch {}
-  }, [])
+  }, [result])
 
   return (
   <div className="relative min-h-screen flex items-center justify-center bg-gradient-to-br from-primary/20 via-white to-primary/40 p-6 overflow-hidden">
@@ -136,7 +141,7 @@ export default function CardnetSuccess() {
                 {snapshot.items.map(i => (
                   <div key={i.id} className="group flex items-center gap-4 text-sm px-3 py-2 rounded-md hover:bg-primary/10 transition-colors">
                     <div className="w-14 h-14 bg-white border border-primary/20 rounded-md flex items-center justify-center overflow-hidden ring-1 ring-white/50 shadow-sm group-hover:scale-105 transition-transform">
-                      {i.image ? <img src={i.image} alt={i.name} className="w-full h-full object-cover" /> : (
+                      {i.image ? <Image src={i.image} alt={i.name} width={56} height={56} className="object-cover" unoptimized /> : (
                         <svg className="w-5 h-5 text-primary/40" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2 1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
                       )}
                     </div>
@@ -200,14 +205,14 @@ export default function CardnetSuccess() {
           )}
 
           <div className="pt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
-            <a href="/store" className="group relative inline-flex items-center gap-2 px-8 py-4 bg-primary text-white font-semibold text-sm rounded-md shadow hover:brightness-110 transition-colors">
+            <Link href="/store" className="group relative inline-flex items-center gap-2 px-8 py-4 bg-primary text-white font-semibold text-sm rounded-md shadow hover:brightness-110 transition-colors">
               <span>Volver a la tienda</span>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0-4 4m4-4H3" /></svg>
               <span className="pointer-events-none absolute inset-0 rounded-md ring-2 ring-primary/0 group-hover:ring-primary/60 transition"></span>
-            </a>
-            <a href="/store/cart" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold text-sm rounded-md border border-primary/30 shadow-sm hover:border-primary/50 hover:bg-primary/10 transition-colors">
+            </Link>
+            <Link href="/store/cart" className="inline-flex items-center gap-2 px-8 py-4 bg-white text-primary font-semibold text-sm rounded-md border border-primary/30 shadow-sm hover:border-primary/50 hover:bg-primary/10 transition-colors">
               Ver carrito vacío
-            </a>
+            </Link>
           </div>
         </div>
       </div>

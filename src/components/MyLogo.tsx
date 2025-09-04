@@ -1,13 +1,17 @@
 // components/MyCustomLogo.tsx
 import React from 'react'
+import Image from 'next/image'
 
 const MyCustomLogo = () => {
   return (
-      <img
-        src="/romanaEbanistería-alt.png" // O la ruta que corresponda (puede estar en /public)
-        alt="RE"
-        style={{ width: '25px', height: '25px', objectFit: 'contain' }}
-      />
+    <Image
+      src="/romanaEbanistería-alt.png"
+      alt="Romana Ebanistería"
+      width={25}
+      height={25}
+      style={{ objectFit: 'contain' }}
+      priority
+    />
   )
 }
 
