@@ -258,6 +258,17 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               </Transition> */}
             </Menu>
             <motion.button
+              className={`hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full border transition-transform ${
+                isScrolled
+                  ? "text-gray-800 border-gray-300 hover:bg-gray-100"
+                  : "text-gray-50 border-white/60 hover:bg-white/10"
+              }`}
+              whileHover={{ scale: 1.05 }}
+              whileTap={{ scale: 0.95 }}
+            >
+              <Link href="/presupuesto">Crear presupuesto</Link>
+            </motion.button>
+            <motion.button
               className={`rounded-full transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
@@ -331,6 +342,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                 >
                   {header?.nav?.news}
                 </Link>
+                <Link
+                  href="/presupuesto"
+                  className="block text-lg font-medium text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Crear presupuesto
+                </Link>
               </div>
               <div className="mt-8 space-y-4">
                 {/* <Menu as="div" className="relative">
@@ -383,6 +401,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                     </Menu.Items>
                   </Transition>
                 </Menu> */}
+                <motion.button
+                  className="w-full bg-primary text-white px-4 py-5 transition-transform flex items-center justify-center"
+                  whileHover={{ scale: 1.05 }}
+                  whileTap={{ scale: 0.95 }}
+                >
+                  <Link href="/presupuesto">Crear presupuesto</Link>
+                </motion.button>
                 <motion.button
                   className="w-full bg-primary text-white px-4 py-5 transition-transform flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}

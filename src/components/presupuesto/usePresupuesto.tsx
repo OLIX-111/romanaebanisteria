@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { localProducts, LocalProduct } from "@/data/localProducts"
+import { type LocalProduct, type ProductVariant } from "@/data/localProducts"
 
 const ITBIS_RATE = 0.18
 
@@ -14,40 +14,65 @@ export function usePresupuesto() {
   const [selected, setSelected] = useState<Record<number, LocalProduct & { qty: number }>>({})
 
   useEffect(() => {
-    try {
+    const controller = new AbortController()
+    ;(async () => {
       setLoading(true)
-      setProducts(localProducts)
-    } catch (e: any) {
-      console.error(e)
-      setError("No se pudieron cargar los productos")
-    } finally {
-      setLoading(false)
-    }
+      setError(null)
+      try {
+        const params = new URLSearchParams()
+        params.set("page", "1")
+        params.set("limit", "200")
+        const res = await fetch(`/api/falitech/products?${params.toString()}`, {
+          signal: controller.signal,
+          cache: "no-store",
+        })
+        if (!res.ok) throw new Error(`Error ${res.status}`)
+        const json = await res.json()
+        const list: LocalProduct[] = (json.data || []).map((item: any) => ({
+          id: item.id,
+          name: item.name,
+          image: item.image,
+          price: item.price,
+          description: item.description,
+          type: item.type,
+          vendor: item.vendor,
+          status: item.status,
+          track_stock: item.track_stock,
+          total_qty: item.total_qty,
+          // variants: [] // opcional: no incluidos desde listado
+        }))
+        setProducts(list)
+      } catch (e: any) {
+        if (e.name !== "AbortError") {
+          console.error(e)
+          setError("No se pudieron cargar los productos")
+        }
+      } finally {
+        if (!controller.signal.aborted) setLoading(false)
+      }
+    })()
+    return () => controller.abort()
   }, [])
 
-  const uniqueTypes = useMemo(
-    () => Array.from(new Set(products.map((p) => p.type).filter(Boolean))),
-    [products]
-  )
-  const uniqueVendors = useMemo(
-    () => Array.from(new Set(products.map((p) => p.vendor).filter(Boolean))),
-    [products]
-  )
+  const uniqueTypes = useMemo(() => Array.from(new Set(products.map((p) => p.type).filter(Boolean))), [products])
+  const uniqueVendors = useMemo(() => Array.from(new Set(products.map((p) => p.vendor).filter(Boolean))), [products])
 
   const filteredProducts = useMemo(() => {
-    let list = products
-      .filter((p: any) => {
-        const status = (p.status || '').toString().toLowerCase()
-        const isUnavailable = status.includes('unavailable') || status.includes('out') || status.includes('agot')
-        const hasStock = p.track_stock ? (Number(p.total_qty) > 0) : true
-        return !isUnavailable && hasStock
-      })
+    let list = products.filter((p: any) => {
+      const status = (p.status || "").toString().toLowerCase()
+      const isUnavailable = status.includes("unavailable") || status.includes("out") || status.includes("agot")
+      const hasStock = p.track_stock ? Number(p.total_qty) > 0 : true
+      return !isUnavailable && hasStock
+    })
     if (filters.type.length) list = list.filter((p) => filters.type.includes(p.type))
     if (filters.vendor.length) list = list.filter((p) => filters.vendor.includes(p.vendor))
     if (search.trim()) {
       const q = search.toLowerCase()
       list = list.filter(
-        (p) => p.name.toLowerCase().includes(q) || p.description.toLowerCase().includes(q)
+        (p) =>
+          p.name.toLowerCase().includes(q) ||
+          p.description.toLowerCase().includes(q) ||
+          p.type.toLowerCase().includes(q),
       )
     }
     return list
@@ -70,13 +95,23 @@ export function usePresupuesto() {
     })
   }
 
-  const addItem = (p: LocalProduct) => {
+  const addItem = (p: LocalProduct, variant?: ProductVariant) => {
+    const productToAdd = variant
+      ? {
+          ...p,
+          name: `${p.name} - ${variant.name}`,
+          price: variant.price,
+          id: Number.parseInt(`${p.id}${variant.id.split("-")[1]}`),
+        }
+      : p
+
     setSelected((prev) => {
-      const existing = prev[p.id]
+      const existing = prev[productToAdd.id]
       const qty = (existing?.qty || 0) + 1
-      return { ...prev, [p.id]: { ...p, qty } }
+      return { ...prev, [productToAdd.id]: { ...productToAdd, qty } }
     })
   }
+
   const removeItem = (id: number) => {
     setSelected((prev) => {
       const copy = { ...prev }
@@ -84,17 +119,16 @@ export function usePresupuesto() {
       return copy
     })
   }
+
   const changeQty = (id: number, qty: number) => {
     if (qty <= 0) return removeItem(id)
     setSelected((prev) => ({ ...prev, [id]: { ...prev[id], qty } }))
   }
+
   const clearSelected = () => setSelected({})
 
   const selectedList = useMemo(() => Object.values(selected), [selected])
-  const subtotal = useMemo(
-    () => selectedList.reduce((s, it) => s + it.price * it.qty, 0),
-    [selectedList]
-  )
+  const subtotal = useMemo(() => selectedList.reduce((s, it) => s + it.price * it.qty, 0), [selectedList])
   const tax = useMemo(() => subtotal * ITBIS_RATE, [subtotal])
   const total = useMemo(() => subtotal + tax, [subtotal, tax])
 
@@ -119,20 +153,30 @@ export function usePresupuesto() {
     line(20)
 
     let y = 28
-    doc.setFontSize(12); doc.text("Items", 10, y); y += 6
+    doc.setFontSize(12)
+    doc.text("Items", 10, y)
+    y += 6
     doc.setFontSize(10)
     selectedList.forEach((it, idx) => {
-      if (y > 270) { doc.addPage(); y = 20 }
-      doc.text(`${idx + 1}. ${it.name}`, 10, y); y += 5
+      if (y > 270) {
+        doc.addPage()
+        y = 20
+      }
+      doc.text(`${idx + 1}. ${it.name}`, 10, y)
+      y += 5
       doc.text(`Cantidad: ${it.qty}`, 12, y)
       doc.text(`Precio: ${formatCurrency(it.price)}`, 70, y)
       doc.text(`Subtotal: ${formatCurrency(it.price * it.qty)}`, 120, y)
       y += 6
     })
-    y += 4; line(y); y += 8
+    y += 4
+    line(y)
+    y += 8
     doc.setFontSize(12)
-    doc.text(`Subtotal: ${formatCurrency(subtotal)}`, 140, y); y += 6
-    doc.text(`Impuesto (18%): ${formatCurrency(tax)}`, 140, y); y += 6
+    doc.text(`Subtotal: ${formatCurrency(subtotal)}`, 140, y)
+    y += 6
+    doc.text(`Impuesto (18%): ${formatCurrency(tax)}`, 140, y)
+    y += 6
     doc.text(`Total: ${formatCurrency(total)}`, 140, y)
     doc.save(`presupuesto-${Date.now()}.pdf`)
   }
@@ -190,7 +234,9 @@ export function usePresupuesto() {
         }
       }
       localStorage.setItem("cart_items", JSON.stringify(items))
-      try { window.dispatchEvent(new Event("cart-updated")) } catch {}
+      try {
+        window.dispatchEvent(new Event("cart-updated"))
+      } catch {}
       window.location.href = "/store/cart"
     } catch (e) {
       console.error("No se pudo proceder a comprar:", e)
@@ -200,18 +246,32 @@ export function usePresupuesto() {
 
   return {
     // state
-    loading, error,
-    products, filters, search,
-    selectedList, subtotal, tax, total,
-    uniqueTypes, uniqueVendors, counts,
+    loading,
+    error,
+    products,
+    filters,
+    search,
+    selectedList,
+    subtotal,
+    tax,
+    total,
+    uniqueTypes,
+    uniqueVendors,
+    counts,
     filteredProducts,
     // actions
-    setSearch, onFilterChange, addItem, removeItem, changeQty, clearSelected,
-    exportPDF, proceedToBuy,
+    setSearch,
+    onFilterChange,
+    addItem,
+    removeItem,
+    changeQty,
+    clearSelected,
+    exportPDF,
+    proceedToBuy,
   }
 }
 
-export function formatCurrency(n: number, currency: string = "DOP") {
+export function formatCurrency(n: number, currency = "DOP") {
   try {
     return new Intl.NumberFormat("es-DO", { style: "currency", currency }).format(n)
   } catch {
