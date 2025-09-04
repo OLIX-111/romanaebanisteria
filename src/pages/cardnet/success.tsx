@@ -70,6 +70,28 @@ export default function CardnetSuccess() {
       try { clear(); } catch {}
       clearedRef.current = true
     }
+
+    // Trigger order confirmation email once
+    try {
+      const sent = localStorage.getItem('cardnet_order_email_sent')
+      if (!sent) {
+        const snapRaw = localStorage.getItem('cardnet_order_snapshot')
+        if (snapRaw) {
+          const snap = JSON.parse(snapRaw)
+          fetch('/api/order/confirm', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ snapshot: snap, payment: result })
+          }).then(r => r.json()).then(resp => {
+            if (resp?.trackingCode) {
+              snap.trackingCode = resp.trackingCode
+              localStorage.setItem('cardnet_order_snapshot', JSON.stringify(snap))
+            }
+          }).catch(()=>{})
+          localStorage.setItem('cardnet_order_email_sent', '1')
+        }
+      }
+    } catch {}
   }, [])
 
   return (
@@ -147,7 +169,7 @@ export default function CardnetSuccess() {
           )}
 
           {/* Resultado del pago */}
-          {result && !loading && (
+          {/* {result && !loading && (
             <div className="mt-10 border border-primary/20 rounded-lg p-6 bg-primary/10 backdrop-blur-sm shadow-inner animate-fade-in">
               <p className="text-sm font-semibold mb-4 text-primary tracking-wide flex items-center gap-2">
                 <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="1.5" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75" /></svg>
@@ -171,7 +193,7 @@ export default function CardnetSuccess() {
                 <p className="mt-4 text-[11px] text-primary/80">Código original: {result.ResponseCode}</p>
               )}
             </div>
-          )}
+          )} */}
 
           {!snapshot && !loading && (
             <p className="text-center text-sm text-gray-500">No se encontró el resumen del pedido.</p>
