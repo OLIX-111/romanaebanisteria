@@ -1,7 +1,7 @@
 "use client"
 
 import Image from "next/image"
-import { Download, ShoppingCart } from "lucide-react"
+import { Download } from "lucide-react"
 import { formatCurrency } from "./usePresupuesto"
 
 interface Item {
@@ -24,12 +24,11 @@ interface RightColumnProps {
   onRemove: (id: number) => void
   onClear: () => void
   onDownload: () => void
-  onProceed: () => void
 }
 
-export default function RightColumn({ items, subtotal, tax, total, onQtyChange, onRemove, onClear, onDownload, onProceed }: RightColumnProps) {
+export default function RightColumn({ items, subtotal, tax, total, onQtyChange, onRemove, onClear, onDownload }: RightColumnProps) {
   return (
-    <section className="lg:col-span-2">
+  <section className="lg:col-span-2 lg:sticky lg:top-24 self-start">
       <div className="border border-gray-200">
         <div className="p-4 border-b flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-800">Seleccionados</h2>
@@ -89,20 +88,13 @@ export default function RightColumn({ items, subtotal, tax, total, onQtyChange, 
         </div>
       </div>
 
-      <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-end">
+  <div className="mt-4 flex flex-col sm:flex-row gap-3 justify-end">
         <button
           onClick={onDownload}
           disabled={items.length === 0}
           className={`inline-flex items-center justify-center gap-2 border px-5 py-3 text-sm ${items.length ? "hover:bg-gray-50" : "opacity-50 cursor-not-allowed"}`}
         >
           <Download size={16} /> Descargar presupuesto (PDF)
-        </button>
-        <button
-          onClick={onProceed}
-          disabled={items.length === 0}
-          className={`inline-flex items-center justify-center gap-2 bg-primary text-white px-5 py-3 text-sm ${items.length ? "hover:bg-primary/90" : "opacity-50 cursor-not-allowed"}`}
-        >
-          <ShoppingCart size={16} /> Proceder a comprar
         </button>
       </div>
     </section>

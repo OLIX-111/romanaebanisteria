@@ -8,6 +8,36 @@ export interface ProductVariant {
   image?: string
 }
 
+export interface CustomizationImage {
+  id?: string
+  alt_text?: string
+  image_url: string
+}
+
+export interface CustomizationSubOption {
+  value_id: string
+  name: string
+  price_adjustment?: number
+  is_default?: boolean
+  image?: CustomizationImage | null
+}
+
+export interface CustomizationOption {
+  value_id: string
+  name: string
+  price_adjustment?: number
+  is_default?: boolean
+  image?: CustomizationImage | null
+  sub_options?: CustomizationSubOption[]
+}
+
+export interface CustomizationAttribute {
+  attribute_id: string
+  attribute_name: string
+  selection_type: "single" | "multiple"
+  options: CustomizationOption[]
+}
+
 export interface LocalProduct {
   id: number
   name: string
@@ -20,6 +50,7 @@ export interface LocalProduct {
   track_stock?: boolean
   total_qty?: number
   variants?: ProductVariant[]
+  customizationAttributes?: CustomizationAttribute[]
 }
 
 export const localProducts: LocalProduct[] = [
