@@ -1,7 +1,7 @@
 "use client"
 
 import { useEffect, useMemo, useState } from "react"
-import { type LocalProduct, type ProductVariant } from "@/data/localProducts"
+import { type LocalProduct, type ProductVariant, type CustomizationAttribute, type CustomizationOption, type CustomizationSubOption, type CustomizationImage } from "@/data/localProducts"
 
 const ITBIS_RATE = 0.18
 
@@ -22,25 +22,59 @@ export function usePresupuesto() {
         const params = new URLSearchParams()
         params.set("page", "1")
         params.set("limit", "200")
-        const res = await fetch(`/api/falitech/products?${params.toString()}`, {
+        const res = await fetch(`/api/presupuesto/products?${params.toString()}`, {
           signal: controller.signal,
           cache: "no-store",
         })
         if (!res.ok) throw new Error(`Error ${res.status}`)
         const json = await res.json()
-        const list: LocalProduct[] = (json.data || []).map((item: any) => ({
-          id: item.id,
-          name: item.name,
-          image: item.image,
-          price: item.price,
-          description: item.description,
-          type: item.type,
-          vendor: item.vendor,
-          status: item.status,
-          track_stock: item.track_stock,
-          total_qty: item.total_qty,
-          // variants: [] // opcional: no incluidos desde listado
-        }))
+        const list: LocalProduct[] = (json.data || []).map((item: any) => {
+          const id = hashStringToNumber(String(item.product_id ?? item.id ?? item.name))
+          const image = item.main_image?.image_url || item.image || ""
+          const customizationAttributes: CustomizationAttribute[] | undefined = Array.isArray(item.customization_attributes)
+            ? item.customization_attributes.map((attr: any) => ({
+                attribute_id: attr.attribute_id,
+                attribute_name: attr.attribute_name,
+                selection_type: attr.selection_type,
+                options: Array.isArray(attr.options)
+                  ? attr.options.map((opt: any): CustomizationOption => ({
+                      value_id: opt.value_id,
+                      name: opt.name,
+                      price_adjustment: opt.price_adjustment,
+                      is_default: opt.is_default,
+                      image: opt.image
+                        ? ({ id: opt.image.id, alt_text: opt.image.alt_text, image_url: opt.image.image_url } as CustomizationImage)
+                        : null,
+                      sub_options: Array.isArray(opt.sub_options)
+                        ? opt.sub_options.map((sub: any): CustomizationSubOption => ({
+                            value_id: sub.value_id,
+                            name: sub.name,
+                            price_adjustment: sub.price_adjustment,
+                            is_default: sub.is_default,
+                            image: sub.image
+                              ? ({ id: sub.image.id, alt_text: sub.image.alt_text, image_url: sub.image.image_url } as CustomizationImage)
+                              : null,
+                          }))
+                        : undefined,
+                    }))
+                  : [],
+              }))
+            : undefined
+
+          return {
+            id,
+            name: item.name,
+            image,
+            price: Number(item.price ?? 0),
+            description: item.description ?? "",
+            type: item.category ?? item.type ?? "",
+            vendor: item.vendor ?? "Romana",
+            status: item.status ?? "available",
+            track_stock: Boolean(item.track_stock ?? false),
+            total_qty: Number(item.total_qty ?? 0),
+            customizationAttributes,
+          }
+        })
         setProducts(list)
       } catch (e: any) {
         if (e.name !== "AbortError") {
@@ -53,6 +87,35 @@ export function usePresupuesto() {
     })()
     return () => controller.abort()
   }, [])
+
+  // Hidratar seleccionados desde localStorage en el primer render
+  useEffect(() => {
+    try {
+      const raw = localStorage.getItem("presu_selected")
+      if (raw) {
+        const parsed = JSON.parse(raw)
+        if (parsed && typeof parsed === 'object') {
+          setSelected(parsed)
+        }
+      }
+    } catch {}
+  }, [])
+
+  // Persistir seleccionados en localStorage
+  useEffect(() => {
+    try { localStorage.setItem("presu_selected", JSON.stringify(selected)) } catch {}
+  }, [selected])
+
+  function hashStringToNumber(str: string): number {
+    let hash = 0
+    for (let i = 0; i < str.length; i++) {
+      const chr = str.charCodeAt(i)
+      hash = (hash << 5) - hash + chr
+      hash |= 0 // Convert to 32bit integer
+    }
+    // Ensure positive and add a large offset to reduce collisions when concatenating with variant ids
+    return Math.abs(hash) + 1_000_000
+  }
 
   const uniqueTypes = useMemo(() => Array.from(new Set(products.map((p) => p.type).filter(Boolean))), [products])
   const uniqueVendors = useMemo(() => Array.from(new Set(products.map((p) => p.vendor).filter(Boolean))), [products])
@@ -152,7 +215,26 @@ export function usePresupuesto() {
     doc.text(new Date().toLocaleString(), 190, 15, { align: "right" })
     line(20)
 
-    let y = 28
+    // Datos del cliente (si existen en localStorage)
+    let y = 26
+    try {
+      const raw = localStorage.getItem('presu_customer')
+      if (raw) {
+        const c = JSON.parse(raw)
+        doc.setFontSize(11)
+        doc.text(`Cliente: ${c.nombre || ''}`, 10, y)
+        doc.text(`Tipo: ${c.tipo || ''}`, 100, y)
+        y += 5
+        doc.setFontSize(10)
+        if (c.numero) doc.text(`Tel: ${c.numero}`, 10, y)
+        if (c.email) doc.text(`Email: ${c.email}`, 60, y)
+        if (c.tipo === 'Desarrollador' && c.empresa) doc.text(`Empresa: ${c.empresa}`, 120, y)
+        y += 5
+        if (c.tipo === 'Desarrollador' && c.website) { doc.text(`Website: ${c.website}`, 10, y); y += 5 }
+        if (c.tipo === 'Agente del codia' && c.codia) { doc.text(`CODIA: ${c.codia}`, 10, y); y += 5 }
+      }
+    } catch {}
+    if (y < 28) y = 28
     doc.setFontSize(12)
     doc.text("Items", 10, y)
     y += 6
@@ -169,15 +251,16 @@ export function usePresupuesto() {
       doc.text(`Subtotal: ${formatCurrency(it.price * it.qty)}`, 120, y)
       y += 6
     })
-    y += 4
-    line(y)
-    y += 8
-    doc.setFontSize(12)
-    doc.text(`Subtotal: ${formatCurrency(subtotal)}`, 140, y)
-    y += 6
-    doc.text(`Impuesto (18%): ${formatCurrency(tax)}`, 140, y)
-    y += 6
-    doc.text(`Total: ${formatCurrency(total)}`, 140, y)
+  y += 4
+  line(y)
+  y += 8
+  doc.setFontSize(12)
+  doc.text(`Subtotal: ${formatCurrency(subtotal)}`, 140, y)
+  y += 6
+  doc.text(`Impuesto (18%): ${formatCurrency(tax)}`, 140, y)
+  y += 6
+  doc.setFontSize(13)
+  doc.text(`Total: ${formatCurrency(total)}`, 140, y)
     doc.save(`presupuesto-${Date.now()}.pdf`)
   }
 
