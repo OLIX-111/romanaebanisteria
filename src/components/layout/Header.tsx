@@ -34,28 +34,26 @@ export default function Header({ enableScroll = false }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Cart count from localStorage
+  // Cart count from localStorage (sync with useCart)
   useEffect(() => {
-    const readCount = () => {
+    const KEY = 'romana_cart_v1'
+    const read = () => {
       try {
-        const raw = localStorage.getItem("cart_items")
-        const items: any[] = raw ? JSON.parse(raw) : []
-        const count = items.reduce((sum, it) => sum + (Number(it?.num) || 0), 0)
-        setCartCount(count)
-      } catch {
-        setCartCount(0)
-      }
+        const raw = localStorage.getItem(KEY)
+        if (!raw) { setCartCount(0); return }
+        const parsed = JSON.parse(raw) as { items?: { quantity?: number }[] }
+        const c = (parsed.items || []).reduce((acc, i: any) => acc + (Number(i.quantity) || 0), 0)
+        setCartCount(c)
+      } catch { setCartCount(0) }
     }
-    readCount()
-    const onStorage = (e: StorageEvent) => {
-      if (e.key === "cart_items") readCount()
-    }
-    const onCustom = () => readCount()
-    window.addEventListener("storage", onStorage)
-    window.addEventListener("cart-updated", onCustom as any)
+    read()
+    const onStorage = (e: StorageEvent) => { if (e.key === KEY) read() }
+    const onCustom = () => read()
+    window.addEventListener('storage', onStorage)
+    window.addEventListener('romana-cart-updated', onCustom as any)
     return () => {
-      window.removeEventListener("storage", onStorage)
-      window.removeEventListener("cart-updated", onCustom as any)
+      window.removeEventListener('storage', onStorage)
+      window.removeEventListener('romana-cart-updated', onCustom as any)
     }
   }, [])
 

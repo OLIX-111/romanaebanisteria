@@ -1,225 +1,128 @@
-"use client"
+"use client";
+import Head from 'next/head';
+import Link from 'next/link';
+import Header from '@/components/layout/Header';
+import Footer from '@/components/layout/Footer';
+import { useCart } from '@/hook/useCart';
+import { Open_Sans } from 'next/font/google';
+import { X, Plus, Minus } from 'lucide-react';
 
-import Footer from "@/components/layout/Footer"
-import Header from "@/components/layout/Header"
-import { Open_Sans } from "next/font/google"
-import { useEffect, useState, useCallback } from "react"
-import Image from "next/image"
-import { X } from "lucide-react"
-
-const openSans = Open_Sans({ subsets: ["latin"] })
-
-interface CartItem {
-  id: number
-  product_id: number
-  name: string
-  desc: string
-  image: string
-  price: number
-  compare_price: number
-  currency: string
-  num: number
-  subtotal: number
-}
-
-interface Cart {
-  id: number
-  created_at: string
-  updated_at: string
-  items: CartItem[]
-  num_of_items: number
-  total_price: number
-}
+const openSans = Open_Sans({ subsets: ['latin'] });
 
 export default function CartPage() {
-  const [cart, setCart] = useState<Cart | null>(null)
-  const [loading, setLoading] = useState(true)
-
-  // Cargar carrito desde localStorage
-  const loadLocalCart = useCallback(() => {
-    try {
-      const raw = localStorage.getItem("cart_items")
-      const items: any[] = raw ? JSON.parse(raw) : []
-      const mapped: Cart = {
-        id: 0,
-        created_at: "",
-        updated_at: "",
-        items: items as any,
-        num_of_items: items.reduce((s, it) => s + (it.num || 0), 0),
-        total_price: items.reduce((s, it) => s + (it.subtotal || 0), 0)
-      }
-      setCart(mapped)
-      try { window.dispatchEvent(new Event("cart-updated")) } catch {}
-    } catch {
-      setCart({ id: 0, created_at: "", updated_at: "", items: [], num_of_items: 0, total_price: 0 })
-    } finally {
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    loadLocalCart()
-  }, [loadLocalCart])
-
-  // Función para remover un ítem (se utiliza product_id como variant_id)
-  const removeItem = (variant_id: number) => {
-    try {
-      const raw = localStorage.getItem("cart_items")
-      const items: any[] = raw ? JSON.parse(raw) : []
-      const filtered = items.filter(it => (it.variant_id || it.id) !== variant_id)
-      localStorage.setItem("cart_items", JSON.stringify(filtered))
-      loadLocalCart()
-      try { window.dispatchEvent(new Event("cart-updated")) } catch {}
-    } catch (e) {
-      console.error("Error al remover localmente:", e)
-    }
-  }
-
-  // Función para vaciar el carrito
-  const clearCart = () => {
-    try {
-      localStorage.removeItem("cart_items")
-      loadLocalCart()
-      try { window.dispatchEvent(new Event("cart-updated")) } catch {}
-    } catch (e) {
-      console.error("Error al limpiar carrito local:", e)
-    }
-  }
-
-  // Calcular resumen del pedido a partir de los ítems del carrito
-  const orderSummary = cart
-    ? {
-        subtotal: cart.items.reduce((sum, item) => sum + item.price * item.num, 0),
-        tax: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 0.0,
-        total: cart.items.reduce((sum, item) => sum + item.price * item.num, 0) * 1.0,
-      }
-    : { subtotal: 0, tax: 0, total: 0 }
-
-  // Función para proceder al checkout
-  const checkout = () => {
-    console.log("Procediendo al checkout", { cart, summary: orderSummary })
-    // Aquí iría la lógica para redirigir al proceso de pago
-    window.location.href = "/checkout" // O la ruta que corresponda
-  }
-
-  // Financiar carrito completo
-  const financeCart = () => {
-    if (!cart || !cart.items || cart.items.length === 0) return
-    try {
-      const snapshot = cart.items.map((it) => ({
-        productId: it.product_id || it.id,
-        name: it.name,
-        qty: it.num,
-        price: it.price,
-        subtotal: (it.price || 0) * (it.num || 0),
-        currency: it.currency || "DOP",
-        image: it.image
-      }))
-      try {
-        sessionStorage.removeItem("product_financing_item")
-        sessionStorage.removeItem("financing_cart_items")
-        sessionStorage.setItem("financing_source", "cart")
-        sessionStorage.setItem("financing_cart_items", JSON.stringify(snapshot))
-      } catch {}
-
-      const amount = Math.round(orderSummary.total || 0)
-      const down = Math.max(0, Math.round(amount * 0.2))
-      const currency = cart.items[0]?.currency || "DOP"
-      const params = new URLSearchParams({
-        amount: String(amount),
-        down: String(down),
-        currency
-      })
-      // Vaciar carrito al iniciar financiamiento
-      try {
-        localStorage.removeItem("cart_items")
-        try { window.dispatchEvent(new Event("cart-updated")) } catch {}
-      } catch {}
-      window.location.href = `/financing/cart?${params.toString()}`
-    } catch (e) {
-      console.error("No se pudo preparar el financiamiento del carrito:", e)
-    }
-  }
-
-  if (loading) {
-    return <div className="text-center mt-8">Cargando carrito...</div>
-  }
-
-  // Removed error rendering condition
-  // if (error) {
-  //   return <div className="text-center mt-8 text-red-500">{error}</div>
-  // }
-
-  // Añadir esta constante cerca del inicio de la función del componente
-  const isCartEmpty = !cart || cart.items.length === 0
+  const { items, subtotal, compareTotal, savings, updateQty, removeItem, clear, count } = useCart();
 
   return (
     <main className={openSans.className}>
+      <Head>
+        <title>Carrito | Romana Ebanistería</title>
+      </Head>
       <Header />
-      <div className="container mx-auto px-4 py-12 mt-24">
-        <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Carrito</h1>
+      <div className="container mx-auto mt-24 px-6 pb-32 pt-10">
+        <nav className="mb-10 text-sm text-slate-500 flex items-center gap-2">
+          <Link href="/store" className="hover:text-slate-700 transition-colors">Tienda</Link>
+          <span className="text-slate-400">•</span>
+          <span className="text-slate-700 font-medium">Carrito</span>
+        </nav>
 
-        <div className="mt-8 grid grid-cols-1 lg:grid-cols-3 gap-12">
-          {/* Lista de productos */}
-          <div className="lg:col-span-2 space-y-0 divide-y divide-gray-200 border border-gray-200">
-            {cart && cart.items.length > 0 ? (
-              cart.items.map((item) => (
-                <div key={item.id} className="p-4">
-                  <div className="flex flex-col sm:flex-row gap-6">
-                    <div className="w-28 h-28 border border-gray-200 flex-shrink-0">
-                      <Image src={item.image || "/placeholder.svg"} alt={item.name} width={112} height={112} className="w-full h-full object-cover" />
+        {count === 0 && (
+          <div className="text-center py-24">
+            <h1 className="text-3xl font-bold tracking-tight mb-4">Tu carrito está vacío</h1>
+            <p className="text-slate-600 mb-8 max-w-md mx-auto">Explora nuestros productos y agrega tus piezas favoritas para continuar.</p>
+            <Link href="/store" className="inline-block px-8 py-4 bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors">Ver productos</Link>
+          </div>
+        )}
+
+        {count > 0 && (
+          <div className="grid gap-12 lg:grid-cols-12">
+            <div className="lg:col-span-7 space-y-6">
+              <header className="flex items-end justify-between pb-2 border-b border-slate-200">
+                <h1 className="text-3xl font-bold tracking-tight">Carrito</h1>
+                <button onClick={clear} className="text-sm text-slate-500 hover:text-slate-800 underline underline-offset-4">Vaciar</button>
+              </header>
+              <ul className="divide-y divide-slate-200 border-y border-slate-200">
+                {items.map(item => (
+                  <li key={item.id} className="flex gap-5 py-6">
+                    <div className="w-24 h-24 bg-slate-100 flex items-center justify-center overflow-hidden border border-slate-200">
+                      {item.image ? (
+                        // eslint-disable-next-line @next/next/no-img-element
+                        <img src={item.image} alt={item.name} className="object-cover w-full h-full" />
+                      ) : (
+                        <span className="text-xs text-slate-400">Sin imagen</span>
+                      )}
                     </div>
-                    <div className="flex-1">
-                      <div className="flex items-start justify-between gap-4">
-                        <h3 className="text-sm font-medium text-gray-900 leading-6">{item.name}</h3>
-                        <button onClick={() => removeItem(item.product_id)} className="text-gray-500 hover:text-gray-800"><X size={18} /></button>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-semibold text-slate-900 leading-tight line-clamp-2 mb-1">{item.name}</p>
+                      <div className="flex items-center gap-3 text-sm text-slate-500 mb-3">
+                        {item.comparePrice && item.comparePrice > item.price && (
+                          <span className="line-through">{item.comparePrice.toLocaleString('es-DO',{style:'currency',currency:'DOP'})}</span>
+                        )}
+                        <span className="font-semibold text-slate-900">{item.price.toLocaleString('es-DO',{style:'currency',currency:'DOP'})}</span>
                       </div>
-                      <div className="mt-3 flex items-center justify-between text-sm">
-                        <div className="text-gray-700">Cantidad: {item.num}</div>
-                        <div className="font-semibold text-gray-900">{new Intl.NumberFormat("es-DO", { style: "currency", currency: item.currency || "DOP" }).format(item.price * item.num)}</div>
+                      <div className="flex items-center gap-4">
+                        <div className="flex items-center border border-slate-300 divide-x divide-slate-300">
+                          <button
+                            onClick={() => updateQty(item.id, item.quantity - 1)}
+                            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                            disabled={item.quantity <= 1}
+                            aria-label="Disminuir"
+                          >
+                            <Minus size={14} />
+                          </button>
+                          <span className="w-10 text-center text-sm font-medium select-none">{item.quantity}</span>
+                          <button
+                            onClick={() => updateQty(item.id, item.quantity + 1)}
+                            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-40"
+                            disabled={item.max !== undefined && item.quantity >= item.max}
+                            aria-label="Incrementar"
+                          >
+                            <Plus size={14} />
+                          </button>
+                        </div>
+                        <button
+                          onClick={() => removeItem(item.id)}
+                          className="text-xs text-slate-500 hover:text-red-600 font-medium"
+                        >
+                          Eliminar
+                        </button>
                       </div>
                     </div>
+                    <button
+                      onClick={() => removeItem(item.id)}
+                      className="text-slate-400 hover:text-red-600 self-start"
+                      aria-label="Eliminar línea"
+                    >
+                      <X size={16} />
+                    </button>
+                  </li>
+                ))}
+              </ul>
+            </div>
+            <aside className="lg:col-span-5 lg:sticky lg:top-10 h-fit space-y-6">
+              <div className="border border-slate-300 p-6 space-y-5">
+                <h2 className="text-lg font-semibold tracking-tight">Resumen</h2>
+                <div className="space-y-3 text-sm">
+                  <div className="flex justify-between"><span className="text-slate-600">Subtotal</span><span className="font-medium">{subtotal.toLocaleString('es-DO',{style:'currency',currency:'DOP'})}</span></div>
+                  {savings > 0 && (
+                    <div className="flex justify-between text-emerald-600 text-xs"><span>Ahorro</span><span>-{savings.toLocaleString('es-DO',{style:'currency',currency:'DOP'})}</span></div>
+                  )}
+                  <div className="flex justify-between"><span className="text-slate-600">Envío</span><span className="font-medium">Gratis</span></div>
+                  <div className="pt-2 border-t border-slate-200 flex justify-between font-semibold text-base">
+                    <span>Total</span>
+                    <span>{subtotal.toLocaleString('es-DO',{style:'currency',currency:'DOP'})}</span>
                   </div>
                 </div>
-              ))
-            ) : (
-              <div className="p-6 text-sm text-gray-600">No hay productos en el carrito.</div>
-            )}
-          </div>
-
-          {/* Resumen del pedido */}
-          <div className="lg:col-span-1">
-            <div className="border border-gray-200 p-6">
-              <h2 className="text-sm font-semibold tracking-wide text-gray-800">Resumen</h2>
-              <div className="mt-4 space-y-2 text-sm">
-                <div className="flex justify-between text-gray-700">
-                  <span>Subtotal</span>
-                  <span>{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(orderSummary.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-gray-700">
-                  <span>Impuestos</span>
-                  <span>{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(orderSummary.tax)}</span>
-                </div>
-                <div className="flex justify-between border-t border-gray-200 pt-3 font-semibold text-gray-900">
-                  <span>Total</span>
-                  <span>{new Intl.NumberFormat("es-DO", { style: "currency", currency: "DOP" }).format(orderSummary.total)}</span>
-                </div>
+                <button className="w-full mt-4 px-6 py-4 bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors">Proceder a pago</button>
+                <p className="text-[11px] text-slate-500 leading-relaxed">Al continuar aceptas nuestros términos y políticas. El cálculo de impuestos o financiamiento se definirá en el checkout.</p>
               </div>
-              <button onClick={financeCart} disabled={isCartEmpty} className={`mt-6 w-full border border-primary text-primary px-6 py-3 text-sm font-semibold hover:bg-primary/5 focus:outline-none focus:ring-2 focus:ring-primary/20 ${isCartEmpty ? "opacity-50 cursor-not-allowed" : ""}`}>
-                Financiar carrito
-              </button>
-              <button onClick={checkout} disabled={isCartEmpty} className={`mt-6 w-full ${isCartEmpty ? "bg-gray-400" : "bg-primary hover:bg-primary/90"} px-6 py-3 text-sm font-semibold text-white focus:outline-none focus:ring-2 focus:ring-primary/40`}>
-                Proceder al pago
-              </button>
-              <button onClick={clearCart} disabled={isCartEmpty} className={`mt-3 w-full border border-gray-300 px-6 py-3 text-sm font-medium text-gray-700 hover:bg-gray-50 ${isCartEmpty ? "opacity-50 cursor-not-allowed" : ""}`}>
-                Vaciar carrito
-              </button>
-            </div>
+              <div className="text-xs text-slate-500 leading-relaxed">
+                <p><strong className="font-semibold text-slate-700">Financiamiento:</strong> Si un producto es financiable podrás simular cuotas en su página de detalle antes de llegar aquí.</p>
+              </div>
+            </aside>
           </div>
-        </div>
+        )}
       </div>
       <Footer />
     </main>
-  )
+  );
 }
-

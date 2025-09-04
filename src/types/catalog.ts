@@ -41,6 +41,7 @@ export interface MappedVariant {
   stock: number;
   onSale: boolean;
   salePrice?: number | null;
+  isFinanceable: boolean;
 }
 
 export interface MappedProductDetail {
@@ -76,7 +77,8 @@ export function mapProduct(raw: ProductSource): MappedProductDetail {
       gallery,          // solo secondary_images
       stock: v.stock,
       onSale: v.is_on_sale,
-      salePrice: v.sale_price
+      salePrice: v.sale_price,
+      isFinanceable: v.is_financeable
     };
     if (v.is_on_sale) {
       variant.comparePrice = v.price;

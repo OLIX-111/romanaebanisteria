@@ -13,8 +13,11 @@ import { Home, Share2, ShieldCheck, Truck } from "lucide-react"
 import { ProductGallery } from "@/components/store/modern/ProductGallery"
 import { VariantSelector } from "@/components/store/modern/VariantSelector"
 import { PriceBlock } from "@/components/store/modern/PriceBlock"
+import { ProductFinanceCalculator } from "@/components/store/modern/ProductFinanceCalculator"
 import { ProductTabs } from "@/components/store/modern/ProductTabs"
-import { mapProduct, type MappedProductDetail, type ProductSource } from "@/types/catalog"
+import { type MappedProductDetail } from "@/types/catalog"
+import { getProductWithDetailsById } from '@/utils/supabase'
+import { useCart } from "@/hook/useCart"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -29,6 +32,7 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
   const { storePage } = dict
   const [selectedVariantId, setSelectedVariantId] = useState<string>(product?.variants?.[0]?.id || "")
   const [shareUrl, setShareUrl] = useState<string>("")
+  const { addItem } = useCart()
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -81,8 +85,16 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
     activeVariant?.comparePrice && activeVariant.comparePrice > priceNumber ? activeVariant.comparePrice : undefined
 
   function handleAddToCart() {
-    // Placeholder: lógica real se integrará luego
-    console.log("Agregar a carrito", activeVariant?.id)
+    if (!activeVariant) return
+    addItem({
+      productId: p.id,
+      variantId: activeVariant.id,
+      name: p.name + (activeVariant.name ? ` - ${activeVariant.name}` : ""),
+      price: activeVariant.price,
+      comparePrice: activeVariant.comparePrice,
+      image: activeVariant.image || p.thumbnail,
+      max: activeVariant.stock,
+    })
   }
 
   async function handleShareProduct() {
@@ -111,7 +123,7 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
         <meta property="og:image" content={activeVariant?.image || p.thumbnail || ""} />
       </Head>
       <Header />
-      <div className="container mx-auto mt-28 px-6 py-16">
+  <div className="container mx-auto mt-24 px-6 pb-28 pt-10">
         <nav className="mb-8 text-sm text-slate-500 flex items-center gap-2">
           <Link href="/store" className="hover:text-slate-700 transition-colors">
             {storePage.title}
@@ -119,62 +131,57 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
           <span className="text-slate-400">•</span>
           <span className="text-slate-700 truncate max-w-[60%] font-medium">{p.name}</span>
         </nav>
-        <div className="grid gap-y-16 gap-x-16 lg:grid-cols-12">
-          <div className="lg:col-span-7 xl:col-span-7">
+        <div className="grid gap-y-20 gap-x-16 lg:grid-cols-12">
+          <div className="lg:col-span-7 xl:col-span-7 order-2 lg:order-1">
             <ProductGallery
               images={activeVariant?.gallery || []}
               mainImage={activeVariant?.image || p.thumbnail || "/placeholder.svg"}
               alt={p.name}
             />
+            <div className="mt-16 border-t border-slate-200 pt-12 hidden lg:block">
+              <ProductTabs
+                description={p.description}
+                details={
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-10 text-base">
+                    <div className="space-y-3">
+                      <span className="text-slate-500 font-medium text-xs tracking-wide uppercase">Categoría</span>
+                      <div className="font-semibold text-slate-900 text-lg leading-tight">{p.category}</div>
+                    </div>
+                    <div className="space-y-3">
+                      <span className="text-slate-500 font-medium text-xs tracking-wide uppercase">Variantes</span>
+                      <div className="font-semibold text-slate-900 text-lg leading-tight">{p.variants.length}</div>
+                    </div>
+                  </div>
+                }
+                shipping={
+                  <div className="space-y-5 text-sm leading-relaxed text-slate-700">
+                    <p><strong className="font-semibold text-slate-900">Entrega estimada:</strong> 7-10 días laborables.</p>
+                    <p>Envío gratuito nacional e instalación profesional coordinada tras la compra.</p>
+                  </div>
+                }
+              />
+            </div>
           </div>
-          <div className="lg:col-span-5 xl:col-span-5 lg:sticky lg:top-32 lg:self-start space-y-8">
-            <div className="space-y-4">
-              <h1 className="text-4xl font-bold tracking-tight text-slate-900 lg:text-5xl text-balance">{p.name}</h1>
-              <div className="flex items-center gap-4 text-sm">
-                {p.category && (
-                  <span className="px-3 py-1 bg-slate-100 text-slate-700 rounded-full font-medium">{p.category}</span>
-                )}
-                <span
-                  className={`inline-flex items-center gap-2 px-3 py-1 text-sm font-semibold rounded-full ${availability.tone === "in" ? "bg-emerald-100 text-emerald-700" : "bg-red-100 text-red-700"}`}
-                >
-                  <span
-                    className={`w-2 h-2 rounded-full ${availability.tone === "in" ? "bg-emerald-500" : "bg-red-500"}`}
-                  ></span>
+          <div className="lg:col-span-5 xl:col-span-5 lg:sticky lg:top-10 lg:self-start order-1 lg:order-2 space-y-10">
+            <div className="space-y-6">
+              <span className="inline-block text-[11px] tracking-widest font-medium text-slate-500 uppercase">Romana Ebanistería</span>
+              <h1 className="text-4xl font-bold tracking-tight text-slate-900 lg:text-5xl leading-[1.05]">{p.name}</h1>
+              <div className="flex items-center gap-5 text-xs">
+                <span className={`inline-flex items-center gap-2 px-2.5 py-1 font-semibold border ${availability.tone === 'in' ? 'border-primary text-primary' : 'border-red-600 text-red-600'}`}>
+                  <span className={`w-1.5 h-1.5 rounded-full ${availability.tone === 'in' ? 'bg-primary' : 'bg-red-500'}`}></span>
                   {availability.label}
                 </span>
+                <span className="text-slate-400">•</span>
+                {p.category && <span className="font-medium text-slate-600">{p.category}</span>}
               </div>
-              <PriceBlock price={priceNumber} comparePrice={comparePrice} />
-              <p className="text-sm text-slate-500 font-medium">ITBIS incluido • Envío gratuito</p>
-            </div>
-            <div className="grid grid-cols-1 gap-4 p-6 bg-slate-50/80 rounded-2xl border border-slate-200/60">
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <Truck size={20} className="text-slate-600" />
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-800">Envío gratuito</span>
-                  <p className="text-sm text-slate-600">A todo el país</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <ShieldCheck size={20} className="text-slate-600" />
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-800">Garantía total</span>
-                  <p className="text-sm text-slate-600">12 meses de cobertura</p>
-                </div>
-              </div>
-              <div className="flex items-center gap-3">
-                <div className="p-2 bg-white rounded-lg shadow-sm">
-                  <Home size={20} className="text-slate-600" />
-                </div>
-                <div>
-                  <span className="font-semibold text-slate-800">Instalación incluida</span>
-                  <p className="text-sm text-slate-600">Servicio profesional</p>
-                </div>
+              <div className="space-y-2">
+                <PriceBlock price={priceNumber} comparePrice={comparePrice} />
+                <p className="text-[13px] text-slate-500">ITBIS incluido · Envío gratuito · Garantía 12 meses</p>
               </div>
             </div>
+            {activeVariant?.isFinanceable && (
+              <ProductFinanceCalculator basePrice={priceNumber} variantId={activeVariant?.id || ''} />
+            )}
             <VariantSelector
               variants={p.variants.map((v) => ({
                 id: v.id,
@@ -185,21 +192,35 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
               activeId={activeVariant?.id}
               onSelect={(id) => setSelectedVariantId(id)}
             />
-            <div className="flex gap-4 pt-4">
+            <div className="border border-slate-300 p-5 space-y-4 text-sm">
+              <div className="flex items-center gap-3">
+                <Truck size={18} className="text-slate-600" />
+                <p><strong>Envío gratuito</strong> a todo el país</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <ShieldCheck size={18} className="text-slate-600" />
+                <p><strong>Garantía total 12 meses</strong> cobertura completa</p>
+              </div>
+              <div className="flex items-center gap-3">
+                <Home size={18} className="text-slate-600" />
+                <p><strong>Instalación incluida</strong> servicio profesional</p>
+              </div>
+            </div>
+            <div className="flex flex-col sm:flex-row gap-3 pt-2">
               <button
-                disabled={availability.tone === "out"}
+                disabled={availability.tone === 'out'}
                 onClick={handleAddToCart}
-                className={`flex-1 px-8 py-4 text-base font-bold rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-offset-2 ${availability.tone === "out" ? "bg-slate-300 text-slate-500 cursor-not-allowed" : "bg-slate-900 text-white hover:bg-slate-800 focus:ring-slate-900/20 shadow-lg hover:shadow-xl"}`}
+                className={`flex-1 px-8 py-4 text-base font-semibold tracking-tight border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${availability.tone === 'out' ? 'bg-slate-200 text-slate-500 cursor-not-allowed border-slate-300' : 'bg-primary text-white hover:bg-accent'}`}
               >
-                {availability.tone === "out" ? "Agotado" : "Agregar al carrito"}
+                {availability.tone === 'out' ? 'Agotado' : 'Agregar al carrito'}
               </button>
               <button
                 type="button"
                 onClick={handleShareProduct}
                 aria-label="Compartir producto"
-                className="px-6 py-4 text-base font-semibold border-2 border-slate-300 text-slate-700 hover:bg-slate-50 hover:border-slate-400 rounded-xl transition-all duration-200 focus:outline-none focus:ring-2 focus:ring-slate-900/20 focus:ring-offset-2"
+                className="px-6 py-4 text-base font-medium border border-slate-300 text-slate-700 hover:bg-slate-100 transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2"
               >
-                <Share2 size={20} />
+                <Share2 size={18} />
               </button>
             </div>
             <div className="pt-4">
@@ -212,32 +233,20 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
             </div>
           </div>
         </div>
-        <ProductTabs
-          description={p.description}
-          details={
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-base">
-              <div className="space-y-2">
-                <span className="text-slate-500 font-medium">Categoría</span>
-                <div className="font-semibold text-slate-800 text-lg">{p.category}</div>
-              </div>
-              <div className="space-y-2">
-                <span className="text-slate-500 font-medium">Variantes disponibles</span>
-                <div className="font-semibold text-slate-800 text-lg">{p.variants.length}</div>
-              </div>
-            </div>
-          }
-          shipping={
-            <div className="space-y-4">
-              <p className="text-base text-slate-700 leading-7">
-                <strong>Tiempo estimado de entrega:</strong> 7-10 días laborables.
-              </p>
-              <p className="text-base text-slate-700 leading-7">
-                Ofrecemos envío gratuito a todo el territorio nacional. Nuestro equipo se pondrá en contacto contigo
-                para coordinar la entrega e instalación.
-              </p>
-            </div>
-          }
-        />
+      </div>
+      <div className="fixed inset-x-0 bottom-0 lg:hidden border-t border-slate-300 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 py-3 flex items-center gap-4">
+        <div className="flex-1">
+          <p className="text-xs text-slate-500 leading-none mb-1">Total</p>
+          {/* <PriceBlock price={priceNumber} comparePrice={comparePrice} /> */}
+          <div> <strong className="text-lg">{priceNumber}</strong> <span className="line-through text-gray-400 text-[12px]">{comparePrice}</span> </div>
+        </div>
+        <button
+          disabled={availability.tone === 'out'}
+          onClick={handleAddToCart}
+          className={`min-w-[48%] px-5 py-3 text-sm font-semibold tracking-tight border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${availability.tone === 'out' ? 'bg-slate-200 text-slate-500 cursor-not-allowed border-slate-300' : 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'}`}
+        >
+          {availability.tone === 'out' ? 'Agotado' : 'Agregar'}
+        </button>
       </div>
       <Footer />
     </main>
@@ -245,124 +254,13 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
 }
 
 export const getServerSideProps: GetServerSideProps<ProductDetailProps> = async (ctx) => {
+  const { id } = ctx.params || {};
+  if (!id || typeof id !== 'string') return { props: { product: null, error: 'ID inválido' } };
   try {
-    const { id } = ctx.params || {}
-    const raw: ProductSource = {
-      product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-      name: "Silla Escandinava",
-      description: "Silla de madera de pino con acabado blanco, inspirada en el diseño nórdico. Ergonómica y ligera.",
-      category: "Sillas",
-      main_image: {
-        id: "dffa9a68-68ac-4d26-9914-3e996f4e8ffa",
-        alt_text: "Silla escandinava blanca",
-        image_url: "https://i.pinimg.com/736x/f3/4f/26/f34f269d88e92de573846ee817b26777.jpg",
-        created_at: "2025-09-01T18:27:40.538812+00:00",
-        product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-        variant_id: "c3032643-73f1-4cd0-a808-26fb72ae5e66",
-        is_thumbnail: true,
-      },
-      variants: [
-        {
-          price: 82000,
-          stock: 20,
-          is_on_sale: true,
-          sale_price: 69000,
-          variant_id: "1a4b4a5b-d19f-4bb7-b17a-841a6e3f81e2",
-          is_available: true,
-          variant_name: "Silla Gris Grafito con Cojín",
-          is_financeable: true,
-          variant_main_images: [
-            {
-              id: "a1d34f19-7a6e-4f8b-9c2c-81f3aa7b14e7",
-              alt_text: "Silla escandinava gris con cojín",
-              image_url: "https://i.pinimg.com/736x/21/1f/9d/211f9d0f63b43aa143cc21c7811bdbcd.jpg",
-              created_at: "2025-09-03T12:10:40.538812+00:00",
-              product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-              variant_id: "1a4b4a5b-d19f-4bb7-b17a-841a6e3f81e2",
-              is_thumbnail: true,
-            },
-          ],
-          secondary_images: [
-            {
-              id: "7c085aca-572d-4390-b751-5771fd3548f5",
-              alt_text: "Silla escandinava de madera natural",
-              image_url: "https://i.pinimg.com/736x/f3/4f/26/f34f269d88e92de573846ee817b26777.jpg",
-              created_at: "2025-09-01T18:27:40.538812+00:00",
-              product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-              variant_id: null,
-              is_thumbnail: false,
-            },
-            {
-              id: "7c085aca-572d-4390-b751-5771fd3548f5",
-              alt_text: "Silla escandinava de madera natural",
-              image_url: "https://i.pinimg.com/736x/f3/4f/26.jpg",
-              created_at: "2025-09-01T18:27:40.538812+00:00",
-              product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-              variant_id: null,
-              is_thumbnail: false,
-            },
-            {
-              id: "7c085aca-572d-4390-b751-5771fd3548f5",
-              alt_text: "Silla escandinava de madera natural",
-              image_url: "https://i.pinimg.com/736x/f3/26/f34f269d88e92de573846ee817b26777.jpg",
-              created_at: "2025-09-01T18:27:40.538812+00:00",
-              product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-              variant_id: null,
-              is_thumbnail: false,
-            },
-          ],
-        },
-        {
-          price: 75000,
-          stock: 15,
-          is_on_sale: false,
-          sale_price: null,
-          variant_id: "30bb3a5d-d8a7-4806-a01d-52eea9f13c5f",
-          is_available: true,
-          variant_name: "Silla Madera Natural",
-          is_financeable: false,
-          variant_main_images: [
-            {
-              id: "dffa9a68-68ac-4d26-9914-3e996f4e8ffa",
-              alt_text: "Silla escandinava blanca",
-              image_url: "",
-              created_at: "2025-09-01T18:27:40.538812+00:00",
-              product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-              variant_id: "30bb3a5d-d8a7-4806-a01d-52eea9f13c5f",
-              is_thumbnail: true,
-            },
-          ],
-          secondary_images: [
-            {
-              id: "7c085aca-572d-4390-b751-5771fd3548f5",
-              alt_text: "Silla escandinava de madera natural",
-              image_url: "https://i.pinimg.com/736x/f3/4f/26/f34f269d88e92de573846ee817b26777.jpg",
-              created_at: "2025-09-01T18:27:40.538812+00:00",
-              product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-              variant_id: null,
-              is_thumbnail: false,
-            },
-            {
-              id: "7c085aca-572d-4390-b751-5771fd3548f5",
-              alt_text: "Silla escandinava de madera natural",
-              image_url: "https://i.pinimg.com/736x/f3/4f/26/f34f269d88e92de573846ee817b26777.jpg",
-              created_at: "2025-09-01T18:27:40.538812+00:00",
-              product_id: "e6315130-dee6-420c-9493-75760e77d58a",
-              variant_id: null,
-              is_thumbnail: false,
-            },
-          ],
-        },
-      ],
-    }
-
-    if (id && id !== raw.product_id) {
-      return { props: { product: null, error: "Producto no encontrado" } }
-    }
-
-    const mapped = mapProduct(raw)
-    return { props: { product: mapped } }
+    const product = await getProductWithDetailsById(id);
+    if (!product) return { props: { product: null, error: 'Producto no encontrado' } };
+    return { props: { product } };
   } catch (e: any) {
-    return { props: { product: null, error: e.message || "Error interno" } }
+    return { props: { product: null, error: e.message || 'Error interno' } };
   }
 }
