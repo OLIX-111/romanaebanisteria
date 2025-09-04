@@ -28,8 +28,8 @@ interface RightColumnProps {
 
 export default function RightColumn({ items, subtotal, tax, total, onQtyChange, onRemove, onClear, onDownload }: RightColumnProps) {
   return (
-  <section className="lg:col-span-2 lg:sticky lg:top-24 self-start">
-      <div className="border border-gray-200">
+    <section className="lg:col-span-2 lg:sticky lg:top-24 self-start">
+      <div className="border border-gray-200 bg-white">
         <div className="p-4 border-b flex items-center justify-between">
           <h2 className="text-sm font-semibold text-gray-800">Seleccionados</h2>
           {items.length > 0 && (
@@ -39,7 +39,7 @@ export default function RightColumn({ items, subtotal, tax, total, onQtyChange, 
         {items.length === 0 ? (
           <div className="p-6 text-sm text-gray-600">Aún no has seleccionado productos.</div>
         ) : (
-          <ul className="divide-y divide-gray-200">
+          <ul className="divide-y divide-gray-200 bg-white">
             {items.map(it => (
               <li key={it.id} className="p-4 flex items-center gap-4">
                 <div className="w-20 h-20 flex-shrink-0 border border-gray-200 bg-gray-50">
@@ -71,7 +71,7 @@ export default function RightColumn({ items, subtotal, tax, total, onQtyChange, 
         )}
       </div>
 
-      <div className="mt-6 border border-gray-200 p-4">
+  <div className="mt-6 border border-gray-200 p-4 bg-white">
         <div className="space-y-2 text-sm">
           <div className="flex justify-between text-gray-700">
             <span>Subtotal</span>
@@ -92,9 +92,9 @@ export default function RightColumn({ items, subtotal, tax, total, onQtyChange, 
         <button
           onClick={onDownload}
           disabled={items.length === 0}
-          className={`inline-flex items-center justify-center gap-2 border px-5 py-3 text-sm ${items.length ? "hover:bg-gray-50" : "opacity-50 cursor-not-allowed"}`}
+          className={`inline-flex items-center justify-center gap-2 border border-gray-200 px-5 py-3 text-sm bg-white text-gray-800 ${items.length ? "hover:bg-gray-50" : "opacity-50 cursor-not-allowed"}`}
         >
-          <Download size={16} /> Descargar presupuesto (PDF)
+          <Download size={16} /> Descargar cotización (PDF)
         </button>
       </div>
     </section>

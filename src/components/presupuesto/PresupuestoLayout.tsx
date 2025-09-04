@@ -30,7 +30,9 @@ export default function PresupuestoLayout() {
     nombre: string
     numero: string
     email: string
-    tipo: 'Consumidor final' | 'Desarrollador' | 'Agente del codia'
+    tipo?: string
+    tipoDesarrollador?: boolean
+    tipoCodia?: boolean
     empresa?: string
     website?: string
   codia?: string
@@ -41,7 +43,8 @@ export default function PresupuestoLayout() {
     nombre: '',
     numero: '',
     email: '',
-    tipo: 'Consumidor final' as 'Consumidor final' | 'Desarrollador' | 'Agente del codia',
+    tipoDesarrollador: false,
+    tipoCodia: false,
     empresa: '',
     website: '',
   codia: '',
@@ -60,7 +63,8 @@ export default function PresupuestoLayout() {
           nombre: parsed.nombre || '',
           numero: parsed.numero || '',
           email: parsed.email || '',
-          tipo: parsed.tipo || 'Consumidor final',
+          tipoDesarrollador: Boolean(parsed.tipoDesarrollador) || (parsed.tipo === 'Desarrollador' || parsed.tipo === 'Desarrollador y Agente del codia'),
+          tipoCodia: Boolean(parsed.tipoCodia) || (parsed.tipo === 'Agente del codia' || parsed.tipo === 'Desarrollador y Agente del codia'),
           empresa: parsed.empresa || '',
           website: parsed.website || '',
           codia: parsed.codia || '',
@@ -76,16 +80,24 @@ export default function PresupuestoLayout() {
     e.preventDefault()
     // Validación simple
     if (!form.nombre.trim() || !form.numero.trim() || !form.email.trim()) return
-    if (form.tipo === 'Desarrollador' && !form.empresa.trim()) return
-    if (form.tipo === 'Agente del codia' && !form.codia.trim()) return
+    if (form.tipoDesarrollador && !form.empresa.trim()) return
+    if (form.tipoCodia && !form.codia.trim()) return
   const payload = {
       nombre: form.nombre.trim(),
       numero: form.numero.trim(),
       email: form.email.trim(),
-      tipo: form.tipo,
-      empresa: form.tipo === 'Desarrollador' ? form.empresa.trim() : undefined,
-      website: form.tipo === 'Desarrollador' ? form.website.trim() : undefined,
-      codia: form.tipo === 'Agente del codia' ? form.codia.trim() : undefined,
+      tipo: form.tipoDesarrollador && form.tipoCodia
+        ? 'Desarrollador y Agente del codia'
+        : form.tipoDesarrollador
+        ? 'Desarrollador'
+        : form.tipoCodia
+        ? 'Agente del codia'
+        : undefined,
+      tipoDesarrollador: form.tipoDesarrollador || undefined,
+      tipoCodia: form.tipoCodia || undefined,
+      empresa: form.tipoDesarrollador ? form.empresa.trim() : undefined,
+      website: form.tipoDesarrollador ? form.website.trim() : undefined,
+      codia: form.tipoCodia ? form.codia.trim() : undefined,
   }
   setGateData(payload)
   try { localStorage.setItem('presu_customer', JSON.stringify(payload)) } catch {}
@@ -143,15 +155,16 @@ export default function PresupuestoLayout() {
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-              <h1 className="text-3xl font-bold text-gray-900 mb-1">Presupuesto</h1>
-              <p className="text-gray-600">Selecciona productos y genera tu presupuesto personalizado</p>
+        <h1 className="text-3xl font-bold text-gray-900 mb-1">Cotización</h1>
+        <p className="text-gray-600">Selecciona productos y genera tu cotización personalizada</p>
               {gateData && (
                 <div className="mt-2 text-sm text-gray-700">
-                  <span className="font-medium">Cliente:</span> {gateData.nombre} • {gateData.tipo}
-                  {gateData.tipo === 'Desarrollador' && gateData.empresa ? (
+          <span className="font-medium">Cliente:</span> {gateData.nombre}
+          {gateData.tipo ? <> • {gateData.tipo}</> : null}
+          {(gateData.tipoDesarrollador || gateData.tipo?.includes('Desarrollador')) && gateData.empresa ? (
                     <> • {gateData.empresa}{gateData.website ? ` (${gateData.website})` : ''}</>
                   ) : null}
-                  {gateData.tipo === 'Agente del codia' && gateData.codia ? (
+          {(gateData.tipoCodia || gateData.tipo?.includes('Agente del codia')) && gateData.codia ? (
                     <> • CODIA: {gateData.codia}</>
                   ) : null}
                 </div>
@@ -221,14 +234,29 @@ export default function PresupuestoLayout() {
                 <input type="email" value={form.email} onChange={(e)=>setForm(prev=>({...prev, email: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" required />
               </div>
               <div>
-                <label className="block text-sm text-gray-700 mb-1">Tipo de cliente</label>
-                <select value={form.tipo} onChange={(e)=>setForm(prev=>({...prev, tipo: e.target.value as any}))} className="w-full border rounded-md px-3 py-2 text-sm">
-                  <option>Consumidor final</option>
-                  <option>Desarrollador</option>
-                  <option>Agente del codia</option>
-                </select>
+                <label className="block text-sm text-gray-700 mb-1">¿Qué tipo de cliente eres? <span className="text-gray-500">(opcional)</span></label>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                  <label className="flex items-center gap-2 text-sm text-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={form.tipoDesarrollador}
+                      onChange={(e) => setForm((prev) => ({ ...prev, tipoDesarrollador: e.target.checked }))}
+                      className="h-4 w-4 border-gray-300"
+                    />
+                    Desarrollador
+                  </label>
+                  <label className="flex items-center gap-2 text-sm text-gray-800">
+                    <input
+                      type="checkbox"
+                      checked={form.tipoCodia}
+                      onChange={(e) => setForm((prev) => ({ ...prev, tipoCodia: e.target.checked }))}
+                      className="h-4 w-4 border-gray-300"
+                    />
+                    Agente del codia
+                  </label>
+                </div>
               </div>
-              {form.tipo === 'Desarrollador' && (
+              {form.tipoDesarrollador && (
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div>
                     <label className="block text-sm text-gray-700 mb-1">Nombre de la empresa</label>
@@ -240,7 +268,7 @@ export default function PresupuestoLayout() {
                   </div>
                 </div>
               )}
-              {form.tipo === 'Agente del codia' && (
+              {form.tipoCodia && (
                 <div>
                   <label className="block text-sm text-gray-700 mb-1">Número de identificación del CODIA</label>
                   <input value={form.codia} onChange={(e)=>setForm(prev=>({...prev, codia: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" placeholder="Ej. CODIA-12345" />

@@ -117,7 +117,7 @@ export default function LeftColumn({ search, setSearch, filteredProducts, onAdd 
   return (
     <section>
       <div className="border border-gray-200 bg-white">
-        <div className="px-4 py-3 border-b bg-gray-50">
+        <div className="px-4 py-3 border-b">
           <h3 className="text-sm font-semibold text-gray-700">Catálogo de productos</h3>
         </div>
         <div className="p-3">

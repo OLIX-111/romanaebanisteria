@@ -266,7 +266,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
-              <Link href="/presupuesto">Crear presupuesto</Link>
+              <Link href="/presupuesto">Crear cotización</Link>
             </motion.button>
             <motion.button
               className={`rounded-full transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
@@ -347,7 +347,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                   className="block text-lg font-medium text-gray-800"
                   onClick={() => setMobileMenuOpen(false)}
                 >
-                  Crear presupuesto
+                  Crear cotización
                 </Link>
               </div>
               <div className="mt-8 space-y-4">
@@ -406,7 +406,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >
-                  <Link href="/presupuesto">Crear presupuesto</Link>
+                  <Link href="/presupuesto">Crear cotización</Link>
                 </motion.button>
                 <motion.button
                   className="w-full bg-primary text-white px-4 py-5 transition-transform flex items-center justify-center"
