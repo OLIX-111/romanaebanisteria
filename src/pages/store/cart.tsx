@@ -112,7 +112,7 @@ export default function CartPage() {
                     <span>{subtotal.toLocaleString('es-DO',{style:'currency',currency:'DOP'})}</span>
                   </div>
                 </div>
-                <button className="w-full mt-4 px-6 py-4 bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors">Proceder a pago</button>
+                <Link href="/store/checkout" className="block w-full mt-4 px-6 py-4 text-center bg-primary text-white font-semibold tracking-tight hover:bg-accent transition-colors">Proceder a checkout</Link>
                 <p className="text-[11px] text-slate-500 leading-relaxed">Al continuar aceptas nuestros términos y políticas. El cálculo de impuestos o financiamiento se definirá en el checkout.</p>
               </div>
               <div className="text-xs text-slate-500 leading-relaxed">
