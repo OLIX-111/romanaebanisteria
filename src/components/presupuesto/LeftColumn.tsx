@@ -116,55 +116,59 @@ export default function LeftColumn({ search, setSearch, filteredProducts, onAdd 
 
   return (
     <section>
-      {/* Buscador */}
-      <div className="mb-4">
-        <div className="relative">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input
-            defaultValue={search}
-            onChange={(e) => {
-              const value = e.target.value
-              // debounce simple
-              ;(window as any)._presuSearchTimer && clearTimeout((window as any)._presuSearchTimer)
-              ;(window as any)._presuSearchTimer = setTimeout(() => setSearch(value), 250)
-            }}
-            placeholder="Buscar productos..."
-            className="w-full pl-9 pr-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          />
+      <div className="border border-gray-200 bg-white">
+        <div className="px-4 py-3 border-b bg-gray-50">
+          <h3 className="text-sm font-semibold text-gray-700">Catálogo de productos</h3>
         </div>
-      </div>
+        <div className="p-3">
+          {/* Buscador */}
+          <div className="mb-3">
+            <div className="relative">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+              <input
+                defaultValue={search}
+                onChange={(e) => {
+                  const value = e.target.value
+                  // debounce simple
+                  ;(window as any)._presuSearchTimer && clearTimeout((window as any)._presuSearchTimer)
+                  ;(window as any)._presuSearchTimer = setTimeout(() => setSearch(value), 250)
+                }}
+                placeholder="Buscar productos..."
+                className="w-full pl-9 pr-3 py-2 rounded-md border border-gray-300 text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
+              />
+            </div>
+          </div>
 
-      {/* Listado por categoría con dropdowns y grilla 3x */}
-      <div className="p-2">
-        {empty ? (
-          <div className="text-sm text-gray-600 p-6">No hay productos para mostrar.</div>
-        ) : (
-          <div className="divide-y divide-gray-100">
-            {Object.entries(productsByCategory).map(([category, products]) => (
-              <div key={category} className="py-2">
-                <button
-                  type="button"
-                  onClick={() => toggleCategory(category)}
-                  className="w-full px-3 py-3 flex items-center justify-between hover:bg-gray-50 rounded-md"
-                >
-                  <div className="flex items-center gap-3">
-                    <span className="text-sm font-semibold text-gray-900">{category}</span>
-                    <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{products.length}</span>
-                  </div>
-                  {expandedCategories.has(category) ? (
-                    <ChevronDown className="w-4 h-4 text-gray-400" />
-                  ) : (
-                    <ChevronRight className="w-4 h-4 text-gray-400" />
-                  )}
-                </button>
+          {/* Listado por categoría con dropdowns y grilla 3x */}
+          {empty ? (
+            <div className="text-sm text-gray-600 p-6">No hay productos para mostrar.</div>
+          ) : (
+            <div>
+              {Object.entries(productsByCategory).map(([category, products]) => (
+                <div key={category} className="border border-gray-200 bg-white">
+                  <button
+                    type="button"
+                    onClick={() => toggleCategory(category)}
+                    className="w-full px-4 py-3 flex items-center justify-between hover:bg-gray-50"
+                  >
+                    <div className="flex items-center gap-3">
+                      <span className="text-sm font-semibold text-gray-900">{category}</span>
+                      <span className="bg-gray-100 text-gray-600 text-xs px-2 py-0.5 rounded-full">{products.length}</span>
+                    </div>
+                    {expandedCategories.has(category) ? (
+                      <ChevronDown className="w-4 h-4 text-gray-400" />
+                    ) : (
+                      <ChevronRight className="w-4 h-4 text-gray-400" />
+                    )}
+                  </button>
 
-                {expandedCategories.has(category) && (
-                  <div className="mt-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {products.map((product) => (
-                      <div
-                        key={product.id}
-                        className="group border border-gray-200 rounded-lg bg-white overflow-hidden hover:shadow-md transition-shadow duration-200"
-                      >
+                  {expandedCategories.has(category) && (
+                    <div className="border-t border-gray-200 p-3 grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+                      {products.map((product) => (
+                        <div
+                          key={product.id}
+                          className="group border border-gray-200 bg-white overflow-hidden hover:shadow-md transition-shadow duration-200"
+                        >
                 <div className="aspect-[4/3] bg-gray-50">
                   <Image
                     src={product.image || "/placeholder.svg"}
@@ -426,6 +430,7 @@ export default function LeftColumn({ search, setSearch, filteredProducts, onAdd 
             ))}
           </div>
         )}
+      </div>
       </div>
     </section>
   )
