@@ -4,9 +4,10 @@ import { useTranslation } from "@/hook/UseTranslation"
 import { useRouter } from "next/router"
 import { useEffect, useState, Fragment } from "react"
 import { motion, AnimatePresence } from "framer-motion"
-import { ChevronDown, ChevronDownIcon, Globe, MenuIcon, X, ShoppingCart } from "lucide-react"
+import { ChevronDown, ChevronDownIcon, Globe, MenuIcon, X, ShoppingCart, User2 } from "lucide-react"
 import Link from "next/link"
 import { Dialog, Disclosure, Transition, Menu } from "@headlessui/react"
+import { supabase } from "@/utils/supabase"
 
 
 interface HeaderProps {
@@ -27,6 +28,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
 
   const [marcas, setMarcas] = useState([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
+  const [authUser, setAuthUser] = useState<any>(null)
 
   useEffect(() => {
     const handleScroll = () => setScrollPosition(window.scrollY)
@@ -54,6 +56,22 @@ export default function Header({ enableScroll = false }: HeaderProps) {
     return () => {
       window.removeEventListener('storage', onStorage)
       window.removeEventListener('romana-cart-updated', onCustom as any)
+    }
+  }, [])
+
+  // Supabase auth state
+  useEffect(() => {
+    let mounted = true
+    supabase.auth.getUser().then(({ data }) => {
+      if (!mounted) return
+      setAuthUser(data?.user || null)
+    })
+    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
+      setAuthUser(session?.user || null)
+    })
+    return () => {
+      mounted = false
+      sub?.subscription.unsubscribe()
     }
   }, [])
 
@@ -129,7 +147,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
           {/* Botón CTA a la derecha */}
           <div className="w-1/3">
             <motion.button
-              className="text-white rounded-full transition-transform flex items-center justify-center h-12 w-12"
+              className="text-white transition-transform flex items-center justify-center h-12 w-12"
               whileHover={{ scale: 1.05 }}
               whileTap={{ scale: 0.95 }}
             >
@@ -258,20 +276,31 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               </Transition> */}
             </Menu>
             <motion.button
-              className={`hidden md:inline-flex items-center gap-2 px-4 py-2 rounded-full border transition-transform ${
+              className={`hidden md:inline-flex items-center gap-2 px-4 py-2 border transition-transform ${
                 isScrolled
                   ? "text-gray-800 border-gray-300 hover:bg-gray-100"
                   : "text-gray-50 border-white/60 hover:bg-white/10"
               }`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
             >
               <Link href="/presupuesto">Crear cotización</Link>
             </motion.button>
+            {authUser ? (
+              <div className="hidden md:flex items-center gap-3 pb-1">
+                <Link href="/profile" 
+                className={`hidden md:inline-flex items-center gap-2 px-4 transition-transform ${
+                  isScrolled
+                    ? "text-gray-800"
+                    : "text-gray-50"
+                }`}
+                >
+                  <User2 className="w-6 h-6" />
+                </Link>
+              </div>
+            ) : (
+              <></>
+            )}
             <motion.button
-              className={`rounded-full transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
-              whileHover={{ scale: 1.05 }}
-              whileTap={{ scale: 0.95 }}
+              className={` transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
             >
               <Link href="/store/cart" className="relative inline-block" aria-label={`Carrito, ${cartCount} artículos`}>
                 <ShoppingCart className="h-6 w-6 mr-[1px]" />
@@ -342,13 +371,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                 >
                   {header?.nav?.news}
                 </Link>
-                <Link
+                {/* <Link
                   href="/presupuesto"
                   className="block text-lg font-medium text-gray-800"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Crear cotización
-                </Link>
+                </Link> */}
               </div>
               <div className="mt-8 space-y-4">
                 {/* <Menu as="div" className="relative">
@@ -402,7 +431,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                   </Transition>
                 </Menu> */}
                 <motion.button
-                  className="w-full bg-primary text-white px-4 py-5 transition-transform flex items-center justify-center"
+                  className="w-full bg-primary/20 text-primary border-primary/20 border-2 px-4 py-5 transition-transform flex items-center justify-center"
                   whileHover={{ scale: 1.05 }}
                   whileTap={{ scale: 0.95 }}
                 >

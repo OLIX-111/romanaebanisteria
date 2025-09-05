@@ -74,6 +74,19 @@ export async function getProductWithDetailsById(id: string) {
   }
 }
 
+// Hay que hacer que se envien los datos faltantes
+export async function AddProductsToCart(
+  userId: string,
+  productId: string,
+  quantity: number
+) {
+  const { data, error } = await supabase.rpc('add_product_to_cart', {
+    p_id_usuario: userId,
+    p_id_producto: productId,
+    p_cantidad: quantity
+  });
+}
+
 
 export async function getProductDetailMapped(id: string) {
   return getProductWithDetailsById(id);
