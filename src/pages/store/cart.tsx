@@ -219,6 +219,12 @@ export default function CartPage() {
                 >
                   Proceder a checkout
                 </Link>
+                <Link
+                  href="/financing/cart"
+                  className="block w-full mt-3 px-6 py-4 text-center border border-slate-300 text-slate-800 font-semibold tracking-tight hover:bg-slate-50 transition-colors"
+                >
+                  Financiar carrito
+                </Link>
                 <p className="text-[11px] text-slate-500 leading-relaxed">
                   Al continuar aceptas nuestros términos y políticas. El cálculo de impuestos o financiamiento se
                   definirá en el checkout.

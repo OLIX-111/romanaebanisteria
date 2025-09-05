@@ -13,8 +13,8 @@ import { Home, Share2, ShieldCheck, Truck } from "lucide-react"
 import { ProductGallery } from "@/components/store/modern/ProductGallery"
 import { VariantSelector } from "@/components/store/modern/VariantSelector"
 import { PriceBlock } from "@/components/store/modern/PriceBlock"
-import { ProductFinanceCalculator } from "@/components/store/modern/ProductFinanceCalculator"
 import { ProductTabs } from "@/components/store/modern/ProductTabs"
+import { ProductFinanceCalculator } from "@/components/store/modern/ProductFinanceCalculator"
 import { type MappedProductDetail } from "@/types/catalog"
 import { getProductWithDetailsById } from '@/utils/supabase'
 import { useCart } from "@/hook/useCart"
@@ -179,9 +179,24 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
                 <p className="text-[13px] text-slate-500">ITBIS incluido · Envío gratuito · Garantía 12 meses</p>
               </div>
             </div>
-            {activeVariant?.isFinanceable && (
-              <ProductFinanceCalculator basePrice={priceNumber} variantId={activeVariant?.id || ''} />
-            )}
+            <ProductFinanceCalculator
+              basePrice={priceNumber}
+              variantId={activeVariant?.id || ''}
+              currency={currency}
+              onApply={(data) => {
+                router.push({
+                  pathname: '/financing/apply',
+                  query: {
+                    productId: String(p.id),
+                    variantId: activeVariant?.id || '',
+                    productName: p.name + (activeVariant?.name ? ` - ${activeVariant.name}` : ''),
+                    price: String(data.price || priceNumber || 0),
+                    currency,
+                    productImage: activeVariant?.image || p.thumbnail || '',
+                  },
+                })
+              }}
+            />
             <VariantSelector
               variants={p.variants.map((v) => ({
                 id: v.id,

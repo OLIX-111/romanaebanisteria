@@ -75,7 +75,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     const requiredErrors: string[] = []
     if (!saleAmount) requiredErrors.push("saleAmount")
     if (!downPayment && downPayment !== 0) requiredErrors.push("downPayment")
-    if (!saleCurrency) requiredErrors.push("saleCurrency")
+    // saleCurrency now defaults to DOP if not provided
     if (!idType) requiredErrors.push("idType")
     if (!idNumber) requiredErrors.push("idNumber")
     if (!fullName) requiredErrors.push("fullName")
@@ -83,7 +83,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!email) requiredErrors.push("email")
     if (!phone) requiredErrors.push("phone")
     if (!monthlyIncome) requiredErrors.push("monthlyIncome")
-    if (!incomeCurrency) requiredErrors.push("incomeCurrency")
+    // incomeCurrency defaults to saleCurrency when missing
     if (!country) requiredErrors.push("country")
     if (!bankOption1) requiredErrors.push("bankOption1")
     if (!bankOption2) requiredErrors.push("bankOption2")
@@ -93,6 +93,16 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (requiredErrors.length) {
       return res.status(400).json({ message: "Missing or invalid fields", fields: requiredErrors })
     }
+
+    // Age validation: must be 18+
+    try {
+      const b = new Date(birthDate)
+      const now = new Date()
+      const minBirth = new Date(now.getFullYear() - 18, now.getMonth(), now.getDate())
+      if (isNaN(b.getTime()) || b > minBirth) {
+        return res.status(400).json({ message: "Debes ser mayor de 18 años.", fields: ["birthDate"] })
+      }
+    } catch {}
 
     const submittedAt = new Date().toLocaleString("es-DO", { hour12: false })
 
