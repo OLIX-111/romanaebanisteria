@@ -16,6 +16,7 @@ export default function ProfilePage() {
   const [info, setInfo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
   const [orders, setOrders] = useState<any[]>([])
+  const [flash, setFlash] = useState<string | null>(null)
 
   // Require login via Supabase
   useEffect(() => {
@@ -37,6 +38,17 @@ export default function ProfilePage() {
     })
     return () => { mounted = false; sub?.subscription.unsubscribe() }
   }, [router])
+
+  // Read and clear flash message from localStorage
+  useEffect(() => {
+    try {
+      const f = localStorage.getItem('romana_flash')
+      if (f) {
+        setFlash(f)
+        localStorage.removeItem('romana_flash')
+      }
+    } catch {}
+  }, [])
 
   useEffect(() => {
     async function load() {
@@ -75,6 +87,11 @@ export default function ProfilePage() {
     <main className={openSans.className}>
       <Header />
       <div className="container mx-auto mt-24 px-4 py-12 lg:px-8">
+        {flash && (
+          <div className="mb-6 p-3 border border-emerald-300 bg-emerald-50 text-emerald-800 text-sm">
+            {flash}
+          </div>
+        )}
         <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Mi perfil</h1>
         <div className="mt-8 grid gap-8 lg:grid-cols-2">
           <section className="border border-gray-200 p-6">

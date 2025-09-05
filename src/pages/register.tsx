@@ -4,16 +4,21 @@ import Link from "next/link"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
-import { useState } from "react"
+import { useMemo, useState } from "react"
 import { supabase } from "@/utils/supabase"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: "", password: "", nombre: "" })
+  const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
+  const isEmailValid = useMemo(() => /.+@.+\..+/.test(form.email), [form.email])
+  const isPasswordValid = useMemo(() => form.password.trim().length >= 6, [form.password])
+  const isNameValid = useMemo(() => form.nombre.trim().length >= 2, [form.nombre])
+  const formValid = isEmailValid && isPasswordValid && isNameValid
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -34,10 +39,11 @@ export default function RegisterPage() {
         return
       }
       if (data?.user) {
-        setMessage("Registro exitoso. Revisa tu correo para confirmar la cuenta.")
-      } else {
-        setMessage("Revisa tu correo para confirmar la cuenta.")
+        try { localStorage.setItem('romana_flash', 'Cuenta creada. ¡Bienvenido!') } catch {}
+        window.location.href = "/profile"
+        return
       }
+      setMessage("Revisa tu correo para confirmar la cuenta.")
     } catch (e: any) {
       setError(e?.message || "No se pudo completar el registro")
     } finally {
@@ -72,7 +78,12 @@ export default function RegisterPage() {
                   placeholder="Tu nombre"
                   value={form.nombre}
                   onChange={(e) => setForm({ ...form, nombre: e.target.value })}
+                  aria-invalid={!isNameValid}
+                  aria-describedby="name-help"
                 />
+                {!isNameValid && form.nombre && (
+                  <p id="name-help" className="text-[12px] text-red-600">Ingresa tu nombre (mínimo 2 caracteres).</p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Correo</label>
@@ -82,19 +93,37 @@ export default function RegisterPage() {
                   placeholder="tu@email.com"
                   value={form.email}
                   onChange={(e) => setForm({ ...form, email: e.target.value })}
-                  required
+                  aria-invalid={!isEmailValid}
+                  aria-describedby="email-help"
                 />
+                {!isEmailValid && form.email && (
+                  <p id="email-help" className="text-[12px] text-red-600">Ingresa un correo válido.</p>
+                )}
               </div>
               <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Contraseña</label>
-                <input
-                  type="password"
-                  className="w-full border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 focus:outline-none"
-                  placeholder="••••••••"
-                  value={form.password}
-                  onChange={(e) => setForm({ ...form, password: e.target.value })}
-                  required
-                />
+                <div className="relative">
+                  <input
+                    type={showPassword ? "text" : "password"}
+                    className="w-full border border-slate-200 rounded-sm px-4 py-3 pr-12 text-sm focus:border-slate-400 focus:outline-none"
+                    placeholder="••••••••"
+                    value={form.password}
+                    onChange={(e) => setForm({ ...form, password: e.target.value })}
+                    aria-invalid={!isPasswordValid}
+                    aria-describedby="pass-help"
+                  />
+                  <button
+                    type="button"
+                    onClick={() => setShowPassword((s) => !s)}
+                    className="absolute inset-y-0 right-0 px-3 text-slate-500 hover:text-slate-700"
+                    aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+                  >
+                    {showPassword ? "Ocultar" : "Mostrar"}
+                  </button>
+                </div>
+                {!isPasswordValid && form.password && (
+                  <p id="pass-help" className="text-[12px] text-red-600">Mínimo 6 caracteres.</p>
+                )}
               </div>
 
               {error && <div className="text-sm text-red-600">{error}</div>}
@@ -102,7 +131,7 @@ export default function RegisterPage() {
 
               <button
                 type="submit"
-                disabled={submitting}
+                disabled={submitting || !formValid}
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 hover:bg-slate-800 transition-colors rounded-sm"
               >
                 {submitting ? "Creando..." : "Crear cuenta"}

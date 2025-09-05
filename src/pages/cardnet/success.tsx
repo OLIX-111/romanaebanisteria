@@ -115,7 +115,7 @@ export default function CardnetSuccess() {
               <span className="absolute -bottom-1 -right-1 px-3 py-1 text-[10px] font-bold tracking-wide uppercase bg-primary text-white rounded-full shadow">OK</span>
             </div>
             <h1 className="text-4xl font-black tracking-tight text-transparent bg-clip-text bg-gradient-to-r from-primary via-primary to-primary drop-shadow-sm animate-fade-in">
-              ¡Pago exitoso!
+              Pago procesado
             </h1>
             <p className="text-sm text-primary/80 font-medium tracking-wide uppercase flex items-center gap-1">
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /> Confirmación generada
@@ -201,7 +201,10 @@ export default function CardnetSuccess() {
           )} */}
 
           {!snapshot && !loading && (
-            <p className="text-center text-sm text-gray-500">No se encontró el resumen del pedido.</p>
+            <div className="mt-4 border border-primary/20 rounded-lg p-6 bg-white/80 text-center">
+              <p className="text-sm text-gray-600">No pudimos mostrar el resumen del pedido en este momento.</p>
+              <p className="text-xs text-gray-500 mt-1">Si completaste el pago, recibirás un correo con la confirmación.</p>
+            </div>
           )}
 
           <div className="pt-10 flex flex-col sm:flex-row items-center justify-center gap-4">
