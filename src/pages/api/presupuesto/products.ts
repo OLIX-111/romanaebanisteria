@@ -21,7 +21,7 @@ const PRODUCTS = [
     customization_attributes: [
       {
         attribute_id: "ATTR_WOOD_FINISH",
-        attribute_name: "1. Elige la Madera y el Tinte",
+        attribute_name: "Madera y el Tinte",
         selection_type: "single",
         options: [
           {

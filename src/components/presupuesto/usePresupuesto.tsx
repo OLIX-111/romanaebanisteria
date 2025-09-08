@@ -5,6 +5,10 @@ import { type LocalProduct, type ProductVariant, type CustomizationAttribute, ty
 
 const ITBIS_RATE = 0.18
 
+function generateQuoteNumber(): string {
+  return `COT-${Date.now().toString().slice(-6)}`;
+}
+
 export function usePresupuesto() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -195,7 +199,7 @@ export function usePresupuesto() {
   const tax = useMemo(() => subtotal * ITBIS_RATE, [subtotal])
   const total = useMemo(() => subtotal + tax, [subtotal, tax])
 
-  const exportPDF = async () => {
+  const exportPDF = async (options: { download: boolean; email: boolean } = { download: true, email: false }) => {
     const { jsPDF } = await import("jspdf")
     const doc = new jsPDF()
     const line = (y: number) => doc.line(10, y, 200, y)
@@ -205,12 +209,14 @@ export function usePresupuesto() {
       const logoPath = encodeURI("/RomanaEbanistería.png")
       const dataUrl = await loadImageAsDataURL(logoPath)
       // x, y, width, height (mm)
-      doc.addImage(dataUrl, "PNG", 10, 8, 28, 12)
+      if (dataUrl) {
+        doc.addImage(dataUrl, "PNG", 10, 8, 28, 12)
+      }
     } catch {}
 
     // Título y fecha
     doc.setFontSize(16)
-    doc.text("Presupuesto", 44, 15)
+    doc.text("Cotización Romana Ebanistería", 44, 15)
     doc.setFontSize(10)
     doc.text(new Date().toLocaleString(), 190, 15, { align: "right" })
     line(20)
@@ -236,7 +242,7 @@ export function usePresupuesto() {
     } catch {}
     if (y < 28) y = 28
     doc.setFontSize(12)
-    doc.text("Items", 10, y)
+    doc.text("Productos", 10, y)
     y += 6
     doc.setFontSize(10)
     selectedList.forEach((it, idx) => {
@@ -251,17 +257,53 @@ export function usePresupuesto() {
       doc.text(`Subtotal: ${formatCurrency(it.price * it.qty)}`, 120, y)
       y += 6
     })
-  y += 4
-  line(y)
-  y += 8
-  doc.setFontSize(12)
-  doc.text(`Subtotal: ${formatCurrency(subtotal)}`, 140, y)
-  y += 6
-  doc.text(`Impuesto (18%): ${formatCurrency(tax)}`, 140, y)
-  y += 6
-  doc.setFontSize(13)
-  doc.text(`Total: ${formatCurrency(total)}`, 140, y)
-    doc.save(`presupuesto-${Date.now()}.pdf`)
+    y += 4
+    line(y)
+    y += 8
+    doc.setFontSize(12)
+    doc.text(`Subtotal: ${formatCurrency(subtotal)}`, 140, y)
+    y += 6
+    doc.text(`Impuesto (18%): ${formatCurrency(tax)}`, 140, y)
+    y += 6
+    doc.setFontSize(13)
+    doc.text(`Total: ${formatCurrency(total)}`, 140, y)
+
+    // Si se solicita envío por email, enviar a la API
+    if (options.email) {
+      try {
+        const customerData = localStorage.getItem('presu_customer')
+        if (customerData) {
+          const response = await fetch('/api/cotizacion/send-email', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify({
+              items: selectedList,
+              customerData: JSON.parse(customerData),
+              subtotal,
+              tax,
+              total
+            })
+          })
+
+          if (!response.ok) {
+            throw new Error('Error al enviar por email')
+          }
+        } else {
+          throw new Error('No hay datos del cliente para enviar por email')
+        }
+      } catch (error) {
+        console.error('Error enviando cotización por email:', error)
+        alert('Error al enviar la cotización por email. El PDF se descargará localmente.')
+      }
+    }
+
+    // Si se solicita descarga, guardar el PDF
+    if (options.download) {
+      const quoteNumber = generateQuoteNumber();
+      doc.save(`cotizacion-${quoteNumber}-romana-ebanisteria.pdf`)
+    }
   }
 
   // Utilidad: carga una imagen y la convierte a dataURL para jsPDF
