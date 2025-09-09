@@ -9,6 +9,7 @@ import { Open_Sans } from "next/font/google"
 import { useCart } from "@/hook/useCart"
 import { useEffect, useState } from "react"
 import { supabase } from "@/utils/supabase"
+import CardnetPaymentForm from "@/components/store/CardnetPaymentForm"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -27,6 +28,11 @@ export default function CheckoutPage() {
     notes: "",
   })
   const [submitting, setSubmitting] = useState(false)
+  const [currentStep, setCurrentStep] = useState<'customer-info' | 'payment'>('customer-info')
+  const [paymentToken, setPaymentToken] = useState<string | null>(null)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+
   const isValid =
     form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
 
@@ -45,53 +51,67 @@ export default function CheckoutPage() {
     }
   }, [])
 
-  async function handleSubmit(e: React.FormEvent) {
+  // Handle customer info form submission
+  async function handleCustomerInfoSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isValid || count === 0) return
     setSubmitting(true)
+
     try {
-      const sanitizeDigits = (v: string) => v.replace(/\D/g, '').slice(0, 10) || '8090000000'
-      const total = subtotal
-      const amount12 = Math.round(total * 100).toString().padStart(12, '0')
-      const tax12 = '000000000000'
+      // Validate form
+      if (!isValid) {
+        alert('Por favor completa todos los campos requeridos')
+        return
+      }
+
+      // Move to payment step
+      setCurrentStep('payment')
+    } catch (error) {
+      console.error('Error en validación:', error)
+      alert('Error al procesar la información. Intenta de nuevo.')
+    } finally {
+      setSubmitting(false)
+    }
+  }
+
+  // Handle payment token creation
+  const handleTokenCreated = async (token: string) => {
+    setPaymentToken(token)
+    setPaymentError(null)
+    setIsProcessingPayment(true)
+
+    try {
       const orderId = `ORD${Date.now()}`
-      const res = await fetch('/api/cardnet/session', {
+      const total = subtotal
+
+      // Process payment with CardNET
+      const res = await fetch('/api/cardnet/purchase', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
-          amount: amount12,
-          orderId,
-          tax: tax12,
-          email: form.email,
-          mobilePhone: sanitizeDigits(form.phone),
-          workPhone: '8090000001',
-          homePhone: '8090000002',
-          billAddr_line1: form.address || 'Direccion',
-          billAddr_line2: '',
-          billAddr_line3: '',
-          billAddr_city: form.city || 'Ciudad',
-          billAddr_state: form.province || 'Provincia',
-          billAddr_country: 'DOP',
-          billAddr_postCode: form.postalCode || '00000',
-          ipClient: ''
+          trxToken: token,
+          amount: total,
+          currency: 'DOP',
+          invoice: orderId,
+          tax: '0'
         })
       })
+
+      const result = await res.json()
+
       if (!res.ok) {
-        alert('No se pudo iniciar el pago')
-        return
+        throw new Error(result.error || 'Error en el procesamiento del pago')
       }
-      const { SESSION, sessionKey } = await res.json()
-      localStorage.setItem('cardnet_session', SESSION)
-      localStorage.setItem('cardnet_sessionKey', sessionKey)
-      // Guardamos snapshot del pedido antes de redirigir (para mostrar en success incluso si el pago falla)
-      try {
+
+      if (result.success && result.status === 'approved') {
+        // Payment successful - save order snapshot and redirect
         const snapshot = {
           orderId,
           amount: total,
-            // Guardamos formato centavos para referencia
-          amountMinorUnits: amount12,
           currency: 'DOP',
           createdAt: Date.now(),
+          purchaseId: result.purchaseId,
+          approvalCode: result.approvalCode,
           items: items.map(i => ({
             id: i.id,
             productId: i.productId,
@@ -119,25 +139,35 @@ export default function CheckoutPage() {
             notes: form.notes
           }
         }
+
         localStorage.setItem('cardnet_order_snapshot', JSON.stringify(snapshot))
-      } catch {}
-      const formEl = document.createElement('form')
-      formEl.action = 'https://lab.cardnet.com.do/authorize'
-      formEl.method = 'POST'
-      formEl.style.display = 'none'
-      const input = document.createElement('input')
-      input.type = 'hidden'
-      input.name = 'SESSION'
-      input.value = SESSION
-      formEl.appendChild(input)
-      document.body.appendChild(formEl)
-      formEl.submit()
-    } catch (e) {
-      console.error(e)
-      alert('No se pudo procesar el checkout. Intenta de nuevo.')
+
+        // Redirect to success page
+        window.location.href = `/cardnet/success?orderId=${orderId}&purchaseId=${result.purchaseId}`
+      } else {
+        throw new Error(result.message || 'Pago no aprobado')
+      }
+
+    } catch (error: any) {
+      console.error('Payment processing error:', error)
+      setPaymentError(error.message || 'Error al procesar el pago')
+      setPaymentToken(null)
     } finally {
-      setSubmitting(false)
+      setIsProcessingPayment(false)
     }
+  }
+
+  // Handle payment errors
+  const handlePaymentError = (error: string) => {
+    setPaymentError(error)
+    setPaymentToken(null)
+  }
+
+  // Go back to customer info step
+  const handleBackToCustomerInfo = () => {
+    setCurrentStep('customer-info')
+    setPaymentToken(null)
+    setPaymentError(null)
   }
 
   return (
@@ -158,7 +188,9 @@ export default function CheckoutPage() {
               Carrito
             </Link>
             <span className="text-slate-300">→</span>
-            <span className="text-slate-800 font-semibold">Checkout</span>
+            <span className="text-slate-800 font-semibold">
+              {currentStep === 'customer-info' ? 'Información del cliente' : 'Pago seguro'}
+            </span>
           </nav>
 
           {count === 0 ? (
@@ -193,14 +225,14 @@ export default function CheckoutPage() {
             <div className="grid gap-16 lg:grid-cols-3">
               {/* Form Section */}
               <div className="lg:col-span-2">
-                <form onSubmit={handleSubmit} className="space-y-12">
-                  <header className="space-y-3">
-                    <h1 className="text-4xl font-bold tracking-tight text-slate-900">Finalizar compra</h1>
-                    <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">
-                      Completa tus datos para coordinar el envío. Te contactaremos para confirmar los detalles y
-                      procesar el pago.
-                    </p>
-                  </header>
+                {currentStep === 'customer-info' ? (
+                  <form onSubmit={handleCustomerInfoSubmit} className="space-y-12">
+                    <header className="space-y-3">
+                      <h1 className="text-4xl font-bold tracking-tight text-slate-900">Información del cliente</h1>
+                      <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">
+                        Completa tus datos para coordinar el envío. Te contactaremos para confirmar los detalles.
+                      </p>
+                    </header>
 
                   <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
                     <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">
@@ -310,47 +342,93 @@ export default function CheckoutPage() {
                     </div>
                   </section>
 
-                  <div className="flex justify-end">
-                    <button
-                      type="submit"
-                      disabled={!isValid || submitting}
-                      className="inline-flex items-center gap-3 px-12 py-4 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all duration-200 rounded-sm shadow-sm hover:shadow-md"
-                    >
-                      {submitting ? (
-                        <>
-                          <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                            <circle
-                              className="opacity-25"
-                              cx="12"
-                              cy="12"
-                              r="10"
-                              stroke="currentColor"
-                              strokeWidth="4"
-                            ></circle>
-                            <path
-                              className="opacity-75"
-                              fill="currentColor"
-                              d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                            ></path>
-                          </svg>
-                          Procesando...
-                        </>
-                      ) : (
-                        <>
-                          Continuar al pago
+                    <div className="flex justify-end">
+                      <button
+                        type="submit"
+                        disabled={!isValid || submitting}
+                        className="inline-flex items-center gap-3 px-12 py-4 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all duration-200 rounded-sm shadow-sm hover:shadow-md"
+                      >
+                        {submitting ? (
+                          <>
+                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                              <circle
+                                className="opacity-25"
+                                cx="12"
+                                cy="12"
+                                r="10"
+                                stroke="currentColor"
+                                strokeWidth="4"
+                              ></circle>
+                              <path
+                                className="opacity-75"
+                                fill="currentColor"
+                                d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                              ></path>
+                            </svg>
+                            Procesando...
+                          </>
+                        ) : (
+                          <>
+                            Continuar al pago
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M17 8l4 4m0 0l-4 4m4-4H3"
+                              />
+                            </svg>
+                          </>
+                        )}
+                      </button>
+                    </div>
+                  </form>
+                ) : (
+                  <div className="space-y-8">
+                    <header className="space-y-3">
+                      <div className="flex items-center gap-4">
+                        <button
+                          onClick={handleBackToCustomerInfo}
+                          className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors"
+                        >
                           <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path
-                              strokeLinecap="round"
-                              strokeLinejoin="round"
-                              strokeWidth={2}
-                              d="M17 8l4 4m0 0l-4 4m4-4H3"
-                            />
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
                           </svg>
-                        </>
-                      )}
-                    </button>
+                          Volver
+                        </button>
+                        <div className="h-4 w-px bg-slate-300"></div>
+                        <span className="text-sm text-slate-500">Paso 2 de 2</span>
+                      </div>
+                      <h1 className="text-4xl font-bold tracking-tight text-slate-900">Pago seguro</h1>
+                      <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">
+                        Completa el pago de forma segura con tu tarjeta. Todos los datos están protegidos.
+                      </p>
+                    </header>
+
+                    {paymentError && (
+                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
+                        <div className="flex items-start gap-3">
+                          <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                          </svg>
+                          <div className="text-sm text-red-700">
+                            <p className="font-medium">Error en el pago</p>
+                            <p>{paymentError}</p>
+                          </div>
+                        </div>
+                      </div>
+                    )}
+
+                    <CardnetPaymentForm
+                      amount={subtotal}
+                      currency="DOP"
+                      invoice={`ORD${Date.now()}`}
+                      onTokenCreated={handleTokenCreated}
+                      onError={handlePaymentError}
+                      isProcessing={isProcessingPayment}
+                    />
                   </div>
-                </form>
+                )}
               </div>
 
               <aside className="lg:sticky lg:top-8 h-fit">
