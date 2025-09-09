@@ -1,6 +1,6 @@
 "use client"
 
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import {
   Search,
   Filter,
@@ -127,15 +127,7 @@ export default function ClientsManagement() {
   const [searchTerm, setSearchTerm] = useState('')
   const [statusFilter, setStatusFilter] = useState('')
 
-  useEffect(() => {
-    loadClients()
-  }, [])
-
-  useEffect(() => {
-    filterClients()
-  }, [clients, searchTerm, statusFilter])
-
-  const loadClients = async () => {
+  const loadClients = useCallback(async () => {
     try {
       // En producción, esto vendría de la API
       // const response = await fetch('/api/admin/clients')
@@ -147,9 +139,9 @@ export default function ClientsManagement() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [])
 
-  const filterClients = () => {
+  const filterClients = useCallback(() => {
     let filtered = clients
 
     // Filtro por búsqueda
@@ -168,7 +160,15 @@ export default function ClientsManagement() {
     }
 
     setFilteredClients(filtered)
-  }
+  }, [clients, searchTerm, statusFilter])
+
+  useEffect(() => {
+    loadClients()
+  }, [loadClients])
+
+  useEffect(() => {
+    filterClients()
+  }, [filterClients])
 
   const formatCurrency = (amount: number) => {
     return new Intl.NumberFormat('es-DO', {
@@ -345,7 +345,7 @@ export default function ClientsManagement() {
           <div className="flex flex-wrap gap-2 mt-4">
             {searchTerm && (
               <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                Búsqueda: "{searchTerm}"
+                Búsqueda: &quot;{searchTerm}&quot;
                 <button
                   onClick={() => setSearchTerm('')}
                   className="hover:text-gray-900"

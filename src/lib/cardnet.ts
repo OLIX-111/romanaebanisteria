@@ -1,4 +1,4 @@
-import { z } from 'zup'
+import { z } from 'zod'
 
 // Types for CardNET API
 export interface CardnetConfig {

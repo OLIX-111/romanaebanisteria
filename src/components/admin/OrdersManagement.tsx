@@ -19,7 +19,20 @@ import {
   Clock,
   AlertTriangle,
   X,
-  Download
+  Download,
+  FileText,
+  Send,
+  Palette,
+  Scissors,
+  Hammer,
+  Settings,
+  Brush,
+  CheckSquare,
+  Home,
+  XCircle,
+  RotateCcw,
+  RefreshCw,
+  DollarSign
 } from 'lucide-react'
 
 // Importar los tipos y datos de órdenes
@@ -67,26 +80,26 @@ interface Order {
 
 // Estados disponibles para las órdenes
 const ORDER_STATUSES = [
-  { id: 'quote_requested', name: 'Cotización Solicitada', color: '#6B7280', generalStatus: 'pending' },
-  { id: 'quote_sent', name: 'Cotización Enviada', color: '#3B82F6', generalStatus: 'pending' },
-  { id: 'awaiting_approval', name: 'Esperando Aprobación', color: '#F59E0B', generalStatus: 'pending' },
-  { id: 'confirmed', name: 'Pedido Confirmado', color: '#10B981', generalStatus: 'processing' },
-  { id: 'deposit_paid', name: 'Depósito Pagado', color: '#059669', generalStatus: 'processing' },
-  { id: 'design_phase', name: 'Fase de Diseño', color: '#6366F1', generalStatus: 'processing' },
-  { id: 'material_preparation', name: 'Preparación de Materiales', color: '#8B5CF6', generalStatus: 'processing' },
-  { id: 'cutting_wood', name: 'Cortando Madera', color: '#EC4899', generalStatus: 'processing' },
-  { id: 'woodworking', name: 'Ebanistería', color: '#F97316', generalStatus: 'processing' },
-  { id: 'assembling', name: 'Ensamblando', color: '#06B6D4', generalStatus: 'processing' },
-  { id: 'finishing', name: 'Acabando', color: '#10B981', generalStatus: 'processing' },
-  { id: 'quality_check', name: 'Control de Calidad', color: '#F59E0B', generalStatus: 'processing' },
-  { id: 'ready_for_shipping', name: 'Listo para Envío', color: '#84CC16', generalStatus: 'shipped' },
-  { id: 'in_transit', name: 'En Tránsito', color: '#22C55E', generalStatus: 'shipped' },
-  { id: 'delivered', name: 'Entregado', color: '#16A34A', generalStatus: 'delivered' },
-  { id: 'installation_complete', name: 'Instalación Completa', color: '#15803D', generalStatus: 'delivered' },
-  { id: 'cancelled_by_customer', name: 'Cancelado por Cliente', color: '#DC2626', generalStatus: 'cancelled' },
-  { id: 'cancelled_by_admin', name: 'Cancelado por Admin', color: '#B91C1C', generalStatus: 'cancelled' },
-  { id: 'return_requested', name: 'Devolución Solicitada', color: '#7C3AED', generalStatus: 'processing' },
-  { id: 'refunded', name: 'Reembolsado', color: '#0891B2', generalStatus: 'refunded' }
+  { id: 'quote_requested', name: 'Cotización Solicitada', color: '#6B7280', generalStatus: 'pending', icon: 'FileText' },
+  { id: 'quote_sent', name: 'Cotización Enviada', color: '#3B82F6', generalStatus: 'pending', icon: 'Send' },
+  { id: 'awaiting_approval', name: 'Esperando Aprobación', color: '#F59E0B', generalStatus: 'pending', icon: 'Clock' },
+  { id: 'confirmed', name: 'Pedido Confirmado', color: '#10B981', generalStatus: 'processing', icon: 'CheckCircle' },
+  { id: 'deposit_paid', name: 'Depósito Pagado', color: '#059669', generalStatus: 'processing', icon: 'DollarSign' },
+  { id: 'design_phase', name: 'Fase de Diseño', color: '#6366F1', generalStatus: 'processing', icon: 'Palette' },
+  { id: 'material_preparation', name: 'Preparación de Materiales', color: '#8B5CF6', generalStatus: 'processing', icon: 'Package' },
+  { id: 'cutting_wood', name: 'Cortando Madera', color: '#EC4899', generalStatus: 'processing', icon: 'Scissors' },
+  { id: 'woodworking', name: 'Ebanistería', color: '#F97316', generalStatus: 'processing', icon: 'Hammer' },
+  { id: 'assembling', name: 'Ensamblando', color: '#06B6D4', generalStatus: 'processing', icon: 'Settings' },
+  { id: 'finishing', name: 'Acabando', color: '#10B981', generalStatus: 'processing', icon: 'Brush' },
+  { id: 'quality_check', name: 'Control de Calidad', color: '#F59E0B', generalStatus: 'processing', icon: 'CheckSquare' },
+  { id: 'ready_for_shipping', name: 'Listo para Envío', color: '#84CC16', generalStatus: 'shipped', icon: 'Truck' },
+  { id: 'in_transit', name: 'En Tránsito', color: '#22C55E', generalStatus: 'shipped', icon: 'MapPin' },
+  { id: 'delivered', name: 'Entregado', color: '#16A34A', generalStatus: 'delivered', icon: 'CheckCircle' },
+  { id: 'installation_complete', name: 'Instalación Completa', color: '#15803D', generalStatus: 'delivered', icon: 'Home' },
+  { id: 'cancelled_by_customer', name: 'Cancelado por Cliente', color: '#DC2626', generalStatus: 'cancelled', icon: 'XCircle' },
+  { id: 'cancelled_by_admin', name: 'Cancelado por Admin', color: '#B91C1C', generalStatus: 'cancelled', icon: 'XCircle' },
+  { id: 'return_requested', name: 'Devolución Solicitada', color: '#7C3AED', generalStatus: 'processing', icon: 'RotateCcw' },
+  { id: 'refunded', name: 'Reembolsado', color: '#0891B2', generalStatus: 'refunded', icon: 'RefreshCw' }
 ]
 
 export default function OrdersManagement() {
