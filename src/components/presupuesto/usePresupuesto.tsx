@@ -201,72 +201,273 @@ export function usePresupuesto() {
 
   const exportPDF = async (options: { download: boolean; email: boolean } = { download: true, email: false }) => {
     const { jsPDF } = await import("jspdf")
-    const doc = new jsPDF()
-    const line = (y: number) => doc.line(10, y, 200, y)
+    const doc = new jsPDF({ orientation: "portrait", unit: "mm", format: [279, 432] })
+    // Tamaños de fuente base (más pequeño)
+    const FS_BASE = 9
+    // medidas de página y márgenes
+    const pageWidth = doc.internal.pageSize.getWidth()
+    const pageHeight = doc.internal.pageSize.getHeight()
+    const margin = 12
+    const headerH = 24
+    const line = (y: number) => doc.line(margin, y, pageWidth - margin, y)
 
-    // Intentar dibujar logo en la parte superior izquierda
+    // Encabezado con color #434343, separado de los bordes
+    doc.setFillColor(67, 67, 67)
+    doc.rect(margin, margin, pageWidth - margin * 2, headerH, "F")
+
+    // Intentar dibujar logo en la parte superior izquierda (dentro del encabezado)
+    let logoDataUrl: string | null = null
     try {
-      const logoPath = encodeURI("/RomanaEbanistería.png")
+      const logoPath = encodeURI("/romanaEbanistería_alt.png")
       const dataUrl = await loadImageAsDataURL(logoPath)
-      // x, y, width, height (mm)
       if (dataUrl) {
-        doc.addImage(dataUrl, "PNG", 10, 8, 28, 12)
+        logoDataUrl = dataUrl
+        // x, y, width, height (mm)
+        doc.addImage(dataUrl, "PNG", margin + 6, margin + 6, 28, 12)
       }
     } catch {}
 
-    // Título y fecha
-    doc.setFontSize(16)
-    doc.text("Cotización Romana Ebanistería", 44, 15)
-    doc.setFontSize(10)
-    doc.text(new Date().toLocaleString(), 190, 15, { align: "right" })
-    line(20)
+    // Línea separadora bajo el encabezado
+    line(margin + headerH)
 
-    // Datos del cliente (si existen en localStorage)
-    let y = 26
+    // Datos del cliente + fecha en la misma línea, bajo el encabezado
+    let y = margin + headerH + 8
+    doc.setTextColor(0, 0, 0)
+    doc.setFontSize(FS_BASE) // antes 10
+    let customerName = ""
     try {
       const raw = localStorage.getItem('presu_customer')
       if (raw) {
         const c = JSON.parse(raw)
-        doc.setFontSize(11)
-        doc.text(`Cliente: ${c.nombre || ''}`, 10, y)
-        doc.text(`Tipo: ${c.tipo || ''}`, 100, y)
-        y += 5
-        doc.setFontSize(10)
-        if (c.numero) doc.text(`Tel: ${c.numero}`, 10, y)
-        if (c.email) doc.text(`Email: ${c.email}`, 60, y)
-        if (c.tipo === 'Desarrollador' && c.empresa) doc.text(`Empresa: ${c.empresa}`, 120, y)
-        y += 5
-        if (c.tipo === 'Desarrollador' && c.website) { doc.text(`Website: ${c.website}`, 10, y); y += 5 }
-        if (c.tipo === 'Agente del codia' && c.codia) { doc.text(`CODIA: ${c.codia}`, 10, y); y += 5 }
+        customerName = c?.nombre || ""
       }
     } catch {}
-    if (y < 28) y = 28
-    doc.setFontSize(12)
-    doc.text("Productos", 10, y)
+    const todayStr = new Date().toLocaleDateString()
+    doc.text(`Cliente: ${customerName}`, margin, y)
+    doc.text(todayStr, pageWidth - margin - 2, y, { align: "right" })
+
+    // PRESUPUESTO #<número>
     y += 6
-    doc.setFontSize(10)
-    selectedList.forEach((it, idx) => {
-      if (y > 270) {
-        doc.addPage()
-        y = 20
-      }
-      doc.text(`${idx + 1}. ${it.name}`, 10, y)
-      y += 5
-      doc.text(`Cantidad: ${it.qty}`, 12, y)
-      doc.text(`Precio: ${formatCurrency(it.price)}`, 70, y)
-      doc.text(`Subtotal: ${formatCurrency(it.price * it.qty)}`, 120, y)
-      y += 6
-    })
-    y += 4
-    line(y)
+    doc.setFontSize(FS_BASE) // antes 10
+    const presupuestoNumber = Math.floor(100000 + Math.random() * 900000)
+    doc.setFontSize(10) // igual tamaño que contacto
+    doc.text(`PRESUPUESTO #${presupuestoNumber}`, margin, y)
+
+    // Contacto y validez
+    y += 6
+    doc.setFontSize(FS_BASE) // antes 10
+    doc.setFont("helvetica", "bold")
+    doc.text("Contacto: Romana Ebanisteria", margin, y)
+    doc.setFont("helvetica", "normal")
+    doc.setTextColor(157, 84, 33) // #9d5421
+    doc.text("COTIZACION VALIDA POR 5 DIAS", pageWidth - margin - 2, y, { align: "right" })
+    doc.setTextColor(0, 0, 0)
+
+    // Teléfono y Email
+    y += 5
+    doc.setFont("helvetica", "bold")
+    doc.text("Tel#: +1 (829) 222-2483   Email: romanaebanisteriar@hotmail.com", margin, y)
+    doc.setFont("helvetica", "normal")
+
+    // Barra fina separadora con color #9d5421
     y += 8
-    doc.setFontSize(12)
-    doc.text(`Subtotal: ${formatCurrency(subtotal)}`, 140, y)
+    doc.setFillColor(157, 84, 33)
+    doc.rect(margin, y, pageWidth - margin * 2, 3, "F")
+    y += 8
+
+    // Título de productos (removido)
+
+    const contentWidth = pageWidth - margin * 2
+    const colWidths = [
+      contentWidth * 0.08,
+      contentWidth * 0.12,
+      contentWidth * 0.12,
+      contentWidth * 0.40,
+      contentWidth * 0.14,
+      contentWidth * 0.14,
+    ]
+
+    // Reducir alturas mínimas de filas
+    const rowHeights = { h1: 7, h2: 7, h3: 7, h4: 9 }
+
+    // Helper para salto de página
+    const ensureSpace = (needed: number) => {
+      if (y + needed > pageHeight - margin - 12) {
+        doc.addPage()
+        const pw = doc.internal.pageSize.getWidth()
+        // Re-dibujar encabezado
+        doc.setFillColor(67, 67, 67)
+        doc.rect(margin, margin, pw - margin * 2, headerH, "F")
+        if (logoDataUrl) doc.addImage(logoDataUrl, "PNG", margin + 6, margin + 6, 28, 12)
+        // Línea bajo encabezado y barra fina
+        doc.setDrawColor(0)
+        doc.setLineWidth(0.2)
+        doc.line(margin, margin + headerH, pw - margin, margin + headerH)
+        doc.setFillColor(157, 84, 33)
+        doc.rect(margin, margin + headerH + 8, pw - margin * 2, 3, "F")
+        y = margin + headerH + 18
+      }
+    }
+
+    doc.setFontSize(FS_BASE)
+    doc.setFont("helvetica", "normal")
+
+    for (let idx = 0; idx < selectedList.length; idx++) {
+      const it = selectedList[idx]
+
+      // Preparar configuración desde el nombre (parte después de " - ") y calcular altura dinámica
+      const fullName = it.name || ""
+      const parts = fullName.split(" - ")
+      const configPart = parts.length > 1 ? parts.slice(1).join(" - ") : ""
+      let cfgDisplay = configPart.trim()
+      if (cfgDisplay && !cfgDisplay.startsWith("-")) cfgDisplay = `- ${cfgDisplay}`
+      const cfgLines = doc.splitTextToSize(cfgDisplay || "Configuración: (según selección)", contentWidth - 4)
+      const lineH = 4 // antes 5, compensa fuente más pequeña
+      const dynH2 = Math.max(rowHeights.h2, 4 + cfgLines.length * lineH)
+
+      // Preparar valores y calcular altura dinámica de la última fila (h4)
+      const qty = it.qty
+      const ancho = Math.floor(60 + Math.random() * 60) // 60-120 cm
+      const alto = Math.floor(180 + Math.random() * 40) // 180-220 cm
+      const desc = `Fabricación de "${it.name}"`
+      const unit = formatCurrency(it.price)
+      const totalP = formatCurrency(it.price * it.qty)
+      const values = [String(qty), `${ancho} cm`, `${alto} cm`, desc, unit, totalP]
+      const linesPerCol = values.map((v, i) => doc.splitTextToSize(String(v), colWidths[i] - 3))
+      const dynH4 = Math.max(rowHeights.h4, 6 + Math.max(...linesPerCol.map((ls: any) => (Array.isArray(ls) ? ls.length : 1)))* (lineH - 1))
+
+      // Alturas totales para la tabla del producto (usar alturas dinámicas de fila 2 y 4)
+      const totalH = rowHeights.h1 + dynH2 + rowHeights.h3 + dynH4 + 6
+      ensureSpace(totalH)
+
+      // Fila 1: nombre (colspan 6)
+      let x = margin
+      let rowY = y
+      doc.setDrawColor(0, 0, 0) // líneas negras
+      doc.setFillColor(165, 165, 165) // #a5a5a5
+      doc.rect(x, rowY, contentWidth, rowHeights.h1, "FD")
+      const baseName = ((it.name || "").split(" - ")[0] || it.name || "").replace(/\s*['\"].*?['\"]/g, "").trim()
+      doc.setFont("helvetica", "bold")
+      doc.setTextColor(0, 0, 0)
+      const titleLines = doc.splitTextToSize(baseName, contentWidth - 4)
+      doc.text(titleLines, x + 2, rowY + rowHeights.h1 - 2)
+      // Reset a normal para evitar negritas fuera de la fila 1
+      doc.setFont("helvetica", "normal")
+
+      // Fila 2: configuración (colspan 6) con altura dinámica
+      rowY += rowHeights.h1
+      doc.setFont("helvetica", "normal")
+      doc.setTextColor(0, 0, 0)
+      doc.rect(x, rowY, contentWidth, dynH2)
+      doc.text(cfgLines, x + 2, rowY + 5)
+
+      // Fila 3: encabezados columnas
+      rowY += dynH2
+      x = margin
+      doc.setDrawColor(0, 0, 0) // líneas negras
+      const headers = ["CANT", "ANCH", "ALTO", "DESCRIPCION", "PRECIO UND", "TOTAL"]
+      doc.setFontSize(FS_BASE)
+      for (let c = 0; c < 6; c++) {
+        doc.rect(x, rowY, colWidths[c], rowHeights.h3)
+        doc.setFont("helvetica", "bold")
+        doc.text(headers[c], x + 2, rowY + rowHeights.h3 - 2)
+        x += colWidths[c]
+      }
+      // Reset a normal para evitar negritas fuera de la fila 3
+      doc.setFont("helvetica", "normal")
+
+      // Fila 4: valores con altura dinámica
+      rowY += rowHeights.h3
+      x = margin
+      doc.setDrawColor(0, 0, 0) // líneas negras
+      doc.setFont("helvetica", "normal")
+      for (let c = 0; c < 6; c++) {
+        doc.rect(x, rowY, colWidths[c], dynH4)
+        const lines = linesPerCol[c]
+        const topY = rowY + 5 // alineación superior con padding
+        // Alinear todo arriba-izquierda (incluye precios)
+        doc.text(lines, x + 2, topY)
+        x += colWidths[c]
+      }
+
+      // Avanzar y pequeño espacio entre tablas
+      y = rowY + dynH4 + 3
+    }
+
+    // Separador antes de totales
+    line(y)
     y += 6
-    doc.text(`Impuesto (18%): ${formatCurrency(tax)}`, 140, y)
-    y += 6
-    doc.setFontSize(13)
-    doc.text(`Total: ${formatCurrency(total)}`, 140, y)
+
+    // Bloque de totales a la derecha
+    const boxW = Math.min(80, pageWidth - margin * 2)
+    const rowH = 7
+    const needed = rowH * 3 + 6
+    ensureSpace(needed)
+    const xBox = pageWidth - margin - boxW
+
+    // Subtotal
+    doc.setFillColor(247, 247, 247)
+    doc.rect(xBox, y, boxW, rowH, "F")
+    doc.setTextColor(0, 0, 0)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(FS_BASE + 1)
+    doc.text("Subtotal", xBox + 3, y + rowH - 2)
+    doc.text(formatCurrency(subtotal), xBox + boxW - 3, y + rowH - 2, { align: "right" })
+    y += rowH
+
+    // ITBIS (18%)
+    doc.setFillColor(247, 247, 247)
+    doc.rect(xBox, y, boxW, rowH, "F")
+    doc.setTextColor(0, 0, 0)
+    doc.setFont("helvetica", "normal")
+    doc.setFontSize(FS_BASE + 1)
+    doc.text("ITBIS (18%)", xBox + 3, y + rowH - 2)
+    doc.text(formatCurrency(tax), xBox + boxW - 3, y + rowH - 2, { align: "right" })
+    y += rowH
+
+    // Total destacado
+    const totalH = rowH + 2
+    doc.setFillColor(157, 84, 33) // #9d5421
+    doc.rect(xBox, y, boxW, totalH, "F")
+    doc.setTextColor(255, 255, 255)
+    doc.setFont("helvetica", "bold")
+    doc.setFontSize(FS_BASE + 3)
+    doc.text("Total", xBox + 3, y + totalH - 2)
+    doc.text(formatCurrency(total), xBox + boxW - 3, y + totalH - 2, { align: "right" })
+    y += totalH
+
+    // Reset de color
+    doc.setTextColor(0, 0, 0)
+
+    // Notas al pie con separador y mayor espacio
+    const preSpace = 14
+    const notes = [
+      "1) Los precios aqui suministrado son en base a las especificaciones dadas por el cliente.",
+      "2) No realizamos devolucion de dinero.",
+      "3) Trabajos presupuestados en este documento tienen un plazo de entrega de _______Dias Calendario a la firma del mismo y pago del primer avance.",
+      "4) La energia electrica y andamios si son requeridos, el cliente se comprometera a facilitar las condiciones favorables para el desarrollo del trabajo.",
+      "5) Cualquier trabajo de ajustes adicionales a las especificaciones dadas pueden ser considerados como otros gastos que deberan ser cubiertos por el cliente.",
+      "6) El Cliente autoriza a Romana Ebanisteria y/o su grupo de trabajo a grabar, fotografiar o documentar el trabajo realizado, y a utilizar dicho material con fines promocionales o de portafolio, en cualquier medio, sin que esto genere compensación adicional.",
+    ]
+    doc.setFontSize(FS_BASE)
+    doc.setFont("helvetica", "normal")
+    const wrapWidth = pageWidth - margin * 2
+    let wrapped: string[] = []
+    for (const n of notes) {
+      const lines = doc.splitTextToSize(n, wrapWidth)
+      wrapped = wrapped.concat(lines)
+    }
+    const lineHF = 4
+    const needFooterH = wrapped.length * lineHF + 4
+    const topSpace = 18
+    const postSpace = 12
+    ensureSpace(topSpace + 3 + postSpace + needFooterH)
+    y += topSpace
+    doc.setFillColor(0, 0, 0)
+    doc.rect(margin, y, pageWidth - margin * 2, 3, "F")
+    y += postSpace
+    doc.text(wrapped, margin, y)
+    y += needFooterH
 
     // Si se solicita envío por email, enviar a la API
     if (options.email) {
