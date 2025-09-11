@@ -5,12 +5,13 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useMemo, useState } from "react"
-import { registerUser } from "@/lib/auth"
+import { useAuth } from "@/context/AuthContext"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function RegisterPage() {
   const [form, setForm] = useState({ email: "", password: "", password2: "", nombre: "", telefono: "" })
+  const { register, loading: authLoading, error: authError } = useAuth()
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
@@ -28,7 +29,7 @@ export default function RegisterPage() {
     setError(null)
     setMessage(null)
     try {
-      const resp = await registerUser({
+      await register({
         nombre: form.nombre,
         correo: form.email,
         password: form.password,
@@ -143,7 +144,7 @@ export default function RegisterPage() {
                 )}
               </div>
 
-              {error && <div className="text-sm text-red-600">{error}</div>}
+              {(error || authError) && <div className="text-sm text-red-600">{error || authError}</div>}
               {message && <div className="text-sm text-emerald-700">{message}</div>}
 
               <button
@@ -151,7 +152,7 @@ export default function RegisterPage() {
                 disabled={submitting || !formValid}
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 hover:bg-slate-800 transition-colors rounded-sm"
               >
-                {submitting ? "Creando..." : "Crear cuenta"}
+                {submitting || authLoading ? "Creando..." : "Crear cuenta"}
               </button>
             </form>
 

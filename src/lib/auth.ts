@@ -6,6 +6,9 @@ export interface RomanaUser {
   nombre: string
   correo: string
   telefono?: string
+  is_guest?: boolean
+  created_at?: string
+  updated_at?: string
 }
 
 export interface AuthResponse {
@@ -63,4 +66,38 @@ export async function loginUser(data: { correo: string; password: string }) {
 
 export function logoutUser() {
   clearAuth()
+}
+
+// Fetch current authenticated user from /auth/me using stored bearer token
+// Updates the cached auth user (preserving token) if successful.
+export async function fetchCurrentUser(): Promise<RomanaUser> {
+  const auth = getAuth()
+  if (!auth?.token) throw new Error('NO_AUTH')
+  const res = await fetch(`${BASE_URL}/auth/me`, {
+    headers: {
+      'Authorization': `Bearer ${auth.token}`,
+      'Accept': 'application/json'
+    }
+  })
+  if (res.status === 401) {
+    clearAuth()
+    throw new Error('UNAUTHORIZED')
+  }
+  if (!res.ok) {
+    throw new Error('No se pudo obtener el perfil')
+  }
+  const data = await res.json()
+  // API returns id_usuario; map to our id field
+  const mapped: RomanaUser = {
+    id: data.id_usuario || data.id || '',
+    nombre: data.nombre,
+    correo: data.correo,
+    telefono: data.telefono || undefined,
+    is_guest: data.is_guest,
+    created_at: data.created_at,
+    updated_at: data.updated_at,
+  }
+  // Persist updated user while keeping token data
+  saveAuth({ user: mapped, token: auth.token, token_type: auth.token_type })
+  return mapped
 }

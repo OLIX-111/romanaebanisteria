@@ -6,26 +6,25 @@ import { Open_Sans } from "next/font/google"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Link from "next/link"
-import { getAuth, logoutUser } from "@/lib/auth"
+import { useAuth } from "@/context/AuthContext"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [loading, setLoading] = useState(true)
   const [flash, setFlash] = useState<string | null>(null)
-  const [user, setUser] = useState<any>(null)
+  const { user, loading, error, logout, refreshUser } = useAuth()
   const [orders, setOrders] = useState<any[]>([])
 
   useEffect(() => {
-    const auth = getAuth()
-    if (!auth?.user) {
-      router.replace("/login?returnTo=/profile")
-      return
+    if (!loading && !user && !error) {
+      // Not authenticated -> redirect
+      router.replace('/login?returnTo=/profile')
     }
-    setUser(auth.user)
-    setLoading(false)
-  }, [router])
+  }, [loading, user, error, router])
+
+  // Optionally could trigger refresh on mount
+  useEffect(() => { if (user) refreshUser() }, [])
 
   // Read and clear flash message from localStorage
   useEffect(() => {
@@ -39,6 +38,22 @@ export default function ProfilePage() {
   }, [])
 
   if (loading) return <div className="mt-24 text-center">Cargando...</div>
+
+  if (error) {
+    return (
+      <main className={openSans.className}>
+        <Header />
+        <div className="container mx-auto mt-24 px-4 py-12 lg:px-8">
+          <div className="mb-6 p-3 border border-red-300 bg-red-50 text-red-800 text-sm">{error}</div>
+          <button
+            onClick={() => router.replace('/login?returnTo=/profile')}
+            className="px-4 py-2 text-sm bg-gray-900 text-white hover:bg-gray-800"
+          >Ir a iniciar sesión</button>
+        </div>
+        <Footer />
+      </main>
+    )
+  }
 
   return (
     <main className={openSans.className}>
@@ -59,7 +74,7 @@ export default function ProfilePage() {
             </div>
             <div className="mt-4">
               <button
-                onClick={async () => { logoutUser(); router.push('/') }}
+                onClick={async () => { logout(); router.push('/') }}
                 className="px-4 py-2 text-sm border border-gray-300 hover:bg-gray-50"
               >Cerrar sesión</button>
             </div>

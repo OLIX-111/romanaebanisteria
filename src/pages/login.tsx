@@ -6,12 +6,13 @@ import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useState, useEffect, useMemo } from "react"
 import { useRouter } from "next/router"
-import { loginUser, getAuth } from "@/lib/auth"
+import { useAuth } from "@/context/AuthContext"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function LoginPage() {
   const router = useRouter()
+  const { user, login, loading: authLoading, error: authError } = useAuth()
   const returnTo = (router.query.returnTo as string) || "/store"
   const [form, setForm] = useState({ email: "", password: "" })
   const [showPassword, setShowPassword] = useState(false)
@@ -22,13 +23,12 @@ export default function LoginPage() {
   const formValid = isEmailValid && isPasswordValid
 
   useEffect(() => {
-    const auth = getAuth()
-    if (auth?.user) router.replace(returnTo)
+    if (user) router.replace(returnTo)
     try {
       const remembered = localStorage.getItem("romana_last_email")
       if (remembered) setForm((f) => ({ ...f, email: remembered }))
     } catch {}
-  }, [returnTo, router])
+  }, [returnTo, router, user])
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -36,7 +36,7 @@ export default function LoginPage() {
     setSubmitting(true)
     setError(null)
     try {
-      await loginUser({ correo: form.email, password: form.password })
+      await login(form.email, form.password)
       try {
         localStorage.setItem("romana_last_email", form.email)
         localStorage.setItem("romana_flash", "Has iniciado sesión correctamente.")
@@ -110,14 +110,14 @@ export default function LoginPage() {
                 )}
               </div>
 
-              {error && <div className="text-sm text-red-600">{error}</div>}
+              {(error || authError) && <div className="text-sm text-red-600">{error || authError}</div>}
 
               <button
                 type="submit"
                 disabled={submitting || !formValid}
                 className="w-full inline-flex items-center justify-center gap-2 px-6 py-3 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 hover:bg-slate-800 transition-colors rounded-sm"
               >
-                {submitting ? "Ingresando..." : "Iniciar sesión"}
+                {submitting || authLoading ? "Ingresando..." : "Iniciar sesión"}
               </button>
             </form>
 
