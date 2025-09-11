@@ -416,7 +416,7 @@ export default function CheckoutPage() {
                       </h2>
                       
                       <div className="space-y-4">
-                        <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                       {/*  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
                           <input
                             type="radio"
                             name="paymentMethod"
@@ -436,7 +436,7 @@ export default function CheckoutPage() {
                               Enviaremos tu información y nos contactaremos contigo para coordinar el pago y entrega.
                             </p>
                           </div>
-                        </label>
+                        </label> */}
 
                         <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
                           <input
