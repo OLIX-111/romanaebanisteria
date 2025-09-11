@@ -181,9 +181,9 @@ export default function ThreeDSFormatPage() {
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-2">📋 Key Transformations</h3>
                     <div className="text-xs text-blue-800 space-y-1">
-                      <p><strong>Phone formatting:</strong> {testForm.phone} → {formatted3DS[&quot;3DS_mobilePhone&quot;]}</p>
-                      <p><strong>Province mapping:</strong> {testForm.province} → {formatted3DS[&quot;3DS_billAddr_state&quot;]}</p>
-                      <p><strong>Address format:</strong> {testForm.address} → {formatted3DS[&quot;3DS_billAddr_line1&quot;]}</p>
+                      <p><strong>Phone formatting:</strong> {testForm.phone} → {formatted3DS["3DS_mobilePhone"]}</p>
+                      <p><strong>Province mapping:</strong> {testForm.province} → {formatted3DS["3DS_billAddr_state"]}</p>
+                      <p><strong>Address format:</strong> {testForm.address} → {formatted3DS["3DS_billAddr_line1"]}</p>
                       <p><strong>Country code:</strong> DO → 214</p>
                     </div>
                   </div>
@@ -202,7 +202,7 @@ export default function ThreeDSFormatPage() {
                 </div>
               ) : (
                 <div className="text-center py-12 text-gray-500">
-                  <p>Click "Format 3DS Data" to see the CardNet format</p>
+                  <p>Click &quot;Format 3DS Data&quot; to see the CardNet format</p>
                 </div>
               )}
             </div>
