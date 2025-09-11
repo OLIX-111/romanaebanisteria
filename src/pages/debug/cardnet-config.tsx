@@ -1,6 +1,7 @@
 "use client"
 
 import Head from "next/head"
+import Link from "next/link"
 import { Open_Sans } from "next/font/google"
 import { useEffect, useState } from "react"
 import { CheckCircle, XCircle, AlertTriangle } from "lucide-react"
@@ -143,15 +144,17 @@ export default function CardNetConfigDebugPage() {
               <p className="text-sm text-gray-600">Use these links to test the payment flow:</p>
               
               <div className="space-y-2">
-                <a 
+                <Link 
                   href="/store/checkout" 
                   className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700 text-sm"
                 >
                   Test Payment Flow
-                </a>
+                </Link>
                 <a 
                   href="/api/debug/cardnet-capture?test=true" 
                   className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 ml-3 text-sm"
+                  target="_blank"
+                  rel="noopener noreferrer"
                 >
                   Test Return Handler
                 </a>

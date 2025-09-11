@@ -1,6 +1,7 @@
 "use client"
 
 import Head from "next/head"
+import Link from "next/link"
 import { Open_Sans } from "next/font/google"
 import { useState } from "react"
 import { getProvinceCode, formatPhoneForCardNet } from "@/lib/cardnet"
@@ -180,9 +181,9 @@ export default function ThreeDSFormatPage() {
                   <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
                     <h3 className="font-semibold text-blue-900 mb-2">📋 Key Transformations</h3>
                     <div className="text-xs text-blue-800 space-y-1">
-                      <p><strong>Phone formatting:</strong> {testForm.phone} → {formatted3DS["3DS_mobilePhone"]}</p>
-                      <p><strong>Province mapping:</strong> {testForm.province} → {formatted3DS["3DS_billAddr_state"]}</p>
-                      <p><strong>Address format:</strong> {testForm.address} → {formatted3DS["3DS_billAddr_line1"]}</p>
+                      <p><strong>Phone formatting:</strong> {testForm.phone} → {formatted3DS[&quot;3DS_mobilePhone&quot;]}</p>
+                      <p><strong>Province mapping:</strong> {testForm.province} → {formatted3DS[&quot;3DS_billAddr_state&quot;]}</p>
+                      <p><strong>Address format:</strong> {testForm.address} → {formatted3DS[&quot;3DS_billAddr_line1&quot;]}</p>
                       <p><strong>Country code:</strong> DO → 214</p>
                     </div>
                   </div>
@@ -211,41 +212,41 @@ export default function ThreeDSFormatPage() {
             <h2 className="text-xl font-semibold mb-4">Example from CardNet Documentation</h2>
             <pre className="bg-gray-100 p-4 rounded text-xs overflow-auto">
 {`{
-  "3DS_email": "marianelsa442@hotmail.com",
-  "3DS_mobilePhone": "8298062770",
-  "3DS_workPhone": "8298062778",
-  "3DS_homePhone": "8298062794",
-  "3DS_billAddr_line1": "CALLE 1 #4 EL DORADO A",
-  "3DS_billAddr_line2": "",
-  "3DS_billAddr_line3": "CALLE 1 #4 EL DORADO A",
-  "3DS_billAddr_city": "SANTIAGO",
-  "3DS_billAddr_state": "25",
-  "3DS_billAddr_country": "214",
-  "3DS_billAddr_postcode": "51000",
-  "3DS_shipAddr_line1": "CALLE 1 #4 EL DORADO 1",
-  "3DS_shipAddr_line2": "",
-  "3DS_shipAddr_line3": "CALLE 1 #4 EL DORADO 1",
-  "3DS_shipAddr_city": "SANTIAGO",
-  "3DS_shipAddr_state": "25",
-  "3DS_shipAddr_country": "214",
-  "3DS_shipAddr_postcode": "51000"
+  &quot;3DS_email&quot;: &quot;marianelsa442@hotmail.com&quot;,
+  &quot;3DS_mobilePhone&quot;: &quot;8298062770&quot;,
+  &quot;3DS_workPhone&quot;: &quot;8298062778&quot;,
+  &quot;3DS_homePhone&quot;: &quot;8298062794&quot;,
+  &quot;3DS_billAddr_line1&quot;: &quot;CALLE 1 #4 EL DORADO A&quot;,
+  &quot;3DS_billAddr_line2&quot;: &quot;&quot;,
+  &quot;3DS_billAddr_line3&quot;: &quot;CALLE 1 #4 EL DORADO A&quot;,
+  &quot;3DS_billAddr_city&quot;: &quot;SANTIAGO&quot;,
+  &quot;3DS_billAddr_state&quot;: &quot;25&quot;,
+  &quot;3DS_billAddr_country&quot;: &quot;214&quot;,
+  &quot;3DS_billAddr_postcode&quot;: &quot;51000&quot;,
+  &quot;3DS_shipAddr_line1&quot;: &quot;CALLE 1 #4 EL DORADO 1&quot;,
+  &quot;3DS_shipAddr_line2&quot;: &quot;&quot;,
+  &quot;3DS_shipAddr_line3&quot;: &quot;CALLE 1 #4 EL DORADO 1&quot;,
+  &quot;3DS_shipAddr_city&quot;: &quot;SANTIAGO&quot;,
+  &quot;3DS_shipAddr_state&quot;: &quot;25&quot;,
+  &quot;3DS_shipAddr_country&quot;: &quot;214&quot;,
+  &quot;3DS_shipAddr_postcode&quot;: &quot;51000&quot;
 }`}
             </pre>
           </div>
 
           <div className="mt-6">
-            <a 
+            <Link 
               href="/debug/test-cardnet" 
               className="inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm"
             >
               🧪 Test CardNet Session
-            </a>
-            <a 
+            </Link>
+            <Link 
               href="/store/checkout" 
               className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 ml-3 text-sm"
             >
               🛒 Back to Checkout
-            </a>
+            </Link>
           </div>
         </div>
       </div>

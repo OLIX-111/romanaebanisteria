@@ -3,6 +3,7 @@
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Head from "next/head"
+import Link from "next/link"
 import { Open_Sans } from "next/font/google"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
@@ -95,18 +96,18 @@ export default function CardNetDebugPage() {
               <p>3. Check server logs for the /api/payments/cardnet/return endpoint</p>
               
               <div className="mt-6 space-y-2">
-                <a 
+                <Link 
                   href="/store/checkout" 
                   className="inline-block bg-blue-600 text-white px-4 py-2 rounded hover:bg-blue-700"
                 >
                   Try Payment Again
-                </a>
-                <a 
+                </Link>
+                <Link 
                   href="/store/cart" 
                   className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 ml-3"
                 >
                   Back to Cart
-                </a>
+                </Link>
               </div>
             </div>
           </div>

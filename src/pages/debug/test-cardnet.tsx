@@ -2,6 +2,7 @@
 
 import { useState } from "react"
 import Head from "next/head"
+import Link from "next/link"
 import { Open_Sans } from "next/font/google"
 import { Play, CheckCircle, XCircle, Loader2 } from "lucide-react"
 
@@ -177,7 +178,7 @@ export default function TestCardNetPage() {
           <div className="bg-blue-50 border border-blue-200 rounded-lg p-6">
             <h3 className="text-lg font-semibold text-blue-900 mb-3">Debug Steps</h3>
             <ol className="space-y-2 text-sm text-blue-800">
-              <li>1. <a href="/debug/cardnet-config" className="underline hover:no-underline">Check configuration status</a></li>
+              <li>1. <Link href="/debug/cardnet-config" className="underline hover:no-underline">Check configuration status</Link></li>
               <li>2. Test session creation (button above)</li>
               <li>3. If session works, test the payment gateway link</li>
               <li>4. Check server logs for any errors</li>
@@ -186,18 +187,18 @@ export default function TestCardNetPage() {
           </div>
 
           <div className="mt-6 space-y-2">
-            <a 
+            <Link 
               href="/debug/cardnet-config" 
               className="inline-block bg-purple-600 text-white px-4 py-2 rounded hover:bg-purple-700 text-sm"
             >
               📋 Check Configuration
-            </a>
-            <a 
+            </Link>
+            <Link 
               href="/store/checkout" 
               className="inline-block bg-gray-600 text-white px-4 py-2 rounded hover:bg-gray-700 ml-3 text-sm"
             >
               🛒 Back to Checkout
-            </a>
+            </Link>
           </div>
         </div>
       </div>
