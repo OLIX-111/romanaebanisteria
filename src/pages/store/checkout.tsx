@@ -9,7 +9,6 @@ import { Open_Sans } from "next/font/google"
 import { useCart } from "@/hook/useCart"
 import { useEffect, useState } from "react"
 import { supabase } from "@/utils/supabase"
-import CardnetPaymentForm from "@/components/store/CardnetPaymentForm"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -28,10 +27,7 @@ export default function CheckoutPage() {
     notes: "",
   })
   const [submitting, setSubmitting] = useState(false)
-  const [currentStep, setCurrentStep] = useState<'customer-info' | 'payment'>('customer-info')
-  const [paymentToken, setPaymentToken] = useState<string | null>(null)
-  const [paymentError, setPaymentError] = useState<string | null>(null)
-  const [isProcessingPayment, setIsProcessingPayment] = useState(false)
+  const [submitted, setSubmitted] = useState(false)
 
   const isValid =
     form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
@@ -51,123 +47,22 @@ export default function CheckoutPage() {
     }
   }, [])
 
-  // Handle customer info form submission
+  // Simplified submit: no payment, single step
   async function handleCustomerInfoSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isValid || count === 0) return
     setSubmitting(true)
 
     try {
-      // Validate form
-      if (!isValid) {
-        alert('Por favor completa todos los campos requeridos')
-        return
-      }
-
-      // Move to payment step
-      setCurrentStep('payment')
+      if (!isValid) return
+      // Here we could send order intent to backend or just mark as submitted
+      setSubmitted(true)
     } catch (error) {
       console.error('Error en validación:', error)
       alert('Error al procesar la información. Intenta de nuevo.')
     } finally {
       setSubmitting(false)
     }
-  }
-
-  // Handle payment token creation
-  const handleTokenCreated = async (token: string) => {
-    setPaymentToken(token)
-    setPaymentError(null)
-    setIsProcessingPayment(true)
-
-    try {
-      const orderId = `ORD${Date.now()}`
-      const total = subtotal
-
-      // Process payment with CardNET
-      const res = await fetch('/api/cardnet/purchase', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          trxToken: token,
-          amount: total,
-          currency: 'DOP',
-          invoice: orderId,
-          tax: '0'
-        })
-      })
-
-      const result = await res.json()
-
-      if (!res.ok) {
-        throw new Error(result.error || 'Error en el procesamiento del pago')
-      }
-
-      if (result.success && result.status === 'approved') {
-        // Payment successful - save order snapshot and redirect
-        const snapshot = {
-          orderId,
-          amount: total,
-          currency: 'DOP',
-          createdAt: Date.now(),
-          purchaseId: result.purchaseId,
-          approvalCode: result.approvalCode,
-          items: items.map(i => ({
-            id: i.id,
-            productId: i.productId,
-            variantId: (i as any).variantId,
-            name: i.name,
-            quantity: i.quantity,
-            price: i.price,
-            image: (i as any).image || null
-          })),
-          totals: {
-            subtotal: total,
-            tax: 0,
-            shipping: 0,
-            grandTotal: total
-          },
-          customer: {
-            firstName: form.firstName,
-            lastName: form.lastName,
-            email: form.email,
-            phone: form.phone,
-            address: form.address,
-            city: form.city,
-            province: form.province,
-            postalCode: form.postalCode,
-            notes: form.notes
-          }
-        }
-
-        localStorage.setItem('cardnet_order_snapshot', JSON.stringify(snapshot))
-
-        // Redirect to success page
-        window.location.href = `/cardnet/success?orderId=${orderId}&purchaseId=${result.purchaseId}`
-      } else {
-        throw new Error(result.message || 'Pago no aprobado')
-      }
-
-    } catch (error: any) {
-      console.error('Payment processing error:', error)
-      setPaymentError(error.message || 'Error al procesar el pago')
-      setPaymentToken(null)
-    } finally {
-      setIsProcessingPayment(false)
-    }
-  }
-
-  // Handle payment errors
-  const handlePaymentError = (error: string) => {
-    setPaymentError(error)
-    setPaymentToken(null)
-  }
-
-  // Go back to customer info step
-  const handleBackToCustomerInfo = () => {
-    setCurrentStep('customer-info')
-    setPaymentToken(null)
-    setPaymentError(null)
   }
 
   return (
@@ -188,9 +83,7 @@ export default function CheckoutPage() {
               Carrito
             </Link>
             <span className="text-slate-300">→</span>
-            <span className="text-slate-800 font-semibold">
-              {currentStep === 'customer-info' ? 'Información del cliente' : 'Pago seguro'}
-            </span>
+            <span className="text-slate-800 font-semibold">Información del cliente</span>
           </nav>
 
           {count === 0 ? (
@@ -225,7 +118,28 @@ export default function CheckoutPage() {
             <div className="grid gap-16 lg:grid-cols-3">
               {/* Form Section */}
               <div className="lg:col-span-2">
-                {currentStep === 'customer-info' ? (
+                {submitted ? (
+                  <div className="space-y-8">
+                    <header className="space-y-3">
+                      <h1 className="text-4xl font-bold tracking-tight text-slate-900">Datos recibidos</h1>
+                      <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">
+                        Hemos recibido tu información. Nos pondremos en contacto para coordinar el pago y entrega.
+                      </p>
+                    </header>
+                    <div className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm space-y-4">
+                      <p className="text-sm text-slate-600">Nombre: <span className="font-medium text-slate-900">{form.firstName} {form.lastName}</span></p>
+                      <p className="text-sm text-slate-600">Correo: <span className="font-medium text-slate-900">{form.email}</span></p>
+                      <p className="text-sm text-slate-600">Teléfono: <span className="font-medium text-slate-900">{form.phone}</span></p>
+                      <p className="text-sm text-slate-600">Dirección: <span className="font-medium text-slate-900">{form.address}, {form.city}, {form.province} {form.postalCode}</span></p>
+                      {form.notes && <p className="text-sm text-slate-600">Notas: <span className="font-medium text-slate-900">{form.notes}</span></p>}
+                      <div className="pt-4">
+                        <Link href="/store" className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900">
+                          ← Seguir comprando
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ) : (
                   <form onSubmit={handleCustomerInfoSubmit} className="space-y-12">
                     <header className="space-y-3">
                       <h1 className="text-4xl font-bold tracking-tight text-slate-900">Información del cliente</h1>
@@ -234,113 +148,113 @@ export default function CheckoutPage() {
                       </p>
                     </header>
 
-                  <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
-                    <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">
-                      Información personal
-                    </h2>
-                    <div className="grid gap-6 sm:grid-cols-2">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Nombre *</label>
-                        <input
-                          className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                          placeholder="Tu nombre"
-                          value={form.firstName}
-                          onChange={(e) => setForm({ ...form, firstName: e.target.value })}
-                          required
-                        />
+                    <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
+                      <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">
+                        Información personal
+                      </h2>
+                      <div className="grid gap-6 sm:grid-cols-2">
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700">Nombre *</label>
+                          <input
+                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                            placeholder="Tu nombre"
+                            value={form.firstName}
+                            onChange={(e) => setForm({ ...form, firstName: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700">Apellido *</label>
+                          <input
+                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                            placeholder="Tu apellido"
+                            value={form.lastName}
+                            onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700">Correo electrónico *</label>
+                          <input
+                            type="email"
+                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                            placeholder="tu@email.com"
+                            value={form.email}
+                            onChange={(e) => setForm({ ...form, email: e.target.value })}
+                            required
+                          />
+                        </div>
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700">Teléfono *</label>
+                          <input
+                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                            placeholder="(809) 000-0000"
+                            value={form.phone}
+                            onChange={(e) => setForm({ ...form, phone: e.target.value })}
+                            required
+                          />
+                        </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Apellido *</label>
-                        <input
-                          className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                          placeholder="Tu apellido"
-                          value={form.lastName}
-                          onChange={(e) => setForm({ ...form, lastName: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Correo electrónico *</label>
-                        <input
-                          type="email"
-                          className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                          placeholder="tu@email.com"
-                          value={form.email}
-                          onChange={(e) => setForm({ ...form, email: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Teléfono *</label>
-                        <input
-                          className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                          placeholder="(809) 000-0000"
-                          value={form.phone}
-                          onChange={(e) => setForm({ ...form, phone: e.target.value })}
-                          required
-                        />
-                      </div>
-                    </div>
-                  </section>
+                    </section>
 
-                  <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
-                    <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">
-                      Dirección de envío
-                    </h2>
-                    <div className="space-y-6">
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Dirección completa *</label>
-                        <input
-                          className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                          placeholder="Calle, número, sector"
-                          value={form.address}
-                          onChange={(e) => setForm({ ...form, address: e.target.value })}
-                          required
-                        />
-                      </div>
-                      <div className="grid gap-6 sm:grid-cols-3">
+                    <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
+                      <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">
+                        Dirección de envío
+                      </h2>
+                      <div className="space-y-6">
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-700">Ciudad *</label>
+                          <label className="text-sm font-medium text-slate-700">Dirección completa *</label>
                           <input
                             className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                            placeholder="Santo Domingo"
-                            value={form.city}
-                            onChange={(e) => setForm({ ...form, city: e.target.value })}
+                            placeholder="Calle, número, sector"
+                            value={form.address}
+                            onChange={(e) => setForm({ ...form, address: e.target.value })}
                             required
                           />
                         </div>
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-700">Provincia *</label>
-                          <input
-                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                            placeholder="Distrito Nacional"
-                            value={form.province}
-                            onChange={(e) => setForm({ ...form, province: e.target.value })}
-                            required
-                          />
+                        <div className="grid gap-6 sm:grid-cols-3">
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Ciudad *</label>
+                            <input
+                              className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                              placeholder="Santo Domingo"
+                              value={form.city}
+                              onChange={(e) => setForm({ ...form, city: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Provincia *</label>
+                            <input
+                              className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                              placeholder="Distrito Nacional"
+                              value={form.province}
+                              onChange={(e) => setForm({ ...form, province: e.target.value })}
+                              required
+                            />
+                          </div>
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">Código postal</label>
+                            <input
+                              className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                              placeholder="10101"
+                              value={form.postalCode}
+                              onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
+                            />
+                          </div>
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-700">Código postal</label>
-                          <input
-                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
-                            placeholder="10101"
-                            value={form.postalCode}
-                            onChange={(e) => setForm({ ...form, postalCode: e.target.value })}
+                          <label className="text-sm font-medium text-slate-700">Notas adicionales</label>
+                          <textarea
+                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400 resize-none"
+                            rows={4}
+                            placeholder="Instrucciones especiales para la entrega, referencias del lugar, etc."
+                            value={form.notes}
+                            onChange={(e) => setForm({ ...form, notes: e.target.value })}
                           />
                         </div>
                       </div>
-                      <div className="space-y-2">
-                        <label className="text-sm font-medium text-slate-700">Notas adicionales</label>
-                        <textarea
-                          className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400 resize-none"
-                          rows={4}
-                          placeholder="Instrucciones especiales para la entrega, referencias del lugar, etc."
-                          value={form.notes}
-                          onChange={(e) => setForm({ ...form, notes: e.target.value })}
-                        />
-                      </div>
-                    </div>
-                  </section>
+                    </section>
 
                     <div className="flex justify-end">
                       <button
@@ -365,69 +279,14 @@ export default function CheckoutPage() {
                                 d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                               ></path>
                             </svg>
-                            Procesando...
+                            Enviando...
                           </>
                         ) : (
-                          <>
-                            Continuar al pago
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                              <path
-                                strokeLinecap="round"
-                                strokeLinejoin="round"
-                                strokeWidth={2}
-                                d="M17 8l4 4m0 0l-4 4m4-4H3"
-                              />
-                            </svg>
-                          </>
+                          <>Enviar información</>
                         )}
                       </button>
                     </div>
                   </form>
-                ) : (
-                  <div className="space-y-8">
-                    <header className="space-y-3">
-                      <div className="flex items-center gap-4">
-                        <button
-                          onClick={handleBackToCustomerInfo}
-                          className="inline-flex items-center gap-2 text-slate-600 hover:text-slate-800 transition-colors"
-                        >
-                          <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M15 19l-7-7 7-7" />
-                          </svg>
-                          Volver
-                        </button>
-                        <div className="h-4 w-px bg-slate-300"></div>
-                        <span className="text-sm text-slate-500">Paso 2 de 2</span>
-                      </div>
-                      <h1 className="text-4xl font-bold tracking-tight text-slate-900">Pago seguro</h1>
-                      <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">
-                        Completa el pago de forma segura con tu tarjeta. Todos los datos están protegidos.
-                      </p>
-                    </header>
-
-                    {paymentError && (
-                      <div className="bg-red-50 border border-red-200 rounded-lg p-4">
-                        <div className="flex items-start gap-3">
-                          <svg className="w-5 h-5 text-red-600 mt-0.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-                          </svg>
-                          <div className="text-sm text-red-700">
-                            <p className="font-medium">Error en el pago</p>
-                            <p>{paymentError}</p>
-                          </div>
-                        </div>
-                      </div>
-                    )}
-
-                    <CardnetPaymentForm
-                      amount={subtotal}
-                      currency="DOP"
-                      invoice={`ORD${Date.now()}`}
-                      onTokenCreated={handleTokenCreated}
-                      onError={handlePaymentError}
-                      isProcessing={isProcessingPayment}
-                    />
-                  </div>
                 )}
               </div>
 
@@ -512,8 +371,8 @@ export default function CheckoutPage() {
                         />
                       </svg>
                       <div className="text-xs text-slate-600 leading-relaxed">
-                        <p className="font-medium text-slate-700 mb-1">Compra segura</p>
-                        <p>Tus datos están protegidos. El pago se procesará en el siguiente paso de forma segura.</p>
+                        <p className="font-medium text-slate-700 mb-1">Solicitud registrada</p>
+                        <p>Tus datos se enviarán al equipo para coordinar el pago y entrega manualmente.</p>
                       </div>
                     </div>
                   </div>

@@ -50,36 +50,6 @@ export default function ProfilePage() {
     } catch {}
   }, [])
 
-  useEffect(() => {
-    async function load() {
-      if (!user) return
-      try {
-        // Load optional profile info via existing API if available
-        try {
-          const ns = localStorage.getItem('falitech_user_ns')
-          if (ns) {
-            const res = await fetch(`/api/ecommerce/subscriber-info?user_ns=${encodeURIComponent(ns)}`)
-            const json = await res.json()
-            setInfo(json?.data || null)
-          }
-        } catch {}
-
-        // Load recent orders from local snapshot for now
-        try {
-          const snapRaw = localStorage.getItem('cardnet_order_snapshot')
-          if (snapRaw) {
-            const snap = JSON.parse(snapRaw)
-            setOrders([{ id: snap.orderId, total: snap.totals?.grandTotal, createdAt: snap.createdAt }])
-          } else {
-            setOrders([])
-          }
-        } catch { setOrders([]) }
-      } finally {
-        setLoading(false)
-      }
-    }
-    load()
-  }, [user])
 
   if (loading) return <div className="mt-24 text-center">Cargando...</div>
 
