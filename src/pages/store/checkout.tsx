@@ -8,13 +8,11 @@ import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useCart } from "@/hook/useCart"
 import { useEffect, useState } from "react"
-import { supabase } from "@/utils/supabase"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function CheckoutPage() {
   const { items, subtotal, count } = useCart()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -31,21 +29,6 @@ export default function CheckoutPage() {
 
   const isValid =
     form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
-
-  useEffect(() => {
-    let mounted = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return
-      setIsLoggedIn(!!data?.user)
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setIsLoggedIn(!!session?.user)
-    })
-    return () => {
-      mounted = false
-      sub?.subscription.unsubscribe()
-    }
-  }, [])
 
   // Simplified submit: no payment, single step
   async function handleCustomerInfoSubmit(e: React.FormEvent) {
