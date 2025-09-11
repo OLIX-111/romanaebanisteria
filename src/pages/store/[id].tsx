@@ -17,6 +17,7 @@ import { ProductTabs } from "@/components/store/modern/ProductTabs"
 import { ProductFinanceCalculator } from "@/components/store/modern/ProductFinanceCalculator"
 import { type MappedProductDetail } from "@/types/catalog"
 import { useCart } from "@/hook/useCart"
+import { useAuth } from "@/context/AuthContext"
 import { fetchProductById } from "@/lib/products"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
@@ -33,6 +34,9 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
   const [selectedVariantId, setSelectedVariantId] = useState<string>(product?.variants?.[0]?.id || "")
   const [shareUrl, setShareUrl] = useState<string>("")
   const { addItem } = useCart()
+  const { token: authToken } = useAuth()
+  const [adding, setAdding] = useState(false)
+  const [addMessage, setAddMessage] = useState<string | null>(null)
 
   useEffect(() => {
     if (typeof window !== "undefined") {
@@ -84,17 +88,21 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
   const comparePrice =
     activeVariant?.comparePrice && activeVariant.comparePrice > priceNumber ? activeVariant.comparePrice : undefined
 
-  function handleAddToCart() {
-    if (!activeVariant) return
-    addItem({
-      productId: p.id,
-      variantId: activeVariant.id,
-      name: p.name + (activeVariant.name ? ` - ${activeVariant.name}` : ""),
-      price: activeVariant.price,
-      comparePrice: activeVariant.comparePrice,
-      image: activeVariant.image || p.thumbnail,
-      max: activeVariant.stock,
-    })
+  async function handleAddToCart() {
+    if (!activeVariant || adding) return
+    setAdding(true)
+    setAddMessage(null)
+    // Server cart add (context handles refresh)
+    await addItem({ productId: p.id, variantId: activeVariant.id, quantity: 1 })
+    try {
+      setAddMessage('Agregado al carrito')
+    } catch (e: any) {
+      setAddMessage(e?.message || 'No se pudo sincronizar con el carrito')
+    } finally {
+      setAdding(false)
+      // Auto hide message
+      setTimeout(() => setAddMessage(null), 4000)
+    }
   }
 
   async function handleShareProduct() {
@@ -225,9 +233,9 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
               <button
                 disabled={availability.tone === 'out'}
                 onClick={handleAddToCart}
-                className={`flex-1 px-8 py-4 text-base font-semibold tracking-tight border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${availability.tone === 'out' ? 'bg-slate-200 text-slate-500 cursor-not-allowed border-slate-300' : 'bg-primary text-white hover:bg-accent'}`}
+                className={`flex-1 px-8 py-4 text-base font-semibold tracking-tight border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${availability.tone === 'out' ? 'bg-slate-200 text-slate-500 cursor-not-allowed border-slate-300' : 'bg-primary text-white hover:bg-accent'} ${adding ? 'opacity-80' : ''}`}
               >
-                {availability.tone === 'out' ? 'Agotado' : 'Agregar al carrito'}
+                {availability.tone === 'out' ? 'Agotado' : (adding ? 'Agregando...' : 'Agregar al carrito')}
               </button>
               <button
                 type="button"
@@ -257,9 +265,9 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
         <button
           disabled={availability.tone === 'out'}
           onClick={handleAddToCart}
-          className={`min-w-[48%] px-5 py-3 text-sm font-semibold tracking-tight border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${availability.tone === 'out' ? 'bg-slate-200 text-slate-500 cursor-not-allowed border-slate-300' : 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'}`}
+          className={`min-w-[48%] px-5 py-3 text-sm font-semibold tracking-tight border transition-colors focus:outline-none focus-visible:ring-2 focus-visible:ring-slate-900 focus-visible:ring-offset-2 ${availability.tone === 'out' ? 'bg-slate-200 text-slate-500 cursor-not-allowed border-slate-300' : 'bg-slate-900 text-white border-slate-900 hover:bg-slate-800'} ${adding ? 'opacity-80' : ''}`}
         >
-          {availability.tone === 'out' ? 'Agotado' : 'Agregar'}
+          {availability.tone === 'out' ? 'Agotado' : (adding ? 'Agregando...' : 'Agregar')}
         </button>
       </div>
       <Footer />

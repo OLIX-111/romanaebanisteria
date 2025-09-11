@@ -7,28 +7,14 @@ import { useCart } from "@/hook/useCart"
 import { Open_Sans } from "next/font/google"
 import { X, Plus, Minus } from "lucide-react"
 import { useEffect, useState } from "react"
-import { supabase } from "@/utils/supabase"
+import { useAuth } from '@/context/AuthContext'
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function CartPage() {
   const { items, subtotal, compareTotal, savings, updateQty, removeItem, clear, count } = useCart()
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
-
-  useEffect(() => {
-    let mounted = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return
-      setIsLoggedIn(!!data?.user)
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setIsLoggedIn(!!session?.user)
-    })
-    return () => {
-      mounted = false
-      sub?.subscription.unsubscribe()
-    }
-  }, [])
+  const { user } = useAuth()
+  const isLoggedIn = !!user
 
   return (
     <main className={openSans.className}>
@@ -140,11 +126,6 @@ export default function CartPage() {
                     <div className="flex-1 min-w-0">
                       <p className="font-semibold text-slate-900 leading-tight line-clamp-2 mb-1">{item.name}</p>
                       <div className="flex items-center gap-3 text-sm text-slate-500 mb-3">
-                        {item.comparePrice && item.comparePrice > item.price && (
-                          <span className="line-through">
-                            {item.comparePrice.toLocaleString("es-DO", { style: "currency", currency: "DOP" })}
-                          </span>
-                        )}
                         <span className="font-semibold text-slate-900">
                           {item.price.toLocaleString("es-DO", { style: "currency", currency: "DOP" })}
                         </span>
@@ -163,7 +144,6 @@ export default function CartPage() {
                           <button
                             onClick={() => updateQty(item.id, item.quantity + 1)}
                             className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                            disabled={item.max !== undefined && item.quantity >= item.max}
                             aria-label="Incrementar"
                           >
                             <Plus size={14} />

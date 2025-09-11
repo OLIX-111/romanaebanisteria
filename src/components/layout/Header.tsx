@@ -7,7 +7,8 @@ import { motion, AnimatePresence } from "framer-motion"
 import { ChevronDown, ChevronDownIcon, Globe, MenuIcon, X, ShoppingCart, User2 } from "lucide-react"
 import Link from "next/link"
 import { Dialog, Disclosure, Transition, Menu } from "@headlessui/react"
-import { supabase } from "@/utils/supabase"
+import { useCart } from '@/hook/useCart'
+import { useAuth } from '@/context/AuthContext'
 
 
 interface HeaderProps {
@@ -24,11 +25,11 @@ export default function Header({ enableScroll = false }: HeaderProps) {
   const router = useRouter()
   const { locale }: any = router
   const [scrollPosition, setScrollPosition] = useState(0)
-  const [cartCount, setCartCount] = useState(0)
+  const { count: cartCount } = useCart()
 
   const [marcas, setMarcas] = useState([])
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false)
-  const [authUser, setAuthUser] = useState<any>(null)
+  const { user: authUser } = useAuth()
 
   useEffect(() => {
     const handleScroll = () => setScrollPosition(window.scrollY)
@@ -36,44 +37,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
     return () => window.removeEventListener("scroll", handleScroll)
   }, [])
 
-  // Cart count from localStorage (sync with useCart)
-  useEffect(() => {
-    const KEY = 'romana_cart_v1'
-    const read = () => {
-      try {
-        const raw = localStorage.getItem(KEY)
-        if (!raw) { setCartCount(0); return }
-        const parsed = JSON.parse(raw) as { items?: { quantity?: number }[] }
-        const c = (parsed.items || []).reduce((acc, i: any) => acc + (Number(i.quantity) || 0), 0)
-        setCartCount(c)
-      } catch { setCartCount(0) }
-    }
-    read()
-    const onStorage = (e: StorageEvent) => { if (e.key === KEY) read() }
-    const onCustom = () => read()
-    window.addEventListener('storage', onStorage)
-    window.addEventListener('romana-cart-updated', onCustom as any)
-    return () => {
-      window.removeEventListener('storage', onStorage)
-      window.removeEventListener('romana-cart-updated', onCustom as any)
-    }
-  }, [])
-
-  // Supabase auth state
-  useEffect(() => {
-    let mounted = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return
-      setAuthUser(data?.user || null)
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      setAuthUser(session?.user || null)
-    })
-    return () => {
-      mounted = false
-      sub?.subscription.unsubscribe()
-    }
-  }, [])
+  // CartContext & AuthContext handle reactivity; local effects removed
 
 
   const changeLanguage = (newLocale: "en" | "es") => {
