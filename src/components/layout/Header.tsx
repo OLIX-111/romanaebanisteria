@@ -246,7 +246,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                   : "text-gray-50 border-white/60 hover:bg-white/10"
               }`}
             >
-              <Link href="/presupuesto">Crear cotización</Link>
+              <Link href="/presupuesto">Crear presupuesto</Link>
             </motion.button>
             {authUser ? (
               <div className="hidden md:flex items-center gap-3 pb-1">

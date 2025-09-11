@@ -155,8 +155,8 @@ export default function PresupuestoLayout() {
         <div className="mb-8">
           <div className="flex items-start justify-between gap-4">
             <div>
-        <h1 className="text-3xl font-bold text-gray-900 mb-1">Cotización</h1>
-        <p className="text-gray-600">Selecciona productos y genera tu cotización personalizada</p>
+              <h1 className="text-3xl font-bold text-gray-900 mb-1">Presupuesto</h1>
+              <p className="text-gray-600">Selecciona productos y genera tu presupuesto personalizado</p>
               {gateData && (
                 <div className="mt-2 text-sm text-gray-700">
           <span className="font-medium">Cliente:</span> {gateData.nombre}
