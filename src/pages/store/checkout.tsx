@@ -21,7 +21,7 @@ export default function CheckoutPage() {
     phone: "",
     workPhone: "",
     homePhone: "",
-    address: "",
+    address: "", 
     city: "",
     province: "",
     postalCode: "",
