@@ -117,13 +117,21 @@ export default function ProfilePage() {
           ) : (
             <div className="overflow-hidden border border-gray-200 divide-y">
               {orders.map(o => (
-                <div key={o.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+                <div key={o.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
                   <div className="flex-1 min-w-0">
                     <p className="font-medium text-gray-900">Orden #{o.order_number || o.id.slice(0,8)}</p>
                     <p className="text-gray-600">{new Date(o.created_at).toLocaleString('es-DO')}</p>
                     <p className="text-xs text-gray-500 mt-1">Estado: <span className="font-medium text-gray-700">{o.estado}</span></p>
                   </div>
-                  <div className="text-gray-900 font-semibold whitespace-nowrap">{Number(o.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</div>
+                  <div className="flex items-center gap-4 flex-shrink-0">
+                    <div className="text-gray-900 font-semibold whitespace-nowrap">{Number(o.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</div>
+                    <Link href={`/store/orders/${o.tracking_number}`} className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-xs font-medium hover:bg-gray-50">
+                      Ver
+                      <svg className="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </Link>
+                  </div>
                 </div>
               ))}
             </div>

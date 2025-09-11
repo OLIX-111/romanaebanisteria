@@ -38,6 +38,15 @@ export interface OrderItemDetail {
   configuracion?: any
 }
 
+export interface OrderTrackingEvent {
+  id?: string
+  estado?: string
+  comentario?: string
+  created_at?: string
+}
+
+export interface OrderDetailResponse { data: OrderData & { seguimientos?: OrderTrackingEvent[] } }
+
 export interface OrderData {
   id: string
   estado: string
@@ -136,5 +145,34 @@ export async function fetchOrders(authToken?: string | null, page: number = 1) :
     const json = await r.json().catch(()=>({}))
     if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudieron obtener las órdenes')
     return json as OrdersListResponse
+  }
+}
+
+export async function fetchOrderByTracking(tracking: string, authToken?: string | null, include: string = 'detalles,seguimientos'): Promise<OrderDetailResponse> {
+  const qp = `?include=${encodeURIComponent(include)}`
+  try {
+    const r = await fetch(`/api/orders/track/${tracking}${qp}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+      },
+      redirect: 'manual'
+    })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudo cargar la orden')
+    return json as OrderDetailResponse
+  } catch (err) {
+    const r = await fetch(`${BASE_URL}/ordenes/track/${tracking}${qp}`, {
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+      },
+      redirect: 'manual'
+    })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudo cargar la orden')
+    return json as OrderDetailResponse
   }
 }
