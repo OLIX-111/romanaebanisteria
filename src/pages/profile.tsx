@@ -7,14 +7,17 @@ import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
 import Link from "next/link"
 import { useAuth } from "@/context/AuthContext"
+import { fetchOrders } from '@/lib/orders'
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function ProfilePage() {
   const router = useRouter()
   const [flash, setFlash] = useState<string | null>(null)
-  const { user, loading, error, logout, refreshUser } = useAuth()
+  const { user, loading, error, logout, refreshUser, token } = useAuth()
   const [orders, setOrders] = useState<any[]>([])
+  const [ordersLoading, setOrdersLoading] = useState(false)
+  const [ordersError, setOrdersError] = useState<string | null>(null)
 
   useEffect(() => {
     if (!loading && !user && !error) {
@@ -25,6 +28,28 @@ export default function ProfilePage() {
 
   // Optionally could trigger refresh on mount
   useEffect(() => { if (user) refreshUser() }, [])
+
+  // Fetch orders when user & token available
+  useEffect(() => {
+    let active = true
+    async function load() {
+      if (!user || !token) return
+      setOrdersLoading(true)
+      setOrdersError(null)
+      try {
+        const resp = await fetchOrders(token)
+        if (!active) return
+        setOrders(resp.data || [])
+      } catch (e:any) {
+        if (!active) return
+        setOrdersError(e?.message || 'No se pudieron cargar las órdenes')
+      } finally {
+        if (active) setOrdersLoading(false)
+      }
+    }
+    load()
+    return () => { active = false }
+  }, [user, token])
 
   // Read and clear flash message from localStorage
   useEffect(() => {
@@ -83,23 +108,36 @@ export default function ProfilePage() {
 
         <section className="mt-8 border border-gray-200 p-6">
           <h2 className="text-sm font-semibold tracking-wide text-gray-800 mb-4">Órdenes recientes</h2>
-          {orders.length === 0 ? (
+          {ordersLoading ? (
+            <p className="text-sm text-gray-600">Cargando órdenes...</p>
+          ) : ordersError ? (
+            <p className="text-sm text-red-600">{ordersError}</p>
+          ) : orders.length === 0 ? (
             <p className="text-sm text-gray-600">No hay órdenes registradas aún.</p>
           ) : (
-            <div className="divide-y border border-gray-200">
+            <div className="overflow-hidden border border-gray-200 divide-y">
               {orders.map(o => (
-                <div key={o.id} className="p-4 flex items-center justify-between text-sm">
-                  <div>
-                    <p className="font-medium text-gray-900">Pedido {o.id}</p>
-                    <p className="text-gray-600">{new Date(o.createdAt).toLocaleString('es-DO')}</p>
+                <div key={o.id} className="p-4 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3 text-sm">
+                  <div className="flex-1 min-w-0">
+                    <p className="font-medium text-gray-900">Orden #{o.order_number || o.id.slice(0,8)}</p>
+                    <p className="text-gray-600">{new Date(o.created_at).toLocaleString('es-DO')}</p>
+                    <p className="text-xs text-gray-500 mt-1">Estado: <span className="font-medium text-gray-700">{o.estado}</span></p>
                   </div>
-                  <div className="text-gray-900 font-semibold">{Number(o.total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</div>
+                  <div className="text-gray-900 font-semibold whitespace-nowrap">{Number(o.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</div>
                 </div>
               ))}
             </div>
           )}
-          <div className="mt-4">
+          <div className="mt-4 flex items-center gap-4">
             <Link href="/store" className="inline-block px-4 py-2 text-sm bg-gray-900 text-white hover:bg-gray-800">Seguir comprando</Link>
+            <button
+              onClick={() => {
+                if (!token) return
+                setOrdersLoading(true)
+                fetchOrders(token).then(r=> setOrders(r.data||[])).catch(e=> setOrdersError(e?.message||'Error refrescando')).finally(()=> setOrdersLoading(false))
+              }}
+              className="text-xs px-3 py-2 border border-gray-300 hover:bg-gray-50"
+            >Refrescar</button>
           </div>
         </section>
       </div>

@@ -9,6 +9,9 @@ import { Open_Sans } from "next/font/google"
 import { useCart } from "@/hook/useCart"
 import { useEffect, useState } from "react"
 import { generateOrderId, generateTransactionId, getProvinceCode, formatPhoneForCardNet } from "@/lib/cardnet"
+import { createOrder } from '@/lib/orders'
+import { getCartToken } from '@/lib/cart'
+import { useAuth } from '@/context/AuthContext'
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -29,8 +32,12 @@ export default function CheckoutPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
-  const [paymentMethod, setPaymentMethod] = useState<"info" | "cardnet">("info")
+  const [paymentMethod, setPaymentMethod] = useState<"order" | "cardnet">("order")
   const [processingPayment, setProcessingPayment] = useState(false)
+  const [creatingOrder, setCreatingOrder] = useState(false)
+  const [orderResult, setOrderResult] = useState<any>(null)
+  const [orderError, setOrderError] = useState<string | null>(null)
+  const { token: authToken } = useAuth()
 
   const isValid =
     form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
@@ -172,8 +179,41 @@ export default function CheckoutPage() {
 
     try {
       if (!isValid) return
-      // Here we could send order intent to backend or just mark as submitted
-      setSubmitted(true)
+      if (paymentMethod === 'order') {
+        setCreatingOrder(true)
+        setOrderError(null)
+        try {
+          const carrito_token = getCartToken()
+          if (!carrito_token) throw new Error('No hay carrito activo')
+          const payload = {
+            carrito_token,
+            direccion_envio: {
+              calle: form.address,
+              ciudad: form.city,
+              provincia: form.province,
+              pais: 'DO',
+              codigo_postal: form.postalCode || ''
+            },
+            contacto: {
+              nombre: form.firstName,
+              apellido: form.lastName,
+              correo: form.email,
+              telefono: form.phone
+            }
+          }
+          const resp = await createOrder(payload, authToken)
+          setOrderResult(resp.data)
+          setSubmitted(true)
+        } catch (er: any) {
+          console.error('Error creando orden:', er)
+          setOrderError(er?.message || 'No se pudo crear la orden')
+        } finally {
+          setCreatingOrder(false)
+        }
+      } else {
+        // fallback info-only path if ever re-enabled
+        setSubmitted(true)
+      }
     } catch (error) {
       console.error('Error en validación:', error)
       alert('Error al procesar la información. Intenta de nuevo.')
@@ -235,7 +275,50 @@ export default function CheckoutPage() {
             <div className="grid gap-16 lg:grid-cols-3">
               {/* Form Section */}
               <div className="lg:col-span-2">
-                {submitted ? (
+                {submitted && paymentMethod === 'order' && orderResult ? (
+                  <div className="space-y-8">
+                    <header className="space-y-3">
+                      <h1 className="text-4xl font-bold tracking-tight text-slate-900">Orden creada</h1>
+                      <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">
+                        Tu orden ha sido registrada. Número de orden <span className="font-semibold">#{orderResult.order_number}</span>.
+                      </p>
+                    </header>
+                    <div className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm space-y-5">
+                      <div className="grid gap-6 sm:grid-cols-2">
+                        <p className="text-sm text-slate-600">Estado: <span className="font-medium text-slate-900">{orderResult.estado}</span></p>
+                        <p className="text-sm text-slate-600">Total: <span className="font-medium text-slate-900">{orderResult.monto_total}</span></p>
+                        <p className="text-sm text-slate-600">Tracking: <span className="font-medium text-slate-900">{orderResult.tracking_number}</span></p>
+                        <p className="text-sm text-slate-600">Items: <span className="font-medium text-slate-900">{orderResult.items_count}</span></p>
+                      </div>
+                      <div className="pt-4 border-t border-slate-200">
+                        <h3 className="text-sm font-semibold text-slate-800 mb-3">Contacto</h3>
+                        <p className="text-xs text-slate-600">{orderResult.contacto?.nombre} {orderResult.contacto?.apellido} · {orderResult.contacto?.correo} · {orderResult.contacto?.telefono}</p>
+                      </div>
+                      <div className="pt-4 border-t border-slate-200">
+                        <h3 className="text-sm font-semibold text-slate-800 mb-3">Dirección</h3>
+                        <p className="text-xs text-slate-600">{orderResult.direccion_envio?.calle}, {orderResult.direccion_envio?.ciudad}, {orderResult.direccion_envio?.provincia} {orderResult.direccion_envio?.codigo_postal}</p>
+                      </div>
+                      {!!orderResult.detalles?.length && (
+                        <div className="pt-4 border-t border-slate-200 space-y-2">
+                          <h3 className="text-sm font-semibold text-slate-800">Detalles</h3>
+                          <ul className="divide-y divide-slate-100 border border-slate-200/60">
+                            {orderResult.detalles.map((d: any) => (
+                              <li key={d.id} className="p-4 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
+                                <span className="font-medium text-slate-700 truncate">{d.producto_nombre} {d.variacion_nombre && <span className="text-slate-400">({d.variacion_nombre})</span>}</span>
+                                <span className="text-slate-500">x{d.cantidad} · {d.precio_unitario}</span>
+                              </li>
+                            ))}
+                          </ul>
+                        </div>
+                      )}
+                      <div className="pt-6 flex gap-4">
+                        <Link href="/store" className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900">
+                          ← Seguir comprando
+                        </Link>
+                      </div>
+                    </div>
+                  </div>
+                ) : submitted ? (
                   <div className="space-y-8">
                     <header className="space-y-3">
                       <h1 className="text-4xl font-bold tracking-tight text-slate-900">Datos recibidos</h1>
@@ -412,10 +495,32 @@ export default function CheckoutPage() {
                     {/* Payment Method Selection */}
                     <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
                       <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">
-                        Método de pago
+                        Método / tipo de finalización
                       </h2>
                       
                       <div className="space-y-4">
+                        <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="order"
+                            checked={paymentMethod === "order"}
+                            onChange={(e) => setPaymentMethod(e.target.value as "order")}
+                            className="mt-1 w-4 h-4 text-primary focus:ring-primary"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M4 6h16M4 10h16M10 14h10M4 18h10" />
+                              </svg>
+                              <span className="font-semibold text-slate-900">Crear orden (sin pagar ahora)</span>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-slate-100 text-slate-700">Manual</span>
+                            </div>
+                            <p className="text-sm text-slate-600">
+                              Genera una orden con tus datos. Te contactaremos para coordinar el pago y entrega.
+                            </p>
+                          </div>
+                        </label>
                        {/*  <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
                           <input
                             type="radio"
@@ -511,13 +616,13 @@ export default function CheckoutPage() {
                             </>
                           )}
                         </button>
-                      ) : (
+            ) : (
                         <button
                           type="submit"
-                          disabled={!isValid || submitting}
+              disabled={!isValid || submitting || creatingOrder}
                           className="inline-flex items-center gap-3 px-12 py-4 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all duration-200 rounded-sm shadow-sm hover:shadow-md"
                         >
-                          {submitting ? (
+              {submitting || creatingOrder ? (
                             <>
                               <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                                 <circle
@@ -534,12 +639,15 @@ export default function CheckoutPage() {
                                   d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
                                 ></path>
                               </svg>
-                              Enviando...
+                              {paymentMethod === 'order' ? 'Creando orden...' : 'Enviando...'}
                             </>
                           ) : (
-                            <>Enviar información</>
+                            <>{paymentMethod === 'order' ? 'Crear orden' : 'Enviar información'}</>
                           )}
                         </button>
+                      )}
+                      {orderError && (
+                        <p className="mt-4 text-sm text-red-600">{orderError}</p>
                       )}
                     </div>
                   </form>
@@ -627,15 +735,15 @@ export default function CheckoutPage() {
                         />
                       </svg>
                       <div className="text-xs text-slate-600 leading-relaxed">
-                        {paymentMethod === "cardnet" ? (
+            {paymentMethod === "cardnet" ? (
                           <>
                             <p className="font-medium text-slate-700 mb-1">Pago seguro con CardNet</p>
                             <p>Serás redirigido a la plataforma segura de CardNet para completar tu pago con tarjeta.</p>
                           </>
-                        ) : (
+            ) : (
                           <>
-                            <p className="font-medium text-slate-700 mb-1">Solicitud registrada</p>
-                            <p>Tus datos se enviarán al equipo para coordinar el pago y entrega manualmente.</p>
+              <p className="font-medium text-slate-700 mb-1">Creación de orden sin pago</p>
+              <p>Se generará una orden con tus datos para coordinar el pago y la entrega posteriormente.</p>
                           </>
                         )}
                       </div>
