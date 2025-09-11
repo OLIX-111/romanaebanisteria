@@ -33,8 +33,9 @@ const nextConfig = {
       { protocol: 'https', hostname: 'static.ikea.com.do' },
     ],
     domains: [
+      'picsum.photos',
       'cdn.sanity.io',
-  'comercialdelsol.com.do',
+      'comercialdelsol.com.do',
       'scontent-syd2-1.xx.fbcdn.net',
       'chatbot.ewr1.vultrobjects.com',
       'www.romanaebanisteria.com',

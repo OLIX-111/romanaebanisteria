@@ -7,9 +7,9 @@ import { FilterSidebar } from "@/components/store/filter-sidebar"
 import { Open_Sans } from "next/font/google"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
-import { ChevronLeft, ChevronRight, SlidersHorizontal, Grid as GridIcon, Rows3 } from "lucide-react"
+import { ChevronLeft, ChevronRight, SlidersHorizontal } from "lucide-react"
 import { useTranslation } from "@/hook/UseTranslation"
-import { getAllProductsWithDetails } from "@/utils/supabase"
+import { fetchProducts } from "@/lib/products"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -30,7 +30,6 @@ interface Product {
   use_variant?: boolean
   variants?: { id: string | number; name: string; price: number; sale_price?: number | null; is_on_sale?: boolean; image?: string }[]
 }
-// Ahora usamos Supabase RPC get_all_products_with_details
 
 export default function StorePage() {
   const dict = useTranslation()
@@ -49,34 +48,28 @@ export default function StorePage() {
   const [currentPage, setCurrentPage] = useState(1)
   const [totalPages, setTotalPages] = useState(1)
   const [totalItems, setTotalItems] = useState(0)
-  const productsPerPage = 100 // máximo solicitado
+  const productsPerPage = 100
   const debounceRef = useRef<NodeJS.Timeout | null>(null)
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [showMobileFilters, setShowMobileFilters] = useState(false)
   const [gridMode, setGridMode] = useState<'grid3' | 'grid2'>('grid3')
 
-  // Debounce búsqueda
   useEffect(() => {
     if (debounceRef.current) clearTimeout(debounceRef.current)
     debounceRef.current = setTimeout(() => {
       setDebouncedSearch(search.trim())
       setCurrentPage(1)
     }, 450)
-    return () => {
-      if (debounceRef.current) clearTimeout(debounceRef.current)
-    }
+    return () => { if (debounceRef.current) clearTimeout(debounceRef.current) }
   }, [search])
 
-  // Cargar productos desde Supabase RPC
   useEffect(() => {
     let cancelled = false
     async function load() {
       setIsLoading(true)
       setError(null)
       try {
-        const all = await getAllProductsWithDetails()
-
-        // Filtro por búsqueda en cliente
+        const all = await fetchProducts()
         const bySearch = debouncedSearch
           ? all.filter((p: any) =>
               [p.name, p.description, p.type].some((field) =>
@@ -84,12 +77,9 @@ export default function StorePage() {
               )
             )
           : all
-
-        // Paginación en cliente
         const start = (currentPage - 1) * productsPerPage
         const end = start + productsPerPage
         const pageSlice = bySearch.slice(start, end)
-
         if (!cancelled) {
           setProducts(pageSlice as Product[])
           setTotalItems(bySearch.length)
@@ -105,9 +95,7 @@ export default function StorePage() {
       }
     }
     load()
-    return () => {
-      cancelled = true
-    }
+    return () => { cancelled = true }
   }, [currentPage, debouncedSearch, isRefreshing])
 
   const handleFilterChange = (type: string, value: string) => {
@@ -121,13 +109,7 @@ export default function StorePage() {
   }
 
   const filteredProducts = products
-    // Hide out of stock or unavailable
-    .filter((p: any) => {
-      const status = (p.status || '').toString().toLowerCase()
-      const isUnavailable = status.includes('unavailable') || status.includes('out') || status.includes('agot')
-      const hasStock = p.track_stock ? (Number(p.total_qty) > 0) : true
-      return !isUnavailable && hasStock
-    })
+    .filter((p: any) => true) // API ya maneja disponibilidad, se puede extender si llega campo
     .filter((product) =>
       (activeFilters.type.length === 0 || activeFilters.type.includes(product.type)) &&
       (activeFilters.vendor.length === 0 || activeFilters.vendor.includes(product.vendor))
@@ -146,7 +128,6 @@ export default function StorePage() {
     }
   })
 
-  // Ya vienen paginados desde el servidor (limit=productsPerPage)
   const paginatedProducts = sortedProducts
 
   const handlePageChange = (newPage: number) => {
@@ -258,7 +239,6 @@ export default function StorePage() {
                 </motion.div>
               </AnimatePresence>
 
-              {/* Pagination */}
               <div className="mt-8 flex flex-col items-center gap-3">
                 {error && <div className="text-sm text-red-500">{error}</div>}
                 <nav className="flex flex-wrap items-center gap-2">
@@ -294,7 +274,6 @@ export default function StorePage() {
           </div>
         </div>
       </div>
-      {/* Mobile Filters Drawer */}
       {showMobileFilters && (
         <div className="fixed inset-0 z-50 flex lg:hidden" role="dialog" aria-modal="true">
           <div className="absolute inset-0 bg-black/40 backdrop-blur-sm" onClick={() => setShowMobileFilters(false)} />

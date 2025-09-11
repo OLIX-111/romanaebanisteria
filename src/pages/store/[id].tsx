@@ -16,8 +16,8 @@ import { PriceBlock } from "@/components/store/modern/PriceBlock"
 import { ProductTabs } from "@/components/store/modern/ProductTabs"
 import { ProductFinanceCalculator } from "@/components/store/modern/ProductFinanceCalculator"
 import { type MappedProductDetail } from "@/types/catalog"
-import { getProductWithDetailsById } from '@/utils/supabase'
 import { useCart } from "@/hook/useCart"
+import { fetchProductById } from "@/lib/products"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -252,7 +252,6 @@ export default function ProductDetailPage({ product, error }: ProductDetailProps
       <div className="fixed inset-x-0 bottom-0 lg:hidden border-t border-slate-300 bg-white/95 backdrop-blur supports-[backdrop-filter]:bg-white/80 px-4 py-3 flex items-center gap-4">
         <div className="flex-1">
           <p className="text-xs text-slate-500 leading-none mb-1">Total</p>
-          {/* <PriceBlock price={priceNumber} comparePrice={comparePrice} /> */}
           <div> <strong className="text-lg">{priceNumber}</strong> <span className="line-through text-gray-400 text-[12px]">{comparePrice}</span> </div>
         </div>
         <button
@@ -272,7 +271,7 @@ export const getServerSideProps: GetServerSideProps<ProductDetailProps> = async 
   const { id } = ctx.params || {};
   if (!id || typeof id !== 'string') return { props: { product: null, error: 'ID inválido' } };
   try {
-    const product = await getProductWithDetailsById(id);
+    const product = await fetchProductById(id);
     if (!product) return { props: { product: null, error: 'Producto no encontrado' } };
     return { props: { product } };
   } catch (e: any) {

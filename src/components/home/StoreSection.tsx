@@ -7,7 +7,7 @@ import Link from "next/link"
 import { useEffect, useState } from "react"
 import { useTranslation } from "@/hook/UseTranslation"
 import { useRouter } from "next/router"
-import { getAllProductsWithDetails } from "@/utils/supabase"
+import { fetchProducts } from "@/lib/products"
 
 interface FeaturedProduct {
   id: string | number
@@ -26,9 +26,7 @@ const container = {
   hidden: { opacity: 0 },
   show: {
     opacity: 1,
-    transition: {
-      staggerChildren: 0.1,
-    },
+    transition: { staggerChildren: 0.1 },
   },
 }
 
@@ -48,22 +46,17 @@ export default function FeaturedProductsElegant() {
   useEffect(() => {
     async function loadFeaturedProducts() {
       try {
-        const all = await getAllProductsWithDetails()
-        const list: FeaturedProduct[] = (all as any[]).map((item: any) => ({
+        const all = await fetchProducts()
+        const list: FeaturedProduct[] = all.map((item: any) => ({
           id: item.id,
           name: item.name,
-          image: item.image,
+            image: item.image,
           description: item.description,
           price: item.price || 0,
-          type: item.type || item.category || "",
-          status: item.status,
-          track_stock: item.track_stock,
-          total_qty: item.total_qty,
-          currency: item.currency || 'DOP'
+          type: item.type || "",
+          currency: 'DOP'
         }))
-
-        const available = list.slice(0, 4)
-        setFeaturedProducts(available)
+        setFeaturedProducts(list.slice(0, 4))
       } catch (error) {
         console.error("Error fetching featured products:", error)
         setError("Error al cargar los productos. Por favor, intente de nuevo más tarde.")
@@ -71,17 +64,11 @@ export default function FeaturedProductsElegant() {
         setIsLoading(false)
       }
     }
-
     loadFeaturedProducts()
   }, [])
 
-  if (isLoading) {
-    return <div className="text-center py-24">{storeSection?.loading}</div>
-  }
-
-  if (error) {
-    return <div className="text-center py-24 text-red-500">{storeSection?.error}</div>
-  }
+  if (isLoading) return <div className="text-center py-24">{storeSection?.loading}</div>
+  if (error) return <div className="text-center py-24 text-red-500">{storeSection?.error}</div>
 
   return (
     <section className="w-full bg-white py-24">
