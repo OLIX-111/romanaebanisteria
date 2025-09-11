@@ -8,6 +8,7 @@ import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useCart } from "@/hook/useCart"
 import { useEffect, useState } from "react"
+import { generateOrderId, generateTransactionId, getProvinceCode, formatPhoneForCardNet } from "@/lib/cardnet"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -18,6 +19,8 @@ export default function CheckoutPage() {
     lastName: "",
     email: "",
     phone: "",
+    workPhone: "",
+    homePhone: "",
     address: "",
     city: "",
     province: "",
@@ -26,11 +29,142 @@ export default function CheckoutPage() {
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
+  const [paymentMethod, setPaymentMethod] = useState<"info" | "cardnet">("info")
+  const [processingPayment, setProcessingPayment] = useState(false)
 
   const isValid =
     form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
 
-  // Simplified submit: no payment, single step
+  // Function to redirect to CardNet payment gateway
+  function postToGateway(action: string, sessionId: string, extras?: Record<string, string>) {
+    const form = document.createElement("form")
+    form.method = "POST"
+    form.action = action
+    form.target = "_self"
+    
+    const sessionInput = document.createElement("input")
+    sessionInput.type = "hidden"
+    sessionInput.name = "SESSION"
+    sessionInput.value = sessionId
+    form.appendChild(sessionInput)
+    
+    // Add return URLs as hidden inputs (using debug capture for troubleshooting)
+    const returnInput = document.createElement("input")
+    returnInput.type = "hidden"
+    returnInput.name = "ReturnUrl"
+    returnInput.value = `${window.location.origin}/api/debug/cardnet-capture`
+    form.appendChild(returnInput)
+    
+    const cancelInput = document.createElement("input")
+    cancelInput.type = "hidden"
+    cancelInput.name = "CancelUrl"
+    cancelInput.value = `${window.location.origin}/api/debug/cardnet-capture`
+    form.appendChild(cancelInput)
+    
+    if (extras) {
+      Object.entries(extras).forEach(([k, v]) => {
+        const input = document.createElement("input")
+        input.type = "hidden"
+        input.name = k
+        input.value = v
+        form.appendChild(input)
+      })
+    }
+    
+    document.body.appendChild(form)
+    form.submit()
+  }
+
+  // Handle CardNet payment
+  async function handleCardNetPayment() {
+    if (!isValid || count === 0) return
+    setProcessingPayment(true)
+
+    try {
+      // Prepare 3DS data from form with EXACT CardNet format
+      const mobilePhone = formatPhoneForCardNet(form.phone)
+      const workPhone = formatPhoneForCardNet(form.workPhone || form.phone)
+      const homePhone = formatPhoneForCardNet(form.homePhone || form.phone)
+      const billStateCode = getProvinceCode(form.province)
+      const shipStateCode = getProvinceCode(form.province) // Same as billing for now
+      
+      const threeDS = {
+        email: form.email,
+        mobilePhone: mobilePhone,
+        workPhone: workPhone,
+        homePhone: homePhone,
+        billAddr_line1: form.address.toUpperCase(),
+        billAddr_line2: "", // Empty if not provided
+        billAddr_line3: form.address.toUpperCase(), // Repeat line1 as per example
+        billAddr_city: form.city.toUpperCase(),
+        billAddr_state: billStateCode,
+        billAddr_country: "214", // Dominican Republic code for CardNet
+        billAddr_postcode: form.postalCode || "10111",
+        
+        // Shipping (use same as billing for now)
+        shipAddr_line1: form.address.toUpperCase(),
+        shipAddr_line2: "", // Empty if not provided
+        shipAddr_line3: form.address.toUpperCase(), // Repeat line1 as per example
+        shipAddr_city: form.city.toUpperCase(),
+        shipAddr_state: shipStateCode,
+        shipAddr_country: "214", // Dominican Republic code for CardNet
+        shipAddr_postcode: form.postalCode || "10111",
+      }
+
+      const orderId = generateOrderId()
+      const transactionId = generateTransactionId()
+
+      const payload = {
+        orderId,
+        transactionId,
+        amount: subtotal,         // in DOP units
+        tax: 0,                   // no ITBIS calculation for now
+        threeDS,
+        useCuotas: false,         // normal payment, not installments
+      }
+
+      console.log('Creating CardNet session...', { orderId, amount: subtotal })
+
+      const response = await fetch("/api/payments/cardnet/session", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify(payload),
+      })
+
+      const data = await response.json()
+
+      if (!response.ok) {
+        throw new Error(data.error || `Error ${response.status}: ${data.details || "Error creating payment session"}`)
+      }
+
+      console.log('CardNet session created:', data.sessionId)
+
+      // Store order data for confirmation
+      try {
+        sessionStorage.setItem("pending_order", JSON.stringify({
+          orderId,
+          items,
+          form,
+          subtotal,
+          sessionId: data.sessionId,
+          transactionId,
+        }))
+      } catch (e) {
+        console.warn("Could not store order data:", e)
+      }
+
+      // Redirect to CardNet payment gateway
+      postToGateway(data.authorizeUrl, data.sessionId)
+
+    } catch (error: any) {
+      console.error('Error creating CardNet session:', error)
+      alert(`Error al procesar el pago: ${error.message}`)
+    } finally {
+      setProcessingPayment(false)
+    }
+  }
+
+  // Handle info-only submission (original behavior)
   async function handleCustomerInfoSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isValid || count === 0) return
@@ -168,7 +302,7 @@ export default function CheckoutPage() {
                           />
                         </div>
                         <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-700">Teléfono *</label>
+                          <label className="text-sm font-medium text-slate-700">Teléfono móvil *</label>
                           <input
                             className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
                             placeholder="(809) 000-0000"
@@ -177,6 +311,42 @@ export default function CheckoutPage() {
                             required
                           />
                         </div>
+                        
+                        {paymentMethod === "cardnet" && (
+                          <>
+                            <div className="col-span-2 bg-blue-50 border border-blue-200 rounded-lg p-4 mb-4">
+                              <div className="flex items-start gap-2">
+                                <svg className="w-5 h-5 text-blue-600 mt-0.5 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 16h-1v-4h-1m1-4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                                <div>
+                                  <p className="text-sm font-medium text-blue-900 mb-1">Información adicional requerida para pago seguro</p>
+                                  <p className="text-xs text-blue-700">Los bancos requieren números de teléfono adicionales para validar tu identidad y procesar el pago de forma segura.</p>
+                                </div>
+                              </div>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-slate-700">Teléfono del trabajo</label>
+                              <input
+                                className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                                placeholder="(809) 000-0000 (opcional)"
+                                value={form.workPhone}
+                                onChange={(e) => setForm({ ...form, workPhone: e.target.value })}
+                              />
+                              <p className="text-xs text-slate-500">Si no tienes teléfono del trabajo, se usará tu móvil</p>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-slate-700">Teléfono de casa</label>
+                              <input
+                                className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                                placeholder="(809) 000-0000 (opcional)"
+                                value={form.homePhone}
+                                onChange={(e) => setForm({ ...form, homePhone: e.target.value })}
+                              />
+                              <p className="text-xs text-slate-500">Si no tienes teléfono de casa, se usará tu móvil</p>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </section>
 
@@ -239,35 +409,138 @@ export default function CheckoutPage() {
                       </div>
                     </section>
 
+                    {/* Payment Method Selection */}
+                    <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
+                      <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">
+                        Método de pago
+                      </h2>
+                      
+                      <div className="space-y-4">
+                        <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="info"
+                            checked={paymentMethod === "info"}
+                            onChange={(e) => setPaymentMethod(e.target.value as "info")}
+                            className="mt-1 w-4 h-4 text-primary focus:ring-primary"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
+                              </svg>
+                              <span className="font-semibold text-slate-900">Solo enviar información</span>
+                            </div>
+                            <p className="text-sm text-slate-600">
+                              Enviaremos tu información y nos contactaremos contigo para coordinar el pago y entrega.
+                            </p>
+                          </div>
+                        </label>
+
+                        <label className="flex items-start gap-4 p-4 border border-slate-200 rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                          <input
+                            type="radio"
+                            name="paymentMethod"
+                            value="cardnet"
+                            checked={paymentMethod === "cardnet"}
+                            onChange={(e) => setPaymentMethod(e.target.value as "cardnet")}
+                            className="mt-1 w-4 h-4 text-primary focus:ring-primary"
+                          />
+                          <div className="flex-1">
+                            <div className="flex items-center gap-2 mb-2">
+                              <svg className="w-5 h-5 text-slate-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                              </svg>
+                              <span className="font-semibold text-slate-900">Pagar con tarjeta ahora</span>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-800">
+                                Seguro
+                              </span>
+                            </div>
+                            <p className="text-sm text-slate-600 mb-3">
+                              Paga de forma segura con tu tarjeta de crédito o débito a través de CardNet.
+                            </p>
+                            <div className="flex items-center gap-3 text-xs text-slate-500">
+                              <div className="flex items-center gap-1">
+                                <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                </svg>
+                                <span>Encriptación SSL</span>
+                              </div>
+                              <span>•</span>
+                              <span>Visa, Mastercard, American Express</span>
+                            </div>
+                          </div>
+                        </label>
+                      </div>
+                    </section>
+
                     <div className="flex justify-end">
-                      <button
-                        type="submit"
-                        disabled={!isValid || submitting}
-                        className="inline-flex items-center gap-3 px-12 py-4 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all duration-200 rounded-sm shadow-sm hover:shadow-md"
-                      >
-                        {submitting ? (
-                          <>
-                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
-                              <circle
-                                className="opacity-25"
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="4"
-                              ></circle>
-                              <path
-                                className="opacity-75"
-                                fill="currentColor"
-                                d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
-                              ></path>
-                            </svg>
-                            Enviando...
-                          </>
-                        ) : (
-                          <>Enviar información</>
-                        )}
-                      </button>
+                      {paymentMethod === "cardnet" ? (
+                        <button
+                          type="button"
+                          onClick={handleCardNetPayment}
+                          disabled={!isValid || processingPayment}
+                          className="inline-flex items-center gap-3 px-12 py-4 bg-primary text-white font-semibold tracking-tight disabled:opacity-50 disabled:cursor-not-allowed hover:bg-accent transition-all duration-200 rounded-sm shadow-sm hover:shadow-md"
+                        >
+                          {processingPayment ? (
+                            <>
+                              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Procesando pago...
+                            </>
+                          ) : (
+                            <>
+                              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 10h18M7 15h1m4 0h1m-7 4h12a3 3 0 003-3V8a3 3 0 00-3-3H6a3 3 0 00-3 3v8a3 3 0 003 3z" />
+                              </svg>
+                              Pagar ahora
+                            </>
+                          )}
+                        </button>
+                      ) : (
+                        <button
+                          type="submit"
+                          disabled={!isValid || submitting}
+                          className="inline-flex items-center gap-3 px-12 py-4 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all duration-200 rounded-sm shadow-sm hover:shadow-md"
+                        >
+                          {submitting ? (
+                            <>
+                              <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                                <circle
+                                  className="opacity-25"
+                                  cx="12"
+                                  cy="12"
+                                  r="10"
+                                  stroke="currentColor"
+                                  strokeWidth="4"
+                                ></circle>
+                                <path
+                                  className="opacity-75"
+                                  fill="currentColor"
+                                  d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"
+                                ></path>
+                              </svg>
+                              Enviando...
+                            </>
+                          ) : (
+                            <>Enviar información</>
+                          )}
+                        </button>
+                      )}
                     </div>
                   </form>
                 )}
@@ -354,10 +627,33 @@ export default function CheckoutPage() {
                         />
                       </svg>
                       <div className="text-xs text-slate-600 leading-relaxed">
-                        <p className="font-medium text-slate-700 mb-1">Solicitud registrada</p>
-                        <p>Tus datos se enviarán al equipo para coordinar el pago y entrega manualmente.</p>
+                        {paymentMethod === "cardnet" ? (
+                          <>
+                            <p className="font-medium text-slate-700 mb-1">Pago seguro con CardNet</p>
+                            <p>Serás redirigido a la plataforma segura de CardNet para completar tu pago con tarjeta.</p>
+                          </>
+                        ) : (
+                          <>
+                            <p className="font-medium text-slate-700 mb-1">Solicitud registrada</p>
+                            <p>Tus datos se enviarán al equipo para coordinar el pago y entrega manualmente.</p>
+                          </>
+                        )}
                       </div>
                     </div>
+                    
+                    {paymentMethod === "cardnet" && (
+                      <div className="mt-4 pt-4 border-t border-slate-200">
+                        <div className="flex items-center justify-between text-xs text-slate-500">
+                          <span>Procesado por CardNet</span>
+                          <div className="flex items-center gap-2">
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
+                            </svg>
+                            <span>Certificado SSL</span>
+                          </div>
+                        </div>
+                      </div>
+                    )}
                   </div>
                 </div>
               </aside>
