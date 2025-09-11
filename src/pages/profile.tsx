@@ -5,38 +5,26 @@ import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useEffect, useState } from "react"
 import { useRouter } from "next/router"
-import { supabase } from "@/utils/supabase"
 import Link from "next/link"
+import { getAuth, logoutUser } from "@/lib/auth"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function ProfilePage() {
   const router = useRouter()
-  const [user, setUser] = useState<any>(null)
-  const [info, setInfo] = useState<any>(null)
   const [loading, setLoading] = useState(true)
-  const [orders, setOrders] = useState<any[]>([])
   const [flash, setFlash] = useState<string | null>(null)
+  const [user, setUser] = useState<any>(null)
+  const [orders, setOrders] = useState<any[]>([])
 
-  // Require login via Supabase
   useEffect(() => {
-    let mounted = true
-    supabase.auth.getUser().then(({ data }) => {
-      if (!mounted) return
-      if (!data?.user) {
-        router.replace("/login?returnTo=/profile")
-        return
-      }
-      setUser(data.user)
-    })
-    const { data: sub } = supabase.auth.onAuthStateChange((_e, session) => {
-      if (!session?.user) {
-        router.replace("/login?returnTo=/profile")
-      } else {
-        setUser(session.user)
-      }
-    })
-    return () => { mounted = false; sub?.subscription.unsubscribe() }
+    const auth = getAuth()
+    if (!auth?.user) {
+      router.replace("/login?returnTo=/profile")
+      return
+    }
+    setUser(auth.user)
+    setLoading(false)
   }, [router])
 
   // Read and clear flash message from localStorage
@@ -49,7 +37,6 @@ export default function ProfilePage() {
       }
     } catch {}
   }, [])
-
 
   if (loading) return <div className="mt-24 text-center">Cargando...</div>
 
@@ -67,12 +54,12 @@ export default function ProfilePage() {
           <section className="border border-gray-200 p-6">
             <h2 className="text-sm font-semibold tracking-wide text-gray-800">Sesión</h2>
             <div className="mt-4 grid grid-cols-1 gap-4 text-sm text-gray-700 sm:grid-cols-2">
-              <div className="border border-gray-200 p-4"><span className="text-gray-500">Email</span><div className="mt-1 font-medium">{user?.email}</div></div>
-              <div className="border border-gray-200 p-4"><span className="text-gray-500">Nombre</span><div className="mt-1 font-medium">{user?.user_metadata?.nombre || '—'}</div></div>
+              <div className="border border-gray-200 p-4"><span className="text-gray-500">Email</span><div className="mt-1 font-medium">{user?.correo}</div></div>
+              <div className="border border-gray-200 p-4"><span className="text-gray-500">Nombre</span><div className="mt-1 font-medium">{user?.nombre || '—'}</div></div>
             </div>
             <div className="mt-4">
               <button
-                onClick={async () => { await supabase.auth.signOut(); router.push('/') }}
+                onClick={async () => { logoutUser(); router.push('/') }}
                 className="px-4 py-2 text-sm border border-gray-300 hover:bg-gray-50"
               >Cerrar sesión</button>
             </div>

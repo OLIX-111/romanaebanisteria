@@ -5,45 +5,38 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useMemo, useState } from "react"
-import { supabase } from "@/utils/supabase"
+import { registerUser } from "@/lib/auth"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function RegisterPage() {
-  const [form, setForm] = useState({ email: "", password: "", nombre: "" })
+  const [form, setForm] = useState({ email: "", password: "", password2: "", nombre: "", telefono: "" })
   const [showPassword, setShowPassword] = useState(false)
   const [submitting, setSubmitting] = useState(false)
   const [message, setMessage] = useState<string | null>(null)
   const [error, setError] = useState<string | null>(null)
   const isEmailValid = useMemo(() => /.+@.+\..+/.test(form.email), [form.email])
   const isPasswordValid = useMemo(() => form.password.trim().length >= 6, [form.password])
+  const isPasswordMatch = useMemo(() => form.password && form.password === form.password2, [form.password, form.password2])
   const isNameValid = useMemo(() => form.nombre.trim().length >= 2, [form.nombre])
-  const formValid = isEmailValid && isPasswordValid && isNameValid
+  const formValid = isEmailValid && isPasswordValid && isNameValid && isPasswordMatch
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!formValid) return
     setSubmitting(true)
     setError(null)
     setMessage(null)
     try {
-      const { data, error } = await supabase.auth.signUp({
-        email: form.email,
+      const resp = await registerUser({
+        nombre: form.nombre,
+        correo: form.email,
         password: form.password,
-        options: {
-          data: { nombre: form.nombre },
-          emailRedirectTo: typeof window !== 'undefined' ? `${window.location.origin}/store` : undefined,
-        },
+        password_confirmation: form.password2,
+        telefono: form.telefono || undefined
       })
-      if (error) {
-        setError(error.message)
-        return
-      }
-      if (data?.user) {
-        try { localStorage.setItem('romana_flash', 'Cuenta creada. ¡Bienvenido!') } catch {}
-        window.location.href = "/profile"
-        return
-      }
-      setMessage("Revisa tu correo para confirmar la cuenta.")
+      try { localStorage.setItem('romana_flash', 'Cuenta creada. ¡Bienvenido!') } catch {}
+      window.location.href = "/profile"
     } catch (e: any) {
       setError(e?.message || "No se pudo completar el registro")
     } finally {
@@ -101,6 +94,15 @@ export default function RegisterPage() {
                 )}
               </div>
               <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Teléfono (opcional)</label>
+                <input
+                  className="w-full border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 focus:outline-none"
+                  placeholder="+1 809 555 0000"
+                  value={form.telefono}
+                  onChange={(e) => setForm({ ...form, telefono: e.target.value })}
+                />
+              </div>
+              <div className="space-y-2">
                 <label className="text-sm font-medium text-slate-700">Contraseña</label>
                 <div className="relative">
                   <input
@@ -123,6 +125,21 @@ export default function RegisterPage() {
                 </div>
                 {!isPasswordValid && form.password && (
                   <p id="pass-help" className="text-[12px] text-red-600">Mínimo 6 caracteres.</p>
+                )}
+              </div>
+              <div className="space-y-2">
+                <label className="text-sm font-medium text-slate-700">Confirmar contraseña</label>
+                <input
+                  type="password"
+                  className="w-full border border-slate-200 rounded-sm px-4 py-3 text-sm focus:border-slate-400 focus:outline-none"
+                  placeholder="Repite la contraseña"
+                  value={form.password2}
+                  onChange={(e) => setForm({ ...form, password2: e.target.value })}
+                  aria-invalid={!isPasswordMatch}
+                  aria-describedby="pass2-help"
+                />
+                {!isPasswordMatch && form.password2 && (
+                  <p id="pass2-help" className="text-[12px] text-red-600">Las contraseñas no coinciden.</p>
                 )}
               </div>
 

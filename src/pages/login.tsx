@@ -5,8 +5,8 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useState, useEffect, useMemo } from "react"
-import { supabase } from "@/utils/supabase"
 import { useRouter } from "next/router"
+import { loginUser, getAuth } from "@/lib/auth"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -22,11 +22,8 @@ export default function LoginPage() {
   const formValid = isEmailValid && isPasswordValid
 
   useEffect(() => {
-    // If already logged in, redirect
-    supabase.auth.getUser().then(({ data }) => {
-      if (data?.user) router.replace(returnTo)
-    })
-    // Prefill email if remembered
+    const auth = getAuth()
+    if (auth?.user) router.replace(returnTo)
     try {
       const remembered = localStorage.getItem("romana_last_email")
       if (remembered) setForm((f) => ({ ...f, email: remembered }))
@@ -35,17 +32,11 @@ export default function LoginPage() {
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
+    if (!formValid) return
     setSubmitting(true)
     setError(null)
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email: form.email,
-        password: form.password,
-      })
-      if (error) {
-        setError(error.message)
-        return
-      }
+      await loginUser({ correo: form.email, password: form.password })
       try {
         localStorage.setItem("romana_last_email", form.email)
         localStorage.setItem("romana_flash", "Has iniciado sesión correctamente.")
