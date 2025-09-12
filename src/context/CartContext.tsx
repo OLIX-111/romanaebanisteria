@@ -1,14 +1,16 @@
 "use client"
 import React, { createContext, useCallback, useContext, useEffect, useState } from 'react'
-import { addItemToServerCart, fetchCart, getCartToken, setCartToken, updateCartItem, ServerCart, ServerCartItem } from '@/lib/cart'
+import { addItemToServerCart, fetchCart, getCartToken, setCartToken, updateCartItem, ServerCart, ServerCartItem, clearServerCart } from '@/lib/cart'
 import { useAuth } from './AuthContext'
 
 interface CartContextValue {
   cart: ServerCart | null
   loading: boolean
+  clearing: boolean
   error: string | null
   addItem: (opts: { productId: string; variantId: string; quantity?: number }) => Promise<void>
   updateQuantity: (lineItemId: string, quantity: number) => Promise<void>
+  clearCart: () => Promise<void>
   refresh: () => Promise<void>
   count: number
   total: number
@@ -21,6 +23,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const [cart, setCart] = useState<ServerCart | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [clearing, setClearing] = useState(false)
 
   // Initial load
   useEffect(() => {
@@ -63,12 +66,27 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     await refresh()
   }, [authToken, refresh])
 
+  const clearCart = useCallback(async () => {
+    try {
+      setClearing(true)
+      await clearServerCart(undefined, authToken)
+      // After clearing, reset cart state locally
+      setCart({ id: cart?.id || 'local', token: getCartToken() || '', items: [], total: 0 })
+    } catch (e:any) {
+      setError(e?.message || 'No se pudo limpiar el carrito')
+    } finally {
+      setClearing(false)
+    }
+  }, [authToken, cart?.id])
+
   const value: CartContextValue = {
     cart,
     loading,
+  clearing,
     error,
     addItem,
     updateQuantity,
+    clearCart,
     refresh,
     count: cart?.items?.reduce((a, i) => a + i.cantidad, 0) || 0,
     total: cart?.total || 0,

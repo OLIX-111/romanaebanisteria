@@ -35,82 +35,64 @@ import {
   DollarSign
 } from 'lucide-react'
 
-// Importar los tipos y datos de órdenes
-interface Order {
+// Order type adapted to CRM API shape
+interface CrmOrderDetail {
   id: string
-  orderNumber: string
-  customer: {
-    firstName: string
-    lastName: string
-    email: string
-    phone: string
-    address: string
-    city: string
-    province: string
-    postalCode: string
-  }
-  items: Array<{
-    id: string
-    name: string
-    quantity: number
-    price: number
-    image?: string
-  }>
-  totals: {
-    subtotal: number
-    tax: number
-    shipping: number
-    grandTotal: number
-  }
-  status: {
-    id: string
-    name: string
-    generalStatus: string
-    color: string
-    icon: string
-  }
-  createdAt: string
-  estimatedDelivery?: string
-  actualDelivery?: string
-  assignedTo?: string
-  department?: string
-  priority: string
-  source: string
+  producto_id: string
+  variacion_id: string
+  producto_nombre: string
+  variacion_nombre?: string
+  sku?: string
+  captured_at?: string
+  cantidad: number
+  precio_unitario: string
+  configuracion: any
 }
 
-// Estados disponibles para las órdenes
-const ORDER_STATUSES = [
-  { id: 'quote_requested', name: 'Cotización Solicitada', color: '#6B7280', generalStatus: 'pending', icon: 'FileText' },
-  { id: 'quote_sent', name: 'Cotización Enviada', color: '#3B82F6', generalStatus: 'pending', icon: 'Send' },
-  { id: 'awaiting_approval', name: 'Esperando Aprobación', color: '#F59E0B', generalStatus: 'pending', icon: 'Clock' },
-  { id: 'confirmed', name: 'Pedido Confirmado', color: '#10B981', generalStatus: 'processing', icon: 'CheckCircle' },
-  { id: 'deposit_paid', name: 'Depósito Pagado', color: '#059669', generalStatus: 'processing', icon: 'DollarSign' },
-  { id: 'design_phase', name: 'Fase de Diseño', color: '#6366F1', generalStatus: 'processing', icon: 'Palette' },
-  { id: 'material_preparation', name: 'Preparación de Materiales', color: '#8B5CF6', generalStatus: 'processing', icon: 'Package' },
-  { id: 'cutting_wood', name: 'Cortando Madera', color: '#EC4899', generalStatus: 'processing', icon: 'Scissors' },
-  { id: 'woodworking', name: 'Ebanistería', color: '#F97316', generalStatus: 'processing', icon: 'Hammer' },
-  { id: 'assembling', name: 'Ensamblando', color: '#06B6D4', generalStatus: 'processing', icon: 'Settings' },
-  { id: 'finishing', name: 'Acabando', color: '#10B981', generalStatus: 'processing', icon: 'Brush' },
-  { id: 'quality_check', name: 'Control de Calidad', color: '#F59E0B', generalStatus: 'processing', icon: 'CheckSquare' },
-  { id: 'ready_for_shipping', name: 'Listo para Envío', color: '#84CC16', generalStatus: 'shipped', icon: 'Truck' },
-  { id: 'in_transit', name: 'En Tránsito', color: '#22C55E', generalStatus: 'shipped', icon: 'MapPin' },
-  { id: 'delivered', name: 'Entregado', color: '#16A34A', generalStatus: 'delivered', icon: 'CheckCircle' },
-  { id: 'installation_complete', name: 'Instalación Completa', color: '#15803D', generalStatus: 'delivered', icon: 'Home' },
-  { id: 'cancelled_by_customer', name: 'Cancelado por Cliente', color: '#DC2626', generalStatus: 'cancelled', icon: 'XCircle' },
-  { id: 'cancelled_by_admin', name: 'Cancelado por Admin', color: '#B91C1C', generalStatus: 'cancelled', icon: 'XCircle' },
-  { id: 'return_requested', name: 'Devolución Solicitada', color: '#7C3AED', generalStatus: 'processing', icon: 'RotateCcw' },
-  { id: 'refunded', name: 'Reembolsado', color: '#0891B2', generalStatus: 'refunded', icon: 'RefreshCw' }
-]
+interface CrmOrder {
+  id: string
+  estado: string
+  monto_total: string
+  calculated_subtotal?: string
+  direccion_envio?: {
+    pais: string
+    calle: string
+    ciudad: string
+    provincia: string
+    codigo_postal: string
+  } | null
+  contacto?: {
+    correo: string
+    nombre: string
+    apellido: string
+    telefono: string
+  } | null
+  reclamada: boolean
+  order_number: number
+  tracking_number: string
+  items_count: number
+  created_at: string
+  detalles: CrmOrderDetail[]
+}
+
+// Map simple estado -> styling
+const STATE_STYLES: Record<string, { label: string; color: string }> = {
+  pending: { label: 'Pendiente', color: '#F59E0B' },
+  processing: { label: 'Procesando', color: '#3B82F6' },
+  shipped: { label: 'Envío', color: '#6366F1' },
+  delivered: { label: 'Entregado', color: '#16A34A' },
+  cancelled: { label: 'Cancelado', color: '#DC2626' },
+  refunded: { label: 'Reembolsado', color: '#0891B2' },
+}
 
 export default function OrdersManagement() {
-  const [orders, setOrders] = useState<Order[]>([])
-  const [filteredOrders, setFilteredOrders] = useState<Order[]>([])
+  const [orders, setOrders] = useState<CrmOrder[]>([])
+  const [filteredOrders, setFilteredOrders] = useState<CrmOrder[]>([])
   const [loading, setLoading] = useState(true)
-  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null)
+  const [selectedOrder, setSelectedOrder] = useState<CrmOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
-  const [dateFilter, setDateFilter] = useState('')
+  const [error, setError] = useState<string | null>(null)
 
   // Filtros
   const [filters, setFilters] = useState({
@@ -122,7 +104,7 @@ export default function OrdersManagement() {
   })
 
   useEffect(() => {
-    loadOrders()
+  loadOrders()
   }, [])
 
   useEffect(() => {
@@ -130,212 +112,53 @@ export default function OrdersManagement() {
   }, [orders, filters, searchTerm])
 
   const loadOrders = async () => {
+    setLoading(true); setError(null)
     try {
-      // En producción, esto vendría de la API
-      // const response = await fetch('/api/orders')
-      // const data = await response.json()
-
-      // Datos simulados basados en el sistema existente
-      const mockOrders: Order[] = [
-        {
-          id: 'ord-2024-001',
-          orderNumber: 'ORD-2024001-00001',
-          customer: {
-            firstName: 'María',
-            lastName: 'Rodríguez',
-            email: 'maria.rodriguez@email.com',
-            phone: '(809) 555-0123',
-            address: 'Calle Principal 123, Bella Vista',
-            city: 'Santiago',
-            province: 'Santiago',
-            postalCode: '51000'
-          },
-          items: [
-            {
-              id: 'item-1',
-              name: 'Mesa de Comedor Moderna Premium - 8 personas',
-              quantity: 1,
-              price: 42000
-            },
-            {
-              id: 'item-2',
-              name: 'Silla Ejecutiva de Cuero - Negro',
-              quantity: 8,
-              price: 12500
-            }
-          ],
-          totals: {
-            subtotal: 154000,
-            tax: 27720,
-            shipping: 1500,
-            grandTotal: 183220
-          },
-          status: ORDER_STATUSES[15], // Entregado
-          createdAt: '2024-01-15T10:00:00Z',
-          estimatedDelivery: '2024-02-15T10:00:00Z',
-          actualDelivery: '2024-02-12T15:30:00Z',
-          assignedTo: 'Carlos Artesano',
-          department: 'produccion',
-          priority: 'high',
-          source: 'website'
-        },
-        {
-          id: 'ord-2024-002',
-          orderNumber: 'ORD-2024001-00002',
-          customer: {
-            firstName: 'Juan',
-            lastName: 'Pérez',
-            email: 'juan.perez@email.com',
-            phone: '(809) 555-0456',
-            address: 'Av. Independencia 456, Centro',
-            city: 'Santo Domingo',
-            province: 'Distrito Nacional',
-            postalCode: '10204'
-          },
-          items: [
-            {
-              id: 'item-3',
-              name: 'Closet Empotrado Premium - 3 puertas',
-              quantity: 1,
-              price: 65000
-            }
-          ],
-          totals: {
-            subtotal: 65000,
-            tax: 11700,
-            shipping: 1200,
-            grandTotal: 77900
-          },
-          status: ORDER_STATUSES[9], // Ebanistería
-          createdAt: '2024-01-20T14:30:00Z',
-          estimatedDelivery: '2024-02-20T10:00:00Z',
-          assignedTo: 'Ana Diseñadora',
-          department: 'produccion',
-          priority: 'normal',
-          source: 'phone'
-        },
-        {
-          id: 'ord-2024-003',
-          orderNumber: 'ORD-2024001-00003',
-          customer: {
-            firstName: 'Ana',
-            lastName: 'García',
-            email: 'ana.garcia@email.com',
-            phone: '(809) 555-0789',
-            address: 'Calle Duarte 789, Villa Mella',
-            city: 'Santo Domingo',
-            province: 'Distrito Nacional',
-            postalCode: '10601'
-          },
-          items: [
-            {
-              id: 'item-4',
-              name: 'Vanity de Baño Minimalista - 80cm',
-              quantity: 1,
-              price: 17200
-            }
-          ],
-          totals: {
-            subtotal: 17200,
-            tax: 3096,
-            shipping: 800,
-            grandTotal: 21096
-          },
-          status: ORDER_STATUSES[2], // Esperando Aprobación
-          createdAt: '2024-01-25T09:15:00Z',
-          estimatedDelivery: '2024-02-25T10:00:00Z',
-          priority: 'normal',
-          source: 'website'
-        }
-      ]
-
-      setOrders(mockOrders)
-    } catch (error) {
-      console.error('Error loading orders:', error)
+      const token = localStorage.getItem('romana_token') || ''
+      const res = await fetch('/api/admin/orders', {
+        headers: { Authorization: `Bearer ${token}` }
+      })
+      const json = await res.json()
+      if (!res.ok) throw json?.error || new Error('Error cargando órdenes')
+      const list: CrmOrder[] = json.data || []
+      setOrders(list)
+    } catch (e:any) {
+      console.error('Error loading orders:', e)
+      setError(e?.message || 'No se pudieron cargar las órdenes')
     } finally {
       setLoading(false)
     }
   }
 
   const filterOrders = () => {
-    let filtered = orders
-
-    // Filtro por búsqueda
+    let filtered = [...orders]
     if (searchTerm) {
-      filtered = filtered.filter(order =>
-        order.orderNumber.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        order.customer.email.toLowerCase().includes(searchTerm.toLowerCase())
+      const q = searchTerm.toLowerCase()
+      filtered = filtered.filter(o =>
+        String(o.order_number).includes(q) ||
+        o.tracking_number.toLowerCase().includes(q) ||
+        (o.contacto?.correo || '').toLowerCase().includes(q) ||
+        (o.contacto?.nombre || '').toLowerCase().includes(q)
       )
     }
-
-    // Filtro por estado
     if (filters.status) {
-      filtered = filtered.filter(order => order.status.id === filters.status)
+      filtered = filtered.filter(o => o.estado === filters.status)
     }
-
-    // Filtro por prioridad
-    if (filters.priority) {
-      filtered = filtered.filter(order => order.priority === filters.priority)
-    }
-
-    // Filtro por departamento
-    if (filters.department) {
-      filtered = filtered.filter(order => order.department === filters.department)
-    }
-
-    // Filtro por fecha
     if (filters.dateRange !== 'all') {
-      const now = new Date()
-      let startDate: Date
-
+      const now = new Date(); let start: Date
       switch (filters.dateRange) {
-        case 'today':
-          startDate = new Date(now.getFullYear(), now.getMonth(), now.getDate())
-          break
-        case 'week':
-          startDate = new Date(now.getTime() - 7 * 24 * 60 * 60 * 1000)
-          break
-        case 'month':
-          startDate = new Date(now.getFullYear(), now.getMonth(), 1)
-          break
-        default:
-          startDate = new Date(0)
+        case 'today': start = new Date(now.getFullYear(), now.getMonth(), now.getDate()); break
+        case 'week': start = new Date(now.getTime() - 7*24*60*60*1000); break
+        case 'month': start = new Date(now.getFullYear(), now.getMonth(), 1); break
+        default: start = new Date(0)
       }
-
-      filtered = filtered.filter(order =>
-        new Date(order.createdAt) >= startDate
-      )
+      filtered = filtered.filter(o => new Date(o.created_at) >= start)
     }
-
     setFilteredOrders(filtered)
   }
 
-  const handleStatusChange = async (orderId: string, newStatusId: string) => {
-    try {
-      // En producción: llamada a API
-      // await fetch(`/api/orders/${orderId}/status`, {
-      //   method: 'PUT',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ statusId: newStatusId })
-      // })
-
-      // Actualizar localmente
-      setOrders(prevOrders =>
-        prevOrders.map(order =>
-          order.id === orderId
-            ? { ...order, status: ORDER_STATUSES.find(s => s.id === newStatusId) || order.status }
-            : order
-        )
-      )
-
-      // Mostrar notificación de éxito
-      alert(`Estado actualizado exitosamente`)
-    } catch (error) {
-      console.error('Error updating status:', error)
-      alert('Error al actualizar el estado')
-    }
+  const handleStatusChange = async (_orderId: string, _new: string) => {
+    alert('Actualización de estado pendiente de implementación en API.')
   }
 
   const formatCurrency = (amount: number) => {
@@ -345,16 +168,11 @@ export default function OrdersManagement() {
     }).format(amount)
   }
 
-  const getStatusBadge = (status: Order['status']) => {
+  const getEstadoBadge = (estado: string) => {
+    const style = STATE_STYLES[estado] || { label: estado, color: '#6B7280' }
     return (
-      <span
-        className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium"
-        style={{
-          backgroundColor: status.color + '20',
-          color: status.color
-        }}
-      >
-        <span>{status.name}</span>
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: style.color + '20', color: style.color }}>
+        {style.label}
       </span>
     )
   }
@@ -387,9 +205,9 @@ export default function OrdersManagement() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
-            <Package size={18} />
-            Nueva Orden
+          <button onClick={loadOrders} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+            <RefreshCw size={18} />
+            Refrescar
           </button>
         </div>
       </div>
@@ -419,10 +237,8 @@ export default function OrdersManagement() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             >
               <option value="">Todos los estados</option>
-              {ORDER_STATUSES.map(status => (
-                <option key={status.id} value={status.id}>
-                  {status.name}
-                </option>
+              {Object.keys(STATE_STYLES).map(k => (
+                <option key={k} value={k}>{STATE_STYLES[k].label}</option>
               ))}
             </select>
           </div>
@@ -436,8 +252,6 @@ export default function OrdersManagement() {
             >
               <option value="">Todas las prioridades</option>
               <option value="normal">Normal</option>
-              <option value="high">Alta</option>
-              <option value="urgent">Urgente</option>
             </select>
           </div>
 
@@ -512,39 +326,33 @@ export default function OrdersManagement() {
                 <tr key={order.id} className="hover:bg-gray-50">
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
-                      {order.orderNumber}
+                      #{order.order_number}
                     </div>
                     <div className="text-sm text-gray-500">
-                      {order.source}
+                      {order.tracking_number}
                     </div>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      {order.customer.firstName} {order.customer.lastName}
-                    </div>
-                    <div className="text-sm text-gray-500">
-                      {order.customer.email}
-                    </div>
+                    {order.contacto ? (
+                      <>
+                        <div className="text-sm font-medium text-gray-900">{order.contacto.nombre} {order.contacto.apellido}</div>
+                        <div className="text-sm text-gray-500">{order.contacto.correo}</div>
+                      </>
+                    ) : (
+                      <div className="text-xs text-gray-400 italic">Sin contacto</div>
+                    )}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    {getStatusBadge(order.status)}
+                    {getEstadoBadge(order.estado)}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatCurrency(order.totals.grandTotal)}
+                    {formatCurrency(Number(order.monto_total||0))}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {new Date(order.createdAt).toLocaleDateString('es-DO')}
+                    {new Date(order.created_at).toLocaleDateString('es-DO')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-                      order.priority === 'urgent'
-                        ? 'bg-red-100 text-red-800'
-                        : order.priority === 'high'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {order.priority}
-                    </span>
+                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">{order.items_count} ítem(s)</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
@@ -557,17 +365,6 @@ export default function OrdersManagement() {
                       >
                         <Eye size={18} />
                       </button>
-                      <select
-                        value={order.status.id}
-                        onChange={(e) => handleStatusChange(order.id, e.target.value)}
-                        className="text-xs border border-gray-300 rounded px-2 py-1"
-                      >
-                        {ORDER_STATUSES.map(status => (
-                          <option key={status.id} value={status.id}>
-                            {status.name}
-                          </option>
-                        ))}
-                      </select>
                     </div>
                   </td>
                 </tr>
@@ -589,10 +386,9 @@ export default function OrdersManagement() {
 
       {/* Order Detail Modal */}
       {showOrderDetail && selectedOrder && (
-        <OrderDetailModal
+        <CrmOrderDetailModal
           order={selectedOrder}
           onClose={() => setShowOrderDetail(false)}
-          onStatusChange={handleStatusChange}
         />
       )}
     </div>
@@ -600,240 +396,92 @@ export default function OrdersManagement() {
 }
 
 // Componente para el modal de detalle de orden
-interface OrderDetailModalProps {
-  order: Order
-  onClose: () => void
-  onStatusChange: (orderId: string, statusId: string) => void
-}
-
-function OrderDetailModal({ order, onClose, onStatusChange }: OrderDetailModalProps) {
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-DO', {
-      style: 'currency',
-      currency: 'DOP'
-    }).format(amount)
+interface CrmOrderDetailModalProps { order: CrmOrder; onClose: () => void }
+function CrmOrderDetailModal({ order, onClose }: CrmOrderDetailModalProps) {
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('es-DO',{style:'currency',currency:'DOP'}).format(amount)
+  const badge = (estado: string) => {
+    const style = STATE_STYLES[estado] || { label: estado, color: '#6B7280' }
+    return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{backgroundColor: style.color + '20', color: style.color}}>{style.label}</span>
   }
-
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">
       <div className="flex items-end justify-center min-h-screen pt-4 px-4 pb-20 text-center sm:block sm:p-0">
         <div className="fixed inset-0 transition-opacity" aria-hidden="true">
-          <div className="absolute inset-0 bg-gray-500 opacity-75" onClick={onClose}></div>
+          <div className="absolute inset-0 bg-gray-500/70" onClick={onClose}></div>
         </div>
-
         <div className="inline-block align-bottom bg-white rounded-lg text-left overflow-hidden shadow-xl transform transition-all sm:my-8 sm:align-middle sm:max-w-4xl sm:w-full">
-          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-4">
+          <div className="bg-white px-4 pt-5 pb-4 sm:p-6 sm:pb-6">
             <div className="flex items-center justify-between mb-6">
-              <h3 className="text-lg leading-6 font-medium text-gray-900">
-                Orden {order.orderNumber}
-              </h3>
-              <button
-                onClick={onClose}
-                className="text-gray-400 hover:text-gray-600"
-              >
-                <X size={24} />
-              </button>
+              <h3 className="text-lg leading-6 font-medium text-gray-900">Orden #{order.order_number}</h3>
+              <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X size={24} /></button>
             </div>
-
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-              {/* Customer Info */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Información del Cliente</h4>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center gap-3">
-                    <User size={18} className="text-gray-400" />
-                    <span className="font-medium">
-                      {order.customer.firstName} {order.customer.lastName}
-                    </span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Mail size={18} className="text-gray-400" />
-                    <span className="text-sm">{order.customer.email}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <Phone size={18} className="text-gray-400" />
-                    <span className="text-sm">{order.customer.phone}</span>
-                  </div>
-                  <div className="flex items-center gap-3">
-                    <MapPin size={18} className="text-gray-400" />
-                    <span className="text-sm">
-                      {order.customer.address}, {order.customer.city}
-                    </span>
-                  </div>
+                <h4 className="font-medium text-gray-900">Contacto</h4>
+                <div className="bg-gray-50 rounded-lg p-4 space-y-2 text-sm">
+                  {order.contacto ? (
+                    <>
+                      <p className="font-medium text-gray-900">{order.contacto.nombre} {order.contacto.apellido}</p>
+                      <p className="text-gray-600">{order.contacto.correo}</p>
+                      <p className="text-gray-600">{order.contacto.telefono}</p>
+                    </>
+                  ) : <p className="italic text-gray-400">Sin contacto</p>}
                 </div>
               </div>
-
-              {/* Order Status & Actions */}
               <div className="space-y-4">
-                <h4 className="font-medium text-gray-900">Estado de la Orden</h4>
-                <div className="bg-gray-50 rounded-lg p-4 space-y-3">
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Estado actual:</span>
-                    <span
-                      className="px-2 py-1 rounded-full text-xs font-medium"
-                      style={{
-                        backgroundColor: order.status.color + '20',
-                        color: order.status.color
-                      }}
-                    >
-                      {order.status.name}
-                    </span>
-                  </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-600">Prioridad:</span>
-                    <span className={`px-2 py-1 text-xs font-medium rounded-full ${
-                      order.priority === 'urgent'
-                        ? 'bg-red-100 text-red-800'
-                        : order.priority === 'high'
-                        ? 'bg-yellow-100 text-yellow-800'
-                        : 'bg-gray-100 text-gray-800'
-                    }`}>
-                      {order.priority}
-                    </span>
-                  </div>
-                  {order.assignedTo && (
-                    <div className="flex items-center justify-between">
-                      <span className="text-sm text-gray-600">Asignado a:</span>
-                      <span className="text-sm font-medium">{order.assignedTo}</span>
-                    </div>
-                  )}
-                  <div className="pt-3 border-t border-gray-200">
-                    <label className="block text-sm font-medium text-gray-700 mb-2">
-                      Cambiar Estado
-                    </label>
-                    <select
-                      value={order.status.id}
-                      onChange={(e) => onStatusChange(order.id, e.target.value)}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
-                    >
-                      {ORDER_STATUSES.map(status => (
-                        <option key={status.id} value={status.id}>
-                          {status.name}
-                        </option>
-                      ))}
-                    </select>
-                  </div>
+                <h4 className="font-medium text-gray-900">Envío</h4>
+                <div className="bg-gray-50 rounded-lg p-4 text-sm space-y-1">
+                  {order.direccion_envio ? (
+                    <>
+                      <p className="text-gray-900">{order.direccion_envio.calle}</p>
+                      <p className="text-gray-600">{order.direccion_envio.ciudad}, {order.direccion_envio.provincia}</p>
+                      <p className="text-gray-600">{order.direccion_envio.pais} {order.direccion_envio.codigo_postal}</p>
+                    </>
+                  ) : <p className="italic text-gray-400">Sin dirección</p>}
                 </div>
               </div>
             </div>
-
-            {/* Order Items */}
-            <div className="mt-6">
-              <h4 className="font-medium text-gray-900 mb-4">Productos</h4>
+            <div className="mt-8">
+              <h4 className="font-medium text-gray-900 mb-4">Artículos</h4>
               <div className="space-y-3">
-                {order.items.map((item) => (
-                  <div key={item.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg">
-                    <div className="flex items-center gap-4">
-                      <div className="w-12 h-12 bg-white border border-gray-200 rounded-lg flex items-center justify-center">
-                        <Package size={20} className="text-gray-400" />
+                {order.detalles.map(d => {
+                  const unit = Number(d.precio_unitario||0); const subtotal = unit * Number(d.cantidad||0)
+                  return (
+                    <div key={d.id} className="flex items-center justify-between p-4 bg-gray-50 rounded-lg text-sm">
+                      <div className="flex flex-col">
+                        <span className="font-medium text-gray-900">{d.producto_nombre} {d.variacion_nombre && <span className='text-gray-400'>({d.variacion_nombre})</span>}</span>
+                        {d.sku && <span className="text-xs text-gray-500 mt-0.5">SKU: {d.sku}</span>}
                       </div>
-                      <div>
-                        <p className="font-medium text-gray-900">{item.name}</p>
-                        <p className="text-sm text-gray-500">
-                          Cantidad: {item.quantity} × {formatCurrency(item.price)}
-                        </p>
+                      <div className="text-right">
+                        <p className="text-xs text-gray-500">x{d.cantidad}</p>
+                        <p className="font-medium text-gray-900">{formatCurrency(unit)}</p>
+                        <p className="text-xs text-gray-600">{formatCurrency(subtotal)}</p>
                       </div>
                     </div>
-                    <div className="text-right">
-                      <p className="font-medium text-gray-900">
-                        {formatCurrency(item.price * item.quantity)}
-                      </p>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
+                {!order.detalles.length && <div className="p-4 bg-gray-50 rounded text-sm text-gray-500">Sin artículos</div>}
               </div>
             </div>
-
-            {/* Order Totals */}
-            <div className="mt-6 bg-gray-50 rounded-lg p-4">
-              <div className="space-y-2">
-                <div className="flex justify-between text-sm">
-                  <span>Subtotal:</span>
-                  <span>{formatCurrency(order.totals.subtotal)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>ITBIS (18%):</span>
-                  <span>{formatCurrency(order.totals.tax)}</span>
-                </div>
-                <div className="flex justify-between text-sm">
-                  <span>Envío:</span>
-                  <span>{formatCurrency(order.totals.shipping)}</span>
-                </div>
-                <div className="flex justify-between font-medium text-lg pt-2 border-t border-gray-200">
-                  <span>Total:</span>
-                  <span>{formatCurrency(order.totals.grandTotal)}</span>
-                </div>
-              </div>
-            </div>
-
-            {/* Order Dates */}
-            <div className="mt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+            <div className="mt-8 grid grid-cols-1 md:grid-cols-3 gap-4">
               <div className="bg-blue-50 rounded-lg p-4">
-                <div className="flex items-center gap-2 mb-2">
-                  <Calendar size={18} className="text-blue-600" />
-                  <span className="text-sm font-medium text-blue-900">Creada</span>
-                </div>
-                <p className="text-sm text-blue-700">
-                  {new Date(order.createdAt).toLocaleDateString('es-DO', {
-                    year: 'numeric',
-                    month: 'long',
-                    day: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  })}
-                </p>
+                <div className="text-xs font-medium text-blue-900 mb-1">Creada</div>
+                <div className="text-sm text-blue-700">{new Date(order.created_at).toLocaleString('es-DO')}</div>
               </div>
-
-              {order.estimatedDelivery && (
-                <div className="bg-yellow-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <Truck size={18} className="text-yellow-600" />
-                    <span className="text-sm font-medium text-yellow-900">Entrega Estimada</span>
-                  </div>
-                  <p className="text-sm text-yellow-700">
-                    {new Date(order.estimatedDelivery).toLocaleDateString('es-DO', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric'
-                    })}
-                  </p>
-                </div>
-              )}
-
-              {order.actualDelivery && (
-                <div className="bg-green-50 rounded-lg p-4">
-                  <div className="flex items-center gap-2 mb-2">
-                    <CheckCircle size={18} className="text-green-600" />
-                    <span className="text-sm font-medium text-green-900">Entregada</span>
-                  </div>
-                  <p className="text-sm text-green-700">
-                    {new Date(order.actualDelivery).toLocaleDateString('es-DO', {
-                      year: 'numeric',
-                      month: 'long',
-                      day: 'numeric',
-                      hour: '2-digit',
-                      minute: '2-digit'
-                    })}
-                  </p>
-                </div>
-              )}
+              <div className="bg-amber-50 rounded-lg p-4">
+                <div className="text-xs font-medium text-amber-900 mb-1">Estado</div>
+                <div>{badge(order.estado)}</div>
+              </div>
+              <div className="bg-emerald-50 rounded-lg p-4">
+                <div className="text-xs font-medium text-emerald-900 mb-1">Total</div>
+                <div className="font-semibold text-emerald-700">{formatCurrency(Number(order.monto_total||0))}</div>
+              </div>
             </div>
           </div>
-
           <div className="bg-gray-50 px-4 py-3 sm:px-6 sm:flex sm:flex-row-reverse">
-            <button
-              type="button"
-              onClick={onClose}
-              className="w-full inline-flex justify-center rounded-md border border-transparent shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              Cerrar
-            </button>
-            <button
-              type="button"
-              className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-primary sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm"
-            >
-              <Download size={18} className="mr-2" />
-              Descargar PDF
+            <button onClick={onClose} className="w-full inline-flex justify-center rounded-md shadow-sm px-4 py-2 bg-primary text-base font-medium text-white hover:bg-primary/90 sm:ml-3 sm:w-auto sm:text-sm">Cerrar</button>
+            <button className="mt-3 w-full inline-flex justify-center rounded-md border border-gray-300 shadow-sm px-4 py-2 bg-white text-base font-medium text-gray-700 hover:bg-gray-50 sm:mt-0 sm:ml-3 sm:w-auto sm:text-sm">
+              <Download size={18} className="mr-2" /> Exportar
             </button>
           </div>
         </div>

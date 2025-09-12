@@ -6,7 +6,7 @@ import Link from 'next/link'
 import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { Open_Sans } from 'next/font/google'
-import { fetchOrderByTracking } from '@/lib/orders'
+import { fetchOrderByTracking as fetchOrderByTrackingMaybe } from '@/lib/orders'
 import { useAuth } from '@/context/AuthContext'
 
 const openSans = Open_Sans({ subsets: ['latin'] })
@@ -27,6 +27,7 @@ export default function OrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [order, setOrder] = useState<any>(null)
+  const [raw, setRaw] = useState<any>(null)
 
   useEffect(()=> {
     let active = true
@@ -35,12 +36,32 @@ export default function OrderDetailPage() {
       setLoading(true)
       setError(null)
       try {
-        const resp = await fetchOrderByTracking(tracking, token)
+        let data:any
+        if (typeof fetchOrderByTrackingMaybe === 'function') {
+          try {
+            data = await fetchOrderByTrackingMaybe(tracking, token)
+          } catch (err:any) {
+            // Helper might already produce { data } shape or throw with error
+            if (err?.error?.code) throw err
+            throw err
+          }
+        } else {
+          const res = await fetch(`/api/orders/track/${tracking}`)
+          const json = await res.json().catch(()=>null)
+            data = json
+          if (!res.ok) {
+            throw json?.error || { message: 'No se pudo cargar la orden' }
+          }
+        }
         if (!active) return
-        setOrder(resp.data)
+        setRaw(data)
+        // Accept shapes: {data:{...}}, {order:{...}}, or direct order
+        const resolved = data?.data || data?.order || data
+        setOrder(resolved)
       } catch(e:any) {
         if (!active) return
-        setError(e?.message || 'No se pudo cargar la orden')
+        const apiErr = e?.error || e
+        setError(apiErr?.code === 'ORDER_NOT_FOUND' ? 'Orden no encontrada' : (apiErr?.message || 'No se pudo cargar la orden'))
       } finally {
         if (active) setLoading(false)
       }
@@ -71,100 +92,21 @@ export default function OrderDetailPage() {
             <div className="py-24 text-center text-slate-600">Orden no encontrada</div>
           ) : (
             <div className="space-y-10">
-              <header className="space-y-4">
-                <h1 className="text-3xl font-bold tracking-tight text-slate-900">Orden #{order.order_number}</h1>
-                <div className="flex flex-wrap gap-4 text-sm text-slate-600">
-                  <span>Tracking: <span className="font-medium text-slate-900">{order.tracking_number}</span></span>
-                  <span>Estado: <span className="font-medium capitalize text-slate-900">{order.estado}</span></span>
-                  <span>Creada: <span className="font-medium text-slate-900">{new Date(order.created_at).toLocaleString('es-DO')}</span></span>
-                </div>
-              </header>
+              <OrderHeader order={order} />
 
               <div className="grid gap-8 lg:grid-cols-3">
                 <div className="lg:col-span-2 space-y-8">
-                  <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                      <h2 className="text-sm font-semibold tracking-wide text-slate-800">Items</h2>
-                      <span className="text-xs text-slate-500">{order.detalles?.length || 0} artículo(s)</span>
-                    </div>
-                    <ul className="divide-y divide-slate-100">
-                      {order.detalles?.map((it: UIOrderItem) => (
-                        <li key={it.id} className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm">
-                          <div className="flex-1 min-w-0">
-                            <p className="font-medium text-slate-900 truncate">{it.producto_nombre} {it.variacion_nombre && <span className='text-slate-400'>({it.variacion_nombre})</span>}</p>
-                            {it.sku && <p className="text-xs text-slate-500 mt-1">SKU: {it.sku}</p>}
-                          </div>
-                          <div className="flex items-center gap-8 flex-shrink-0">
-                            <span className="text-xs text-slate-500">x{it.cantidad}</span>
-                            <span className="font-semibold text-slate-900 whitespace-nowrap">{Number(it.precio_unitario||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</span>
-                          </div>
-                        </li>
-                      ))}
-                      {!order.detalles?.length && (
-                        <li className="p-5 text-sm text-slate-500">Sin detalles de items.</li>
-                      )}
-                    </ul>
-                  </section>
+                  <ItemsPanel order={order} />
 
-                  <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
-                      <h2 className="text-sm font-semibold tracking-wide text-slate-800">Seguimiento</h2>
-                      <span className="text-xs text-slate-500">{order.seguimientos?.length || 0} eventos</span>
-                    </div>
-                    <div className="p-6">
-                      {order.seguimientos?.length ? (
-                        <ol className="relative border-l border-slate-200 pl-6 space-y-6">
-                          {order.seguimientos.map((ev: any, idx: number) => (
-                            <li key={idx} className="relative">
-                              <span className="absolute -left-3 w-2.5 h-2.5 rounded-full bg-slate-400" />
-                              <div className="text-xs text-slate-500 mb-1">{ev.created_at ? new Date(ev.created_at).toLocaleString('es-DO') : '—'}</div>
-                              <p className="text-sm font-medium text-slate-800">{ev.estado || 'Actualización'}</p>
-                              {ev.comentario && <p className="text-xs text-slate-600 mt-1">{ev.comentario}</p>}
-                            </li>
-                          ))}
-                        </ol>
-                      ) : (
-                        <p className="text-sm text-slate-500">Sin eventos de seguimiento todavía.</p>
-                      )}
-                    </div>
-                  </section>
+                  <TimelinePanel order={order} />
                 </div>
 
                 <div className="space-y-6">
-                  <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100">
-                      <h2 className="text-sm font-semibold tracking-wide text-slate-800">Resumen</h2>
-                    </div>
-                    <div className="p-6 space-y-4 text-sm">
-                      <div className="flex justify-between"><span className="text-slate-600">Total</span><span className="font-semibold text-slate-900">{Number(order.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</span></div>
-                      <div className="pt-4 border-t border-slate-100 space-y-3">
-                        <p className="text-xs text-slate-500">Número de seguimiento para consultas o soporte.</p>
-                        <code className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">{order.tracking_number}</code>
-                      </div>
-                    </div>
-                  </section>
+                  <SummaryPanel order={order} />
 
-                  <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100">
-                      <h2 className="text-sm font-semibold tracking-wide text-slate-800">Contacto</h2>
-                    </div>
-                    <div className="p-6 text-sm space-y-1">
-                      <p className="font-medium text-slate-900">{order.contacto?.nombre} {order.contacto?.apellido}</p>
-                      <p className="text-slate-600">{order.contacto?.correo}</p>
-                      <p className="text-slate-600">{order.contacto?.telefono}</p>
-                    </div>
-                  </section>
+                  <ContactPanel order={order} />
 
-                  <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
-                    <div className="px-6 py-4 border-b border-slate-100">
-                      <h2 className="text-sm font-semibold tracking-wide text-slate-800">Dirección de envío</h2>
-                    </div>
-                    <div className="p-6 text-sm space-y-1">
-                      <p className="text-slate-900">{order.direccion_envio?.calle}</p>
-                      <p className="text-slate-600">{order.direccion_envio?.ciudad}, {order.direccion_envio?.provincia}</p>
-                      <p className="text-slate-600">{order.direccion_envio?.pais} {order.direccion_envio?.codigo_postal}</p>
-                    </div>
-                  </section>
+                  <ShippingPanel order={order} />
 
                   <div className="pt-2">
                     <Link href="/profile" className="text-xs text-slate-600 hover:text-slate-800 inline-flex items-center gap-1">← Volver al perfil</Link>
@@ -177,5 +119,152 @@ export default function OrderDetailPage() {
       </div>
       <Footer />
     </main>
+  )
+}
+
+// ---- Sub Components ----
+function statusStyle(status?: string) {
+  const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-medium'
+  const map: Record<string,string> = {
+    pending: 'bg-amber-100 text-amber-800',
+    processing: 'bg-blue-100 text-blue-700',
+    shipped: 'bg-indigo-100 text-indigo-700',
+    delivered: 'bg-emerald-100 text-emerald-700',
+    cancelled: 'bg-rose-100 text-rose-700',
+  }
+  return base + ' ' + (status ? (map[status] || 'bg-slate-200 text-slate-700') : 'bg-slate-200 text-slate-700')
+}
+
+const OrderHeader = ({ order }: { order: any }) => {
+  if (!order) return null
+  return (
+    <header className="space-y-5">
+      <div className="flex flex-col md:flex-row md:items-start md:justify-between gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight text-slate-900">Orden #{order.order_number}</h1>
+          <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-600">
+            <div>Creada <span className="font-medium text-slate-900">{order.created_at ? new Date(order.created_at).toLocaleString('es-DO') : '—'}</span></div>
+            <div>Estado <span className={statusStyle(order.estado)}>{order.estado}</span></div>
+            <div>Total <span className="font-medium text-slate-900">{Number(order.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</span></div>
+          </div>
+        </div>
+        <div className="flex gap-3 items-center">
+          <code className="px-2 py-1 bg-slate-900 text-white rounded text-xs font-mono tracking-wide">{order.tracking_number}</code>
+          <CopyButton value={order.tracking_number} />
+        </div>
+      </div>
+    </header>
+  )
+}
+
+const CopyButton = ({ value }: { value: string }) => {
+  const [copied, setCopied] = useState(false)
+  return (
+    <button
+      onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(()=> setCopied(false), 1800) }}
+      className="text-xs px-3 py-1.5 bg-slate-200 hover:bg-slate-300 rounded transition-colors"
+    >{copied ? 'Copiado' : 'Copiar'}</button>
+  )
+}
+
+const ItemsPanel = ({ order }: { order: any }) => {
+  return (
+    <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-800">Artículos</h2>
+        <span className="text-xs text-slate-500">{order.detalles?.length || 0} artículo(s)</span>
+      </div>
+      <ul className="divide-y divide-slate-100">
+        {order.detalles?.map((it: UIOrderItem) => (
+          <li key={it.id} className="p-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4 text-sm">
+            <div className="flex-1 min-w-0">
+              <p className="font-medium text-slate-900 truncate">{it.producto_nombre} {it.variacion_nombre && <span className='text-slate-400'>({it.variacion_nombre})</span>}</p>
+              {it.sku && <p className="text-xs text-slate-500 mt-1">SKU: {it.sku}</p>}
+            </div>
+            <div className="flex items-center gap-8 flex-shrink-0">
+              <span className="text-xs text-slate-500">x{it.cantidad}</span>
+              <span className="font-semibold text-slate-900 whitespace-nowrap">{Number(it.precio_unitario||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</span>
+            </div>
+          </li>
+        ))}
+        {!order.detalles?.length && (
+          <li className="p-5 text-sm text-slate-500">Sin detalles de artículos.</li>
+        )}
+      </ul>
+    </section>
+  )
+}
+
+const TimelinePanel = ({ order }: { order: any }) => {
+  return (
+    <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100 flex items-center justify-between">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-800">Seguimiento</h2>
+        <span className="text-xs text-slate-500">{order.seguimientos?.length || 0} eventos</span>
+      </div>
+      <div className="p-6">
+        {order.seguimientos?.length ? (
+          <ol className="relative border-l border-slate-200 pl-6 space-y-6">
+            {order.seguimientos.map((ev: any, idx: number) => (
+              <li key={idx} className="relative">
+                <span className="absolute -left-3 w-2.5 h-2.5 rounded-full bg-slate-400" />
+                <div className="text-xs text-slate-500 mb-1">{ev.created_at ? new Date(ev.created_at).toLocaleString('es-DO') : '—'}</div>
+                <p className="text-sm font-medium text-slate-800">{ev.estado || 'Actualización'}</p>
+                {ev.comentario && <p className="text-xs text-slate-600 mt-1">{ev.comentario}</p>}
+              </li>
+            ))}
+          </ol>
+        ) : (
+          <p className="text-sm text-slate-500">Sin eventos de seguimiento todavía.</p>
+        )}
+      </div>
+    </section>
+  )
+}
+
+const SummaryPanel = ({ order }: { order: any }) => {
+  return (
+    <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-800">Resumen</h2>
+      </div>
+      <div className="p-6 space-y-4 text-sm">
+        <div className="flex justify-between"><span className="text-slate-600">Total</span><span className="font-semibold text-slate-900">{Number(order.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</span></div>
+        <div className="pt-4 border-t border-slate-100 space-y-3">
+          <p className="text-xs text-slate-500">Número de seguimiento para consultas o soporte.</p>
+          <code className="px-2 py-1 bg-slate-100 text-slate-700 rounded text-xs font-mono">{order.tracking_number}</code>
+        </div>
+      </div>
+    </section>
+  )
+}
+
+const ContactPanel = ({ order }: { order: any }) => {
+  return (
+    <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-800">Contacto</h2>
+      </div>
+      <div className="p-6 text-sm space-y-1">
+        <p className="font-medium text-slate-900">{order.contacto?.nombre} {order.contacto?.apellido}</p>
+        <p className="text-slate-600">{order.contacto?.correo}</p>
+        <p className="text-slate-600">{order.contacto?.telefono}</p>
+      </div>
+    </section>
+  )
+}
+
+const ShippingPanel = ({ order }: { order: any }) => {
+  return (
+    <section className="bg-white border border-slate-200 rounded-md shadow-sm overflow-hidden">
+      <div className="px-6 py-4 border-b border-slate-100">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-800">Dirección de envío</h2>
+      </div>
+      <div className="p-6 text-sm space-y-1">
+        <p className="text-slate-900">{order.direccion_envio?.calle}</p>
+        <p className="text-slate-600">{order.direccion_envio?.ciudad}, {order.direccion_envio?.provincia}</p>
+        <p className="text-slate-600">{order.direccion_envio?.pais} {order.direccion_envio?.codigo_postal}</p>
+      </div>
+    </section>
   )
 }

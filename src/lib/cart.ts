@@ -189,3 +189,44 @@ export interface ServerCart {
   items: ServerCartItem[]
   total: number
 }
+
+// Clear entire cart via API endpoint /carrito/clear?token=
+export async function clearServerCart(cartToken?: string | null, authToken?: string | null) {
+  const token = cartToken || getCartToken()
+  if (!token) return
+  try {
+    const res = await fetch(`/api/cart/clear?token=${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+      },
+      redirect: 'manual'
+    })
+    if (res.status === 301 || res.status === 302) {
+      console.warn('Client clearCart redirect', res.status, res.headers.get('Location'))
+    }
+    if (!res.ok) {
+      const j = await res.json().catch(()=>({}))
+      throw new Error(j?.message || j?.error || 'No se pudo limpiar el carrito')
+    }
+  } catch(err){
+    const res = await fetch(`${BASE_URL}/carrito/clear?token=${encodeURIComponent(token)}`, {
+      method: 'POST',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+      },
+      redirect: 'manual'
+    })
+    if (res.status === 301 || res.status === 302) {
+      console.warn('External clearCart redirect', res.status, res.headers.get('Location'))
+    }
+    if (!res.ok) {
+      const j = await res.json().catch(()=>({}))
+      throw new Error(j?.message || j?.error || 'No se pudo limpiar el carrito')
+    }
+  }
+}

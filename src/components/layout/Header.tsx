@@ -248,21 +248,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             >
               <Link href="/presupuesto">Crear presupuesto</Link>
             </motion.button>
-            {authUser ? (
-              <div className="hidden md:flex items-center gap-3 pb-1">
-                <Link href="/profile" 
-                className={`hidden md:inline-flex items-center gap-2 px-4 transition-transform ${
-                  isScrolled
-                    ? "text-gray-800"
-                    : "text-gray-50"
-                }`}
-                >
-                  <User2 className="w-6 h-6" />
-                </Link>
-              </div>
-            ) : (
-              <></>
-            )}
+            <div className="hidden md:flex items-center gap-3 pb-1">
+              <Link href="/profile"
+                className={`hidden md:inline-flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isScrolled ? "text-gray-800 hover:text-gray-600" : "text-gray-50 hover:text-gray-200"}`}
+              >
+                <User2 className="w-5 h-5" />
+              </Link>
+            </div>
             <motion.button
               className={` transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
             >
@@ -307,6 +299,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                 </button>
               </div>
               <div className="mt-12 space-y-8">
+                <Link
+                  href="/profile"
+                  className="block text-lg font-medium text-gray-800"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  {authUser ? 'Perfil' : 'Perfil / Rastreo'}
+                </Link>
                 <Link
                   href="/"
                   className="block text-lg font-medium text-gray-800"

@@ -178,7 +178,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Stats Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+      {/* <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         {statCards.map((stat, index) => {
           const Icon = stat.icon
           return (
@@ -203,7 +203,7 @@ export default function DashboardOverview() {
             </div>
           )
         })}
-      </div>
+      </div> */}
 
       {/* Order Status Overview */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
@@ -279,7 +279,7 @@ export default function DashboardOverview() {
       </div>
 
       {/* Quick Actions */}
-      <div className="bg-white rounded-lg border border-gray-200 p-6">
+      {/* <div className="bg-white rounded-lg border border-gray-200 p-6">
         <h2 className="text-xl font-semibold text-gray-900 mb-6">Acciones Rápidas</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
           <button className="flex items-center gap-3 p-4 border border-gray-200 rounded-lg hover:bg-gray-50 transition-colors">
@@ -306,7 +306,7 @@ export default function DashboardOverview() {
             </div>
           </button>
         </div>
-      </div>
+      </div> */}
     </div>
   )
 }

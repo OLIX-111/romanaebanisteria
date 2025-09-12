@@ -5,16 +5,28 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { useCart } from "@/hook/useCart"
 import { Open_Sans } from "next/font/google"
-import { X, Plus, Minus } from "lucide-react"
+import { X } from "lucide-react"
 import { useEffect, useState } from "react"
 import { useAuth } from '@/context/AuthContext'
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function CartPage() {
-  const { items, subtotal, compareTotal, savings, updateQty, removeItem, clear, count } = useCart()
+  const { items, subtotal, compareTotal, savings, updateQty, removeItem, clear, count, loading, clearing } = useCart()
   const { user } = useAuth()
   const isLoggedIn = !!user
+  const [showConfirm, setShowConfirm] = useState(false)
+  const [clearError, setClearError] = useState<string | null>(null)
+
+  async function handleConfirmClear() {
+    setClearError(null)
+    try {
+      await clear()
+      setShowConfirm(false)
+    } catch (e:any) {
+      setClearError(e?.message || 'Error al vaciar el carrito')
+    }
+  }
 
   return (
     <main className={openSans.className}>
@@ -31,7 +43,35 @@ export default function CartPage() {
           <span className="text-slate-700 font-medium">Carrito</span>
         </nav>
 
-        {count === 0 && (
+        {loading && (
+          <div className="py-24">
+            <div className="max-w-3xl mx-auto">
+              <div className="animate-pulse space-y-8">
+                <div className="h-8 w-40 bg-slate-200 rounded" />
+                <div className="grid gap-6 lg:grid-cols-3">
+                  <div className="lg:col-span-2 space-y-4">
+                    {[1,2,3].map(i => (
+                      <div key={i} className="flex gap-5 p-4 border border-slate-200 rounded">
+                        <div className="w-24 h-24 bg-slate-200" />
+                        <div className="flex-1 space-y-3">
+                          <div className="h-4 bg-slate-200 rounded w-3/4" />
+                          <div className="h-4 bg-slate-200 rounded w-1/3" />
+                          <div className="h-6 bg-slate-200 rounded w-1/2" />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="space-y-4">
+                    <div className="h-6 bg-slate-200 w-32 rounded" />
+                    <div className="h-40 bg-slate-200 rounded" />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
+
+        {!loading && count === 0 && (
           <div className="text-center py-24">
             <h1 className="text-3xl font-bold tracking-tight mb-4">Tu carrito está vacío</h1>
             <p className="text-slate-600 mb-6 max-w-md mx-auto">
@@ -71,15 +111,22 @@ export default function CartPage() {
           </div>
         )}
 
-        {count > 0 && (
+  {!loading && count > 0 && (
           <div className="grid gap-12 lg:grid-cols-12">
             <div className="lg:col-span-7 space-y-6">
               <header className="flex items-end justify-between pb-2 border-b border-slate-200">
                 <h1 className="text-3xl font-bold tracking-tight">Carrito</h1>
                 <button
-                  onClick={clear}
-                  className="text-sm text-slate-500 hover:text-slate-800 underline underline-offset-4"
+                  onClick={() => setShowConfirm(true)}
+                  disabled={clearing || count === 0}
+                  className="text-sm flex items-center gap-2 text-slate-500 hover:text-slate-800 disabled:opacity-40 underline underline-offset-4"
                 >
+                  {clearing && (
+                    <svg className="w-3.5 h-3.5 animate-spin" viewBox="0 0 24 24" fill="none">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                    </svg>
+                  )}
                   Vaciar
                 </button>
               </header>
@@ -130,40 +177,11 @@ export default function CartPage() {
                           {item.price.toLocaleString("es-DO", { style: "currency", currency: "DOP" })}
                         </span>
                       </div>
-                      <div className="flex items-center gap-4">
-                        <div className="flex items-center border border-slate-300 divide-x divide-slate-300">
-                          <button
-                            onClick={() => updateQty(item.id, item.quantity - 1)}
-                            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                            disabled={item.quantity <= 1}
-                            aria-label="Disminuir"
-                          >
-                            <Minus size={14} />
-                          </button>
-                          <span className="w-10 text-center text-sm font-medium select-none">{item.quantity}</span>
-                          <button
-                            onClick={() => updateQty(item.id, item.quantity + 1)}
-                            className="w-8 h-8 flex items-center justify-center text-slate-700 hover:bg-slate-100 disabled:opacity-40"
-                            aria-label="Incrementar"
-                          >
-                            <Plus size={14} />
-                          </button>
-                        </div>
-                        <button
-                          onClick={() => removeItem(item.id)}
-                          className="text-xs text-slate-500 hover:text-red-600 font-medium"
-                        >
-                          Eliminar
-                        </button>
+                      <div className="flex items-center gap-4 text-sm text-slate-600">
+                        <span className="inline-flex items-center px-3 py-1 border border-slate-300 text-xs font-medium tracking-wide">Cantidad: {item.quantity}</span>
                       </div>
                     </div>
-                    <button
-                      onClick={() => removeItem(item.id)}
-                      className="text-slate-400 hover:text-red-600 self-start"
-                      aria-label="Eliminar línea"
-                    >
-                      <X size={16} />
-                    </button>
+                    {/* Eliminación individual deshabilitada */}
                   </li>
                 ))}
               </ul>
@@ -221,6 +239,38 @@ export default function CartPage() {
         )}
       </div>
       <Footer />
+      {showConfirm && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center">
+          <div className="absolute inset-0 bg-slate-900/40 backdrop-blur-sm" onClick={() => !clearing && setShowConfirm(false)} />
+          <div className="relative z-10 w-full max-w-sm bg-white border border-slate-200 rounded-md shadow-lg p-6 space-y-5">
+            <div className="space-y-2">
+              <h2 className="text-lg font-semibold text-slate-900">Vaciar carrito</h2>
+              <p className="text-sm text-slate-600 leading-relaxed">¿Seguro que deseas eliminar todos los artículos del carrito? Esta acción no se puede deshacer.</p>
+            </div>
+            {clearError && <div className="text-xs text-red-600 bg-red-50 border border-red-200 p-2 rounded">{clearError}</div>}
+            <div className="flex items-center justify-end gap-3 pt-2">
+              <button
+                disabled={clearing}
+                onClick={() => setShowConfirm(false)}
+                className="text-sm px-4 py-2 border border-slate-300 hover:bg-slate-50 disabled:opacity-40"
+              >Cancelar</button>
+              <button
+                onClick={handleConfirmClear}
+                disabled={clearing}
+                className="text-sm px-4 py-2 bg-red-600 text-white font-medium hover:bg-red-500 disabled:opacity-50 flex items-center gap-2"
+              >
+                {clearing && (
+                  <svg className="w-4 h-4 animate-spin" viewBox="0 0 24 24" fill="none">
+                    <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
+                    <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
+                  </svg>
+                )}
+                Vaciar ahora
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
