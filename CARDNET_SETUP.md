@@ -42,12 +42,12 @@ CARDNET_MERCHANT_STATE="   "  # 3 characters
 CARDNET_MERCHANT_COUNTRY="DO" # 2-character country code
 
 # Public URLs (replace with your domain)
-PUBLIC_BASE_URL=https://www.romanaebanisteria.com
+PUBLIC_BASE_URL=http://localhost:3000
 CARDNET_RETURN_URL=${PUBLIC_BASE_URL}/api/payments/cardnet/return
 CARDNET_CANCEL_URL=${PUBLIC_BASE_URL}/api/payments/cardnet/return?type=cancelled
 
 # For local development:
-# PUBLIC_BASE_URL=https://www.romanaebanisteria.com
+# PUBLIC_BASE_URL=http://localhost:3000
 ```
 
 ## Testing with LAB Environment
