@@ -7,6 +7,8 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { Open_Sans } from 'next/font/google'
 import { fetchOrderByTracking } from '@/lib/orders'
+import dynamic from 'next/dynamic'
+const QRCode = dynamic(()=> import('qrcode.react').then(m=> m.QRCodeCanvas || (m as any)), { ssr:false })
 import { useAuth } from '@/context/AuthContext'
 
 const openSans = Open_Sans({ subsets: ['latin'] })
@@ -119,9 +121,25 @@ export default function OrderSuccessPage() {
                     <p className="text-xs uppercase tracking-wide text-slate-500">Total</p>
                     <p className="font-medium text-slate-900">{Number(order.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</p>
                   </div>
+                  <div className="space-y-1">
+                    <p className="text-xs uppercase tracking-wide text-slate-500">Tracking</p>
+                    <p className="font-medium text-slate-900 truncate">{order.tracking_number}</p>
+                  </div>
                 </div>
-                <div className="pt-4 border-t border-slate-100 text-xs text-slate-600 leading-relaxed">
-                  Guarda tu número de tracking para consultar el estado de tu orden o compartirlo con soporte.
+                <div className="pt-4 border-t border-slate-100 text-xs text-slate-600 leading-relaxed grid gap-6 sm:grid-cols-3">
+                  <div className="sm:col-span-2 space-y-3">
+                    <p>Guarda tu número de tracking para consultar el estado de tu orden o compartirlo con soporte.</p>
+                    <div className="flex flex-wrap gap-2 text-[11px] text-slate-500">
+                      <span className="px-2 py-1 bg-slate-100 rounded"># {order.order_number}</span>
+                      <span className="px-2 py-1 bg-slate-100 rounded">{order.tracking_number}</span>
+                    </div>
+                  </div>
+                  <div className="flex flex-col items-center justify-start gap-2">
+                    {typeof window !== 'undefined' && (
+                      <QRCode value={`${window.location.origin}/store/orders/${order.tracking_number}`} size={128} includeMargin={false} />
+                    )}
+                    <span className="text-[10px] text-slate-500 text-center leading-tight">Escanea para ver seguimiento</span>
+                  </div>
                 </div>
               </section>
 

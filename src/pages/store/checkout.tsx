@@ -208,10 +208,43 @@ export default function CheckoutPage() {
           }
           const resp = await createOrder(payload, authToken)
           const data = resp.data
-          try { await clear() } catch (clrErr) { console.warn('No se pudo vaciar el carrito después de crear la orden', clrErr) }
           const tracking = data.tracking_number || data.order_number
+
+          // Simular pago inmediatamente y disparar emails con QR reutilizando el tracking real
+          try {
+            await fetch('/api/payments/process-order', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                orderId: String(data.order_number || Date.now()),
+                trackingNumber: tracking,
+                items: items.map(it => ({ id: String(it.id), name: it.name, quantity: it.quantity, price: it.price, image: it.image })),
+                customer: {
+                  firstName: form.firstName,
+                  lastName: form.lastName,
+                  email: form.email,
+                  phone: form.phone,
+                  address: form.address,
+                  city: form.city,
+                  province: form.province,
+                  postalCode: form.postalCode,
+                  notes: form.notes,
+                },
+                totals: { subtotal, tax: 0, total: subtotal },
+                payment: {
+                  responseCode: '00', // forzamos éxito
+                  authCode: 'SIMULATED',
+                  rrn: 'SIM-' + Math.random().toString(36).slice(2,8).toUpperCase(),
+                  maskedPan: '411111******1111'
+                }
+              })
+            }).catch(err => console.warn('Fallo simulando process-order:', err))
+          } catch (simErr) {
+            console.warn('No se pudo simular el pago / enviar emails:', simErr)
+          }
+
+          try { await clear() } catch (clrErr) { console.warn('No se pudo vaciar el carrito después de crear la orden', clrErr) }
           setRedirecting(true)
-          // Añadimos query para que la página success pueda mostrar toast/contexto
           router.replace(`/store/checkout/success/${tracking}?just_created=1`)
           return
         } catch (er: any) {

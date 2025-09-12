@@ -29,8 +29,8 @@ export function ContactInfo() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-600">{contactInfo.emailLabel}</p>
-            <a href="mailto:romanaebanisteriar@hotmail.com" className="text-lg hover:text-primary">
-              romanaebanisteriar@hotmail.com
+            <a href="mailto:info@grupochavon.com" className="text-lg hover:text-primary">
+              info@grupochavon.com
             </a>
           </div>
         </div>

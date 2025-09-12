@@ -21,7 +21,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       headers: {
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
-        'Authorization': "Bearer 12|VL7qeFIJrDJdWXVmAqNcXKOJXWUSj8BlHbxVMlTV7ee0c428",
+        'Authorization': "Bearer 14|uCaqMI5FqZXPbXzZwCm6SFDtOst7WSRJMbyMQskS1ad782f9",
       },
       redirect: 'manual'
     })

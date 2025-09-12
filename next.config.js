@@ -11,8 +11,8 @@ const nextConfig = {
       { protocol: 'https', hostname: 'forjaferreatienda.com' },
       { protocol: 'https', hostname: 'naturshome.es' },
       { protocol: 'https', hostname: 'maderahogar.com' },
-  { protocol: 'https', hostname: 'encrypted-tbn0.gstatic.com' },
-  { protocol: 'https', hostname: 'puertasdesegura.com' },
+      { protocol: 'https', hostname: 'encrypted-tbn0.gstatic.com' },
+      { protocol: 'https', hostname: 'puertasdesegura.com' },
       { protocol: 'https', hostname: 'shopflamingo.com.mx' },
       { protocol: 'https', hostname: 'camifer.com' },
       { protocol: 'https', hostname: 'www.cajonerasfama.es' },
@@ -34,6 +34,7 @@ const nextConfig = {
     ],
     domains: [
       'picsum.photos',
+      'ochoa.com.do',
       'cdn.sanity.io',
       'comercialdelsol.com.do',
       'scontent-syd2-1.xx.fbcdn.net',

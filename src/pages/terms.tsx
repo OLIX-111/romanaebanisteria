@@ -38,7 +38,7 @@ export default function Terms() {
             Para cualquier consulta, puedes comunicarte con nosotros a través de los siguientes medios:
           </p>
           <ul className="list-disc pl-6 text-gray-700">
-            <li><strong>Correo Electrónico:</strong> <a href="mailto:romanaebanisteriar@hotmail.com" className="text-blue-600 underline">romanaebanisteriar@hotmail.com</a></li>
+            <li><strong>Correo Electrónico:</strong> <a href="mailto:info@grupochavon.com" className="text-blue-600 underline">info@grupochavon.com</a></li>
             <li><strong>Teléfono | WhatsApp:</strong> <a href="https://wa.me/18292222483" className="text-blue-600 underline">+1 (829) 222-2483</a></li>
             <li><strong>Horario de Atención:</strong></li>
             <ul className="list-disc pl-6">
@@ -109,7 +109,7 @@ export default function Terms() {
             Si tienes preguntas sobre estos términos, puedes escribirnos a:
           </p>
           <ul className="list-disc pl-6 text-gray-700">
-            <li><strong>Correo Electrónico:</strong> <a href="mailto:romanaebanisteriar@hotmail.com" className="text-blue-600 underline">romanaebanisteriar@hotmail.com</a></li>
+            <li><strong>Correo Electrónico:</strong> <a href="mailto:info@grupochavon.com" className="text-blue-600 underline">info@grupochavon.com</a></li>
             <li><strong>Teléfono | WhatsApp:</strong> <a href="https://wa.me/18292222483" className="text-blue-600 underline">+1 (829) 222-2483</a></li>
           </ul>
         </section>

@@ -266,7 +266,7 @@ export function usePresupuesto() {
     // Teléfono y Email
     y += 5
     doc.setFont("helvetica", "bold")
-    doc.text("Tel#: +1 (829) 222-2483   Email: romanaebanisteriar@hotmail.com", margin, y)
+    doc.text("Tel#: +1 (829) 222-2483   Email: info@grupochavon.com", margin, y)
     doc.setFont("helvetica", "normal")
 
     // Barra fina separadora con color #9d5421

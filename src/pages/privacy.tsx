@@ -75,7 +75,7 @@ export default function Privacy() {
             <li>Oponerte al uso de tus datos para ciertos fines.</li>
           </ul>
           <p className="text-gray-700">
-            Para ejercer estos derechos, contáctanos a través del correo <a href="mailto:romanaebanisteriar@hotmail.com" className="text-blue-600 underline">romanaebanisteriar@hotmail.com</a>.
+            Para ejercer estos derechos, contáctanos a través del correo <a href="mailto:info@grupochavon.com" className="text-blue-600 underline">info@grupochavon.com</a>.
           </p>
 
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">8. Cambios en la Política</h2>
@@ -87,7 +87,7 @@ export default function Privacy() {
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">9. Contacto</h2>
           <p className="text-gray-700">Si tienes dudas sobre esta política de privacidad, puedes contactarnos a:</p>
           <ul className="list-disc pl-6 text-gray-700">
-            <li><strong>Correo Electrónico:</strong> <a href="mailto:romanaebanisteriar@hotmail.com" className="text-blue-600 underline">romanaebanisteriar@hotmail.com</a></li>
+            <li><strong>Correo Electrónico:</strong> <a href="mailto:info@grupochavon.com" className="text-blue-600 underline">info@grupochavon.com</a></li>
             <li><strong>Teléfono | WhatsApp:</strong> <a href="https://wa.me/18292222483" className="text-blue-600 underline">+1 (829) 222-2483</a></li>
             <li><strong>Horario de Atención:</strong></li>
             <ul className="list-disc pl-6">

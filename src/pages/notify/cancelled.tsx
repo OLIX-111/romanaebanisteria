@@ -130,7 +130,7 @@ export default function PaymentCancelledPage() {
             <div className="mt-4 p-4 bg-slate-50 rounded-lg">
               <p className="text-xs text-slate-500">
                 Si necesitas ayuda, contáctanos por WhatsApp al +1 (829) 222-2483 o 
-                envíanos un correo a romanaebanisteriar@hotmail.com
+                envíanos un correo a info@grupochavon.com
               </p>
             </div>
           </div>

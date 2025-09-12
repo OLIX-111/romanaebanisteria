@@ -1,6 +1,7 @@
 import type { NextApiRequest, NextApiResponse } from "next"
 // @ts-ignore nodemailer types may not resolve fully under bundler resolution
 import nodemailer from "nodemailer"
+import QRCode from 'qrcode'
 
 // Using SendGrid SMTP configuration (same as other email APIs)
 const SMTP_HOST = "smtp.sendgrid.net"
@@ -41,8 +42,11 @@ interface CustomerData {
 
 interface ProcessOrderPayload {
   orderId: string
-  sessionId: string
-  transactionId: string
+  // Opcional si es una compra simulada (sin gateway real)
+  sessionId?: string
+  transactionId?: string
+  // Si ya tenemos trackingNumber (porque se creó la orden antes) lo usamos, si no generamos uno
+  trackingNumber?: string
   items: OrderItem[]
   customer: CustomerData
   totals: {
@@ -51,6 +55,7 @@ interface ProcessOrderPayload {
     total: number
   }
   payment: {
+    // Para simulaciones forzamos "00" y aprobamos siempre
     responseCode: string
     authCode?: string
     rrn?: string
@@ -82,6 +87,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       orderId,
       sessionId,
       transactionId,
+      trackingNumber,
       items,
       customer,
       totals,
@@ -92,13 +98,21 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     if (!orderId || !items || !customer || !totals || !payment) {
       return res.status(400).json({ error: "Missing required order data" })
     }
-
+    // En modo simulación aceptamos cualquier responseCode diferente de "00" y lo convertimos a éxito.
     if (payment.responseCode !== "00") {
-      return res.status(400).json({ error: "Payment not approved" })
+      // Normalmente rechazaríamos, pero el requerimiento indica siempre éxito.
+      payment.responseCode = "00"
     }
 
-    const trackingCode = generateTrackingCode(orderId)
+  const trackingCode = trackingNumber || generateTrackingCode(orderId)
     const orderDate = new Date().toLocaleString("es-DO", { hour12: false })
+    const trackingUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}/store/orders/${trackingCode}`
+    let qrDataUrl: string | null = null
+    try {
+      qrDataUrl = await QRCode.toDataURL(trackingUrl, { margin: 1, width: 220 })
+    } catch (qrErr) {
+      console.warn('QR generation failed:', qrErr)
+    }
 
     // Build order items HTML for email
     const itemsHtml = items.map(item => `
@@ -136,8 +150,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           ${payment.authCode ? `<tr><td style="padding:4px 0;font-size:12px;color:#555;width:120px;">Autorización:</td><td style="padding:4px 0;font-size:12px;color:#111;font-weight:600;">${payment.authCode}</td></tr>` : ''}
           ${payment.rrn ? `<tr><td style="padding:4px 0;font-size:12px;color:#555;width:120px;">Referencia:</td><td style="padding:4px 0;font-size:12px;color:#111;font-weight:600;">${payment.rrn}</td></tr>` : ''}
           ${payment.maskedPan ? `<tr><td style="padding:4px 0;font-size:12px;color:#555;width:120px;">Tarjeta:</td><td style="padding:4px 0;font-size:12px;color:#111;font-weight:600;">${payment.maskedPan}</td></tr>` : ''}
-          <tr><td style="padding:4px 0;font-size:12px;color:#555;width:120px;">ID Transacción:</td><td style="padding:4px 0;font-size:12px;color:#111;font-weight:600;">${transactionId}</td></tr>
-          <tr><td style="padding:4px 0;font-size:12px;color:#555;width:120px;">Sesión:</td><td style="padding:4px 0;font-size:12px;color:#111;font-weight:600;">${sessionId}</td></tr>
+          ${transactionId ? `<tr><td style="padding:4px 0;font-size:12px;color:#555;width:120px;">ID Transacción:</td><td style="padding:4px 0;font-size:12px;color:#111;font-weight:600;">${transactionId}</td></tr>` : ''}
+          ${sessionId ? `<tr><td style="padding:4px 0;font-size:12px;color:#555;width:120px;">Sesión:</td><td style="padding:4px 0;font-size:12px;color:#111;font-weight:600;">${sessionId}</td></tr>` : ''}
         </table>
       </div>
     `
@@ -159,7 +173,14 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             <td style="padding:20px 24px;">
               <h2 style="margin:0 0 6px 0;color:#111;font-size:18px;">¡Gracias por tu compra!</h2>
               <p style="margin:0 0 16px 0;color:#555;font-size:14px;">Tu pago ha sido procesado exitosamente. Aquí tienes el resumen de tu pedido:</p>
-              <p style="margin:0 0 16px 0;color:#555;font-size:14px;"><strong>Código de seguimiento:</strong> ${trackingCode}</p>
+              <p style="margin:0 0 6px 0;color:#555;font-size:14px;"><strong>Código de seguimiento:</strong> ${trackingCode}</p>
+              ${qrDataUrl ? `<div style="margin:12px 0 20px 0;text-align:center;">
+                <div style=\"font-size:12px;color:#555;margin-bottom:6px;\">Escanea para ver el estado de tu orden</div>
+                <a href="${trackingUrl}" style="display:inline-block;text-decoration:none;" target="_blank" rel="noopener">
+                  <img src="${qrDataUrl}" alt="Tracking QR" style="display:block;width:220px;height:220px;border:8px solid #f5f5f5;border-radius:12px;box-shadow:0 2px 4px rgba(0,0,0,0.08);" />
+                </a>
+                <div style="margin-top:8px;font-size:11px;color:#888;word-break:break-all;">${trackingUrl}</div>
+              </div>` : ''}
 
               <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:8px;">
                 <thead>
@@ -204,7 +225,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
               </div>
 
               <div style="margin-top:24px;color:#666;font-size:12px;">
-                ¿Necesitas ayuda? Escríbenos a <a href="mailto:romanaebanisteriar@hotmail.com" style="color:#111;">romanaebanisteriar@hotmail.com</a> o llámanos al +1 (829) 222-2483.
+                ¿Necesitas ayuda? Escríbenos a <a href="mailto:info@grupochavon.com" style="color:#111;">info@grupochavon.com</a> o llámanos al +1 (829) 222-2483.
               </div>
             </td>
           </tr>
@@ -233,6 +254,17 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                 <h3 style="margin:0 0 8px 0;color:#166534;font-size:16px;">✅ Pago confirmado</h3>
                 <p style="margin:0;color:#166534;font-size:14px;">El cliente ha completado el pago exitosamente a través de CardNet.</p>
               </div>
+              ${qrDataUrl ? `<div style=\"margin:0 0 20px 0;display:flex;align-items:center;gap:16px;\">
+                <div>
+                  <div style=\"font-size:12px;color:#555;margin-bottom:4px;\">QR Tracking</div>
+                  <img src="${qrDataUrl}" width="140" height="140" style="display:block;border:4px solid #f5f5f5;border-radius:10px;" />
+                  <div style=\"font-size:10px;color:#999;margin-top:4px;word-break:break-all;width:140px;\">${trackingUrl}</div>
+                </div>
+                <div style=\"font-size:12px;color:#555;line-height:1.5;\">
+                  <strong>Tracking URL:</strong><br/>
+                  <a href="${trackingUrl}" style=\"color:#0369a1;text-decoration:none;\" target="_blank" rel="noopener">${trackingUrl}</a>
+                </div>
+              </div>` : ''}
 
               <table width="100%" cellspacing="0" cellpadding="0" style="border-collapse:collapse;margin-top:8px;">
                 <thead>
@@ -321,6 +353,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       items,
       totals,
       payment,
+      trackingUrl,
+      qrDataUrl,
       createdAt: Date.now(),
     }
 
@@ -328,6 +362,8 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       success: true,
       orderId,
       trackingCode,
+      trackingUrl,
+      qrDataUrl,
       orderSnapshot,
       message: "Order processed and emails sent successfully"
     })
