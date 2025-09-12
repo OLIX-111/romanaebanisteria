@@ -71,9 +71,13 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
   const clearCart = useCallback(async () => {
     try {
       setClearing(true)
-      await clearServerCart(undefined, authToken)
-      // After clearing, reset cart state locally
-      setCart({ id: cart?.id || 'local', token: getCartToken() || '', items: [], total: 0 })
+      const existingToken = getCartToken()
+      if (existingToken) {
+        await clearServerCart(existingToken, authToken)
+      }
+      // Limpiar token local para forzar creación de nuevo carrito en próxima adición
+      try { localStorage.removeItem('romana_cart_token') } catch {}
+      setCart({ id: cart?.id || 'local', token: '', items: [], total: 0 })
     } catch (e:any) {
       setError(e?.message || 'No se pudo limpiar el carrito')
     } finally {

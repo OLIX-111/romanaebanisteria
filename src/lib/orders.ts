@@ -100,7 +100,7 @@ export async function createOrder(payload: CreateOrderPayload, authToken?: strin
     return json as CreateOrderResponse
   } catch (err) {
     // Fallback direct
-    const r = await fetch(`${BASE_URL}/ordenes`, {
+    const r = await fetch(`${BASE_URL}/ordenes?include_detalles=true`, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',

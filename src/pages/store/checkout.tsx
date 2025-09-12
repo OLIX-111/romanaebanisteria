@@ -8,15 +8,18 @@ import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useCart } from "@/hook/useCart"
 import { useEffect, useState } from "react"
+import { useRouter } from 'next/navigation'
 import { generateOrderId, generateTransactionId, getProvinceCode, formatPhoneForCardNet } from "@/lib/cardnet"
 import { createOrder } from '@/lib/orders'
 import { getCartToken } from '@/lib/cart'
 import { useAuth } from '@/context/AuthContext'
+// TODO: Futuro: si usuario inicia sesión después de crear carrito invitado, implementar merge de carrito invitado -> carrito cuenta.
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
 export default function CheckoutPage() {
-  const { items, subtotal, count } = useCart()
+  // Include clear to vaciar el carrito tras crear la orden
+  const { items, subtotal, count, clear } = useCart()
   const [form, setForm] = useState({
     firstName: "",
     lastName: "",
@@ -35,9 +38,11 @@ export default function CheckoutPage() {
   const [paymentMethod, setPaymentMethod] = useState<"order" | "cardnet">("order")
   const [processingPayment, setProcessingPayment] = useState(false)
   const [creatingOrder, setCreatingOrder] = useState(false)
-  const [orderResult, setOrderResult] = useState<any>(null)
+  const [orderResult, setOrderResult] = useState<any>(null) // mantenido solo si en futuro se reusa
   const [orderError, setOrderError] = useState<string | null>(null)
   const { token: authToken } = useAuth()
+  const router = useRouter()
+  const [redirecting, setRedirecting] = useState(false)
 
   const isValid =
     form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
@@ -202,8 +207,13 @@ export default function CheckoutPage() {
             }
           }
           const resp = await createOrder(payload, authToken)
-          setOrderResult(resp.data)
-          setSubmitted(true)
+          const data = resp.data
+          try { await clear() } catch (clrErr) { console.warn('No se pudo vaciar el carrito después de crear la orden', clrErr) }
+          const tracking = data.tracking_number || data.order_number
+          setRedirecting(true)
+          // Añadimos query para que la página success pueda mostrar toast/contexto
+          router.replace(`/store/checkout/success/${tracking}?just_created=1`)
+          return
         } catch (er: any) {
           console.error('Error creando orden:', er)
           setOrderError(er?.message || 'No se pudo crear la orden')
@@ -275,50 +285,7 @@ export default function CheckoutPage() {
             <div className="grid gap-16 lg:grid-cols-3">
               {/* Form Section */}
               <div className="lg:col-span-2">
-                {submitted && paymentMethod === 'order' && orderResult ? (
-                  <div className="space-y-8">
-                    <header className="space-y-3">
-                      <h1 className="text-4xl font-bold tracking-tight text-slate-900">Orden creada</h1>
-                      <p className="text-slate-600 text-lg leading-relaxed max-w-2xl">
-                        Tu orden ha sido registrada. Número de orden <span className="font-semibold">#{orderResult.order_number}</span>.
-                      </p>
-                    </header>
-                    <div className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm space-y-5">
-                      <div className="grid gap-6 sm:grid-cols-2">
-                        <p className="text-sm text-slate-600">Estado: <span className="font-medium text-slate-900">{orderResult.estado}</span></p>
-                        <p className="text-sm text-slate-600">Total: <span className="font-medium text-slate-900">{orderResult.monto_total}</span></p>
-                        <p className="text-sm text-slate-600">Tracking: <span className="font-medium text-slate-900">{orderResult.tracking_number}</span></p>
-                        <p className="text-sm text-slate-600">Items: <span className="font-medium text-slate-900">{orderResult.items_count}</span></p>
-                      </div>
-                      <div className="pt-4 border-t border-slate-200">
-                        <h3 className="text-sm font-semibold text-slate-800 mb-3">Contacto</h3>
-                        <p className="text-xs text-slate-600">{orderResult.contacto?.nombre} {orderResult.contacto?.apellido} · {orderResult.contacto?.correo} · {orderResult.contacto?.telefono}</p>
-                      </div>
-                      <div className="pt-4 border-t border-slate-200">
-                        <h3 className="text-sm font-semibold text-slate-800 mb-3">Dirección</h3>
-                        <p className="text-xs text-slate-600">{orderResult.direccion_envio?.calle}, {orderResult.direccion_envio?.ciudad}, {orderResult.direccion_envio?.provincia} {orderResult.direccion_envio?.codigo_postal}</p>
-                      </div>
-                      {!!orderResult.detalles?.length && (
-                        <div className="pt-4 border-t border-slate-200 space-y-2">
-                          <h3 className="text-sm font-semibold text-slate-800">Detalles</h3>
-                          <ul className="divide-y divide-slate-100 border border-slate-200/60">
-                            {orderResult.detalles.map((d: any) => (
-                              <li key={d.id} className="p-4 text-xs flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                                <span className="font-medium text-slate-700 truncate">{d.producto_nombre} {d.variacion_nombre && <span className="text-slate-400">({d.variacion_nombre})</span>}</span>
-                                <span className="text-slate-500">x{d.cantidad} · {d.precio_unitario}</span>
-                              </li>
-                            ))}
-                          </ul>
-                        </div>
-                      )}
-                      <div className="pt-6 flex gap-4">
-                        <Link href="/store" className="inline-flex items-center gap-2 text-sm font-medium text-slate-700 hover:text-slate-900">
-                          ← Seguir comprando
-                        </Link>
-                      </div>
-                    </div>
-                  </div>
-                ) : submitted ? (
+                {submitted ? (
                   <div className="space-y-8">
                     <header className="space-y-3">
                       <h1 className="text-4xl font-bold tracking-tight text-slate-900">Datos recibidos</h1>
@@ -770,6 +737,20 @@ export default function CheckoutPage() {
         </div>
       </div>
       <Footer />
+      {redirecting && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-white/80 backdrop-blur-sm">
+          <div className="flex flex-col items-center gap-4 p-8 bg-white border border-slate-200 rounded-md shadow-sm">
+            <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+            <p className="text-sm font-medium text-slate-700">Orden creada. Redirigiendo…</p>
+            <div className="flex items-center gap-2 text-xs text-slate-500">
+              <span className="inline-block w-2 h-2 rounded-full bg-emerald-500 animate-pulse" />
+              <span>No cierres esta ventana</span>
+            </div>
+          </div>
+        </div>
+      )}
     </main>
   )
 }
