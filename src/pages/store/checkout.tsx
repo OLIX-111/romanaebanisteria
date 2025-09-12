@@ -130,6 +130,7 @@ export default function CheckoutPage() {
       // 4. Construir y enviar formulario POST automático a CardNet
       const formUrl: string = sessionData.formUrl
       const fields: Record<string,string> = sessionData.fields
+      // Ya no usamos marcador __TRACKING__; el backend entrega la URL final.
 
       const gatewayFormId = 'cardnet-auto-form'
       let existing = document.getElementById(gatewayFormId) as HTMLFormElement | null

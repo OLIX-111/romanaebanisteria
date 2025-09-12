@@ -47,7 +47,7 @@ CARDNET_RETURN_URL=${PUBLIC_BASE_URL}/api/payments/cardnet/return
 CARDNET_CANCEL_URL=${PUBLIC_BASE_URL}/api/payments/cardnet/return?type=cancelled
 
 # For local development:
-# PUBLIC_BASE_URL=http://localhost:3000
+# PUBLIC_BASE_URL=https://www.romanaebanisteria.com
 ```
 
 ## Testing with LAB Environment

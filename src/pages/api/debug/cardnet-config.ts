@@ -51,7 +51,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       recommendations.push("Production merchant credentials not configured")
     }
 
-    const publicBaseUrl = process.env.PUBLIC_BASE_URL || 'http://localhost:3000'
+    const publicBaseUrl = process.env.PUBLIC_BASE_URL || 'https://www.romanaebanisteria.com'
     const returnUrl = `${publicBaseUrl}/api/debug/cardnet-capture`
     const cancelUrl = `${publicBaseUrl}/api/debug/cardnet-capture`
 

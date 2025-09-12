@@ -1,213 +1,157 @@
-import type { NextApiRequest, NextApiResponse } from "next"
+import type { NextApiRequest, NextApiResponse } from 'next'
 import { 
   cardnetEnv, 
-  clientIpFromReq, 
-  formatMerchantName, 
+  generateTransactionId, 
   toMinor12, 
-  generateTransactionId,
-  savePaymentIntent,
-  getProvinceCode,
-  formatPhoneForCardNet,
-  type ThreeDSData,
-  type PaymentIntent
-} from "@/lib/cardnet"
+  savePaymentIntent, 
+  PaymentIntent,
+  clientIpFromReq,
+  formatMerchantName
+} from '@/lib/cardnet'
+
+// Realista: crea una sesión en CardNet (endpoint /sessions) y devuelve la URL /authorize + IDs.
+// Si CardNet devuelve error, retornamos 502. Mantiene callback unificado /notify/success.
 
 const TIMEOUT_MS = 15000
 
 export default async function handler(req: NextApiRequest, res: NextApiResponse) {
-  if (req.method !== "POST") {
-    res.setHeader("Allow", ["POST"])
-    return res.status(405).json({ error: "Method not allowed" })
+  if (req.method !== 'POST') {
+    res.setHeader('Allow', ['POST'])
+    return res.status(405).json({ error: 'Method not allowed' })
   }
-
   try {
-    const abort = new AbortController()
-    const timeout = setTimeout(() => abort.abort(), TIMEOUT_MS)
-
     const {
-      orderId,
-      amount,           // in units (e.g., 881.00)
-      tax = 0,          // in units (e.g., 158.58)
-      currency = process.env.CARDNET_CURRENCY || "214",
-      transactionId = generateTransactionId(),
+      amount,            // number (ej: 1500.50)
+      tax = 0,           // number
+      currency = '214',  // numeric DOP por defecto
+      tracking_number,
       useCuotas = false,
-      threeDS,          // ThreeDSData object
+      customer = {},     // { firstName,lastName,email,phone,address,city,province,postalCode }
     } = req.body || {}
 
-    // Validation
-    if (!orderId || !amount || typeof amount !== "number" || amount <= 0) {
-      return res.status(400).json({ error: "Missing or invalid orderId/amount" })
+    if (typeof amount !== 'number' || amount <= 0 || !tracking_number) {
+      return res.status(400).json({ error: 'Parámetros inválidos: amount>0 y tracking_number requeridos' })
     }
 
-    if (!threeDS?.email || !threeDS?.mobilePhone || !threeDS?.billAddr_line1 || !threeDS?.billAddr_city) {
-      return res.status(400).json({ error: "Missing required 3DS data" })
-    }
+    const env = cardnetEnv()
+    const transactionId = generateTransactionId()
+    const orderId = `RMA-${tracking_number}`.slice(0,20)
+    const amountMinor = toMinor12(amount)
+    const taxMinor = toMinor12(tax)
+    const abort = new AbortController()
+    const timer = setTimeout(()=> abort.abort(), TIMEOUT_MS)
 
-    // Format phone numbers according to CardNet requirements
-    const mobilePhone = formatPhoneForCardNet(threeDS.mobilePhone)
-    const workPhone = formatPhoneForCardNet(threeDS.workPhone || threeDS.mobilePhone)
-    const homePhone = formatPhoneForCardNet(threeDS.homePhone || threeDS.mobilePhone)
-
-    // Get province codes
-    const billStateCode = getProvinceCode(threeDS.billAddr_state || "")
-    const shipStateCode = getProvinceCode(threeDS.shipAddr_state || threeDS.billAddr_state || "")
-
-    const config = cardnetEnv()
-    const ip = clientIpFromReq(req)
-    
-    // Convert amounts to minor units (centavos)
-    const amountMinor = toMinor12(Number(amount))
-    const taxMinor = toMinor12(Number(tax))
-    
+    const baseUrl = `${req.headers['x-forwarded-proto'] || 'https'}://${req.headers.host}`
+    // Ahora usamos directamente el tracking real (sin marcador) para que CardNet regrese a la URL correcta
+    const successUrl = `${baseUrl}/store/checkout/success/${encodeURIComponent(tracking_number)}?from_gateway=1`
     const merchantName = formatMerchantName(
-      process.env.CARDNET_MERCHANT_OWNER || "ROMANA EBANISTERIA SRL",
-      process.env.CARDNET_MERCHANT_CITY || "LA ROMANA",
-      process.env.CARDNET_MERCHANT_STATE || "   ",
-      process.env.CARDNET_MERCHANT_COUNTRY || "DO"
+      process.env.CARDNET_MERCHANT_OWNER || 'ROMANA EBANISTERIA SRL',
+      process.env.CARDNET_MERCHANT_CITY || 'LA ROMANA',
+      process.env.CARDNET_MERCHANT_STATE || '   ',
+      process.env.CARDNET_MERCHANT_COUNTRY || 'DO'
     )
 
-    // Build CardNet payload
-    const payload: Record<string, any> = {
-      TransactionType: "0200",                                    // normal sale
+    // Payload mínimo requerido por CardNet lab para /sessions
+    const payload: Record<string,string> = {
+      TransactionType: '0200',
       CurrencyCode: String(currency),
-      AcquiringInstitutionCode: String(config.acquirer),
-      MerchantType: String(config.merchantType),
-      MerchantNumber: String(config.merchantNumber),
-      MerchantTerminal: String(config.terminalId),
-      MerchantTerminal_amex: "00000001",                          // default AMEX terminal
-      ReturnUrl: process.env.CARDNET_RETURN_URL || `${process.env.PUBLIC_BASE_URL || 'http://localhost:3000'}/api/debug/cardnet-capture`,
-      CancelUrl: process.env.CARDNET_CANCEL_URL || `${process.env.PUBLIC_BASE_URL || 'http://localhost:3000'}/api/debug/cardnet-capture`,
-      PageLanguaje: process.env.CARDNET_PAGE_LANG || "ESP",
-      OrdenId: String(orderId).slice(0, 20),                      // max 20 chars
-      TransactionId: String(transactionId).padStart(6, "0"),
+      AcquiringInstitutionCode: env.acquirer,
+      MerchantType: env.merchantType,
+      MerchantNumber: env.merchantNumber,
+      MerchantTerminal: env.terminalId,
+      MerchantTerminal_amex: '00000001',
+    ReturnUrl: successUrl,
+    CancelUrl: successUrl,
+      PageLanguaje: 'ESP',
+      OrdenId: orderId,
+      TransactionId: transactionId,
       Tax: taxMinor,
       MerchantName: merchantName,
-      AVS: `${threeDS.billAddr_line1} ${threeDS.billAddr_line2 || ""} ${threeDS.billAddr_city}`.trim().slice(0, 50),
       Amount: amountMinor,
-      Ipclient: ip,
-      
-      // 3DS mandatory fields (v1.2 requirements) - EXACT FORMAT REQUIRED
-      "3DS_email": threeDS.email,
-      "3DS_mobilePhone": mobilePhone,
-      "3DS_workPhone": workPhone,
-      "3DS_homePhone": homePhone,
-      "3DS_billAddr_line1": threeDS.billAddr_line1.toUpperCase().slice(0, 50),
-      "3DS_billAddr_line2": (threeDS.billAddr_line2 || "").toUpperCase().slice(0, 50),
-      "3DS_billAddr_line3": (threeDS.billAddr_line3 || threeDS.billAddr_line1).toUpperCase().slice(0, 50),
-      "3DS_billAddr_city": threeDS.billAddr_city.toUpperCase().slice(0, 50),
-      "3DS_billAddr_state": billStateCode,
-      "3DS_billAddr_country": "214", // Dominican Republic country code for CardNet
-      "3DS_billAddr_postcode": threeDS.billAddr_postcode || "10111",
-      
-      // Shipping (mandatory, fallback to billing if not provided)
-      "3DS_shipAddr_line1": (threeDS.shipAddr_line1 || threeDS.billAddr_line1).toUpperCase().slice(0, 50),
-      "3DS_shipAddr_line2": (threeDS.shipAddr_line2 || threeDS.billAddr_line2 || "").toUpperCase().slice(0, 50),
-      "3DS_shipAddr_line3": (threeDS.shipAddr_line3 || threeDS.billAddr_line3 || threeDS.shipAddr_line1 || threeDS.billAddr_line1).toUpperCase().slice(0, 50),
-      "3DS_shipAddr_city": (threeDS.shipAddr_city || threeDS.billAddr_city).toUpperCase().slice(0, 50),
-      "3DS_shipAddr_state": shipStateCode,
-      "3DS_shipAddr_country": "214", // Dominican Republic country code for CardNet
-      "3DS_shipAddr_postcode": threeDS.shipAddr_postcode || threeDS.billAddr_postcode || "10111",
+      Ipclient: clientIpFromReq(req),
+      // (Opcional / placeholders de contacto; no bloquean)
+      '3DS_email': customer.email || 'demo@example.com',
+      '3DS_mobilePhone': (customer.phone || '18095551234').replace(/\D/g,''),
+      '3DS_workPhone': (customer.phone || '18095551234').replace(/\D/g,''),
+      '3DS_homePhone': (customer.phone || '18095551234').replace(/\D/g,''),
+      '3DS_billAddr_line1': (customer.address || 'CALLE DEMO 123').toUpperCase().slice(0,50),
+      '3DS_billAddr_line2': '',
+      '3DS_billAddr_line3': (customer.address || 'CALLE DEMO 123').toUpperCase().slice(0,50),
+      '3DS_billAddr_city': (customer.city || 'LA ROMANA').toUpperCase().slice(0,50),
+      '3DS_billAddr_state': '12',
+      '3DS_billAddr_country': '214',
+      '3DS_billAddr_postcode': (customer.postalCode || '10111'),
+      '3DS_shipAddr_line1': (customer.address || 'CALLE DEMO 123').toUpperCase().slice(0,50),
+      '3DS_shipAddr_line2': '',
+      '3DS_shipAddr_line3': (customer.address || 'CALLE DEMO 123').toUpperCase().slice(0,50),
+      '3DS_shipAddr_city': (customer.city || 'LA ROMANA').toUpperCase().slice(0,50),
+      '3DS_shipAddr_state': '12',
+      '3DS_shipAddr_country': '214',
+      '3DS_shipAddr_postcode': (customer.postalCode || '10111'),
     }
 
-    console.log(`[CardNet] Creating session for order ${orderId}, amount: ${amount}, tax: ${tax}`)
-    console.log(`[CardNet] Configuration:`, {
-      env: config.env,
-      baseUrl: config.baseUrl,
-      merchantNumber: config.merchantNumber,
-      terminalId: config.terminalId,
-      returnUrl: payload.ReturnUrl,
-      cancelUrl: payload.CancelUrl,
-    })
-    console.log(`[CardNet] Payload summary:`, {
-      TransactionType: payload.TransactionType,
-      Amount: payload.Amount,
-      Tax: payload.Tax,
-      OrdenId: payload.OrdenId,
-      TransactionId: payload.TransactionId,
-      email: payload["3DS_email"],
-      phone: payload["3DS_mobilePhone"],
-    })
-    console.log(`[CardNet] 3DS Data:`, {
-      email: payload["3DS_email"],
-      mobilePhone: payload["3DS_mobilePhone"],
-      workPhone: payload["3DS_workPhone"],
-      homePhone: payload["3DS_homePhone"],
-      billAddr_line1: payload["3DS_billAddr_line1"],
-      billAddr_line2: payload["3DS_billAddr_line2"],
-      billAddr_line3: payload["3DS_billAddr_line3"],
-      billAddr_city: payload["3DS_billAddr_city"],
-      billAddr_state: payload["3DS_billAddr_state"],
-      billAddr_country: payload["3DS_billAddr_country"],
-      billAddr_postcode: payload["3DS_billAddr_postcode"],
-      shipAddr_line1: payload["3DS_shipAddr_line1"],
-      shipAddr_city: payload["3DS_shipAddr_city"],
-      shipAddr_state: payload["3DS_shipAddr_state"],
-      shipAddr_country: payload["3DS_shipAddr_country"],
-      shipAddr_postcode: payload["3DS_shipAddr_postcode"],
-    })
-
-    const response = await fetch(`${config.baseUrl}/sessions`, {
-      method: "POST",
-      headers: { "Content-Type": "application/json" },
+    const sessionResp = await fetch(`${env.baseUrl}/sessions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify(payload),
-      signal: abort.signal,
+      signal: abort.signal
     })
+    clearTimeout(timer)
 
-    clearTimeout(timeout)
-
-    if (!response.ok) {
-      const errorText = await response.text().catch(() => "")
-      console.error(`[CardNet] Session creation failed: ${response.status} ${response.statusText}`, errorText)
-      return res.status(502).json({ 
-        error: "CardNet session failed", 
-        details: errorText,
-        status: response.status 
-      })
+    if (!sessionResp.ok) {
+      const txt = await sessionResp.text().catch(()=> '')
+      console.error('[CardNet] Fallo creando sesión', sessionResp.status, txt)
+      return res.status(502).json({ error: 'CardNet session failed', status: sessionResp.status, details: txt })
+    }
+    const json = await sessionResp.json().catch(()=>null)
+    if (!json || !json.SESSION || !json['session-key']) {
+      console.error('[CardNet] Respuesta inválida de /sessions', json)
+      return res.status(502).json({ error: 'Respuesta inválida de CardNet' })
     }
 
-    const data = await response.json()
-    
-    if (!data.SESSION || !data["session-key"]) {
-      console.error("[CardNet] Invalid session response", data)
-      return res.status(502).json({ error: "Invalid session response from CardNet" })
-    }
+    const sessionId = json.SESSION as string
+    const sessionKey = json['session-key'] as string
 
-    // Save payment intent
+    // Guardar intent
     const intent: PaymentIntent = {
-      orderId: String(orderId),
-      sessionId: data.SESSION,
-      sessionKey: data["session-key"],
-      transactionId: String(transactionId).padStart(6, "0"),
+      orderId,
+      sessionId,
+      sessionKey,
+      transactionId,
       currency: String(currency),
-      amountMinor: parseInt(amountMinor, 10),
-      taxMinor: parseInt(taxMinor, 10),
-      status: "created",
+      amountMinor: parseInt(amountMinor,10),
+      taxMinor: parseInt(taxMinor,10),
+      status: 'created',
       createdAt: Date.now(),
       updatedAt: Date.now(),
     }
-
     savePaymentIntent(intent)
 
-    console.log(`[CardNet] Session created: ${data.SESSION} for order ${orderId}`)
+    const authorizePath = useCuotas ? env.cuotasPath : env.authorizePath
+    const formUrl = `${env.baseUrl}${authorizePath}`
 
-    // Determine authorize URL based on cuotas preference
-    const authorizePath = useCuotas ? config.cuotasPath : config.authorizePath
-    const authorizeUrl = `${config.baseUrl}${authorizePath}`
+    // Campos para el POST de autorización (según docs: OrdenID / TransactionID / SESSION / MerchantNumber ... )
+    // Reemplazo final del tracking real se hará en el cliente antes de submit (para no exponerlo antes de crear la orden)
+    const fields: Record<string,string> = {
+      OrdenID: orderId,
+      TransactionID: transactionId,
+      SESSION: sessionId,
+      MerchantNumber: env.merchantNumber,
+      MerchantTerminal: env.terminalId,
+      Amount: amountMinor,
+      CurrencyCode: String(currency),
+  ReturnUrl: successUrl,
+  CancelUrl: successUrl,
+    }
 
-    return res.status(200).json({
-      sessionId: data.SESSION,
-      authorizeUrl,
-      orderId: intent.orderId,
-      transactionId: intent.transactionId,
-    })
-
-  } catch (err: any) {
-    const isTimeout = err?.name === "AbortError"
-    console.error("[CardNet] Session creation exception:", isTimeout ? "timeout" : err?.message || err)
-    
-    return res.status(500).json({ 
-      error: isTimeout ? "Request timeout" : "Internal server error",
-      timeout: isTimeout 
-    })
+    return res.status(200).json({ formUrl, fields, sessionId, orderId, transactionId })
+  } catch (e:any) {
+    const timeout = e?.name === 'AbortError'
+    console.error('[CardNet] session error', timeout ? 'timeout' : e?.message || e)
+    return res.status(500).json({ error: timeout ? 'Timeout creando sesión' : 'Error creando sesión', timeout })
   }
+}
+
+export const config = {
+  api: { bodyParser: true }
 }
