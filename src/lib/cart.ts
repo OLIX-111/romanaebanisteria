@@ -26,17 +26,23 @@ export function setCartToken(token: string) {
   try { localStorage.setItem(CART_TOKEN_KEY, token) } catch {}
 }
 
+let creatingCart = false
 export async function addItemToServerCart(params: { productId: string; variantId: string; quantity?: number; authToken?: string | null }) {
   const { productId, variantId, quantity = 1, authToken } = params
-  // API actual exige id_producto / id_variacion (error anterior mostraba "The id producto field is required when id variacion is not present")
-  // Mantenemos compatibilidad si backend aceptara nombres antiguos, pero enviamos las nuevas claves.
-  const body: Record<string, any> = {
-    id_producto: productId,
-    id_variacion: variantId,
-    cantidad: quantity,
+  const body: Record<string, any> = { id_producto: productId, id_variacion: variantId, cantidad: quantity }
+  // Determine endpoint: first time (no token) -> POST /carrito/items (creates cart)
+  // Subsequent (guest) -> POST /carrito/items?token=XYZ ; authenticated can also keep token but backend should accept both.
+  const existingToken = getCartToken()
+  const qs = existingToken ? `?token=${encodeURIComponent(existingToken)}` : ''
+  // Simple guard to avoid parallel double-creation
+  while (!existingToken && creatingCart) {
+    await new Promise(r => setTimeout(r, 80))
   }
-  try {
-    const res = await fetch(`/api/cart/items`, {
+  if (!existingToken) creatingCart = true
+  const attempt = async (direct: boolean) => {
+    const base = direct ? BASE_URL : ''
+    const url = direct ? `${base}/carrito/items${qs}` : `/api/cart/items${qs}`
+    const res = await fetch(url, {
       method: 'POST',
       headers: {
         'Content-Type': 'application/json',
@@ -45,44 +51,27 @@ export async function addItemToServerCart(params: { productId: string; variantId
         ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
       },
       body: JSON.stringify(body),
-      credentials: 'include',
+      credentials: direct ? 'omit' : 'include',
       redirect: 'manual'
     })
-    if (res.status === 301 || res.status === 302) {
-      console.warn('Client addItem redirect', res.status, res.headers.get('Location'))
-    }
-    const json = await res.json().catch(() => ({}))
-    if (!res.ok) {
-      throw new Error(json?.message || json?.error || 'No se pudo agregar al carrito')
-    }
+    if ([301,302].includes(res.status)) console.warn('addItem redirect', res.status, res.headers.get('Location'))
+    const json = await res.json().catch(()=>({}))
+    if (!res.ok) throw new Error(json?.message || json?.error || 'No se pudo agregar al carrito')
     const data = json as AddCartItemResponse
     if (data?.data?.carrito_token) setCartToken(data.data.carrito_token)
     return data.data
-  } catch (err: any) {
-    // Fallback to external API
+  }
+  try {
+    return await attempt(false)
+  } catch (err) {
+    // Fallback direct
     try {
-      const res = await fetch(`${BASE_URL}/carrito/items`, {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          'Accept': 'application/json',
-          'X-Requested-With': 'XMLHttpRequest',
-          ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
-        },
-  body: JSON.stringify(body),
-        redirect: 'manual'
-      })
-      if (res.status === 301 || res.status === 302) {
-        console.warn('External addItem redirect', res.status, res.headers.get('Location'))
-      }
-      const json = await res.json().catch(()=>({}))
-      if (!res.ok) throw new Error(json?.message || json?.error || 'No se pudo agregar al carrito')
-      const data = json as AddCartItemResponse
-      if (data?.data?.carrito_token) setCartToken(data.data.carrito_token)
-      return data.data
-    } catch (inner) {
-      throw err instanceof Error ? err : new Error('Fallo al agregar al carrito')
+      return await attempt(true)
+    } finally {
+      creatingCart = false
     }
+  } finally {
+    creatingCart = false
   }
 }
 

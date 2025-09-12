@@ -42,6 +42,8 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
     })()
   }, [authToken])
 
+  // Refresh always re-reads token from storage so if first add created a cart
+  // (guest flow) subsequent refresh uses the newly stored token.
   const refresh = useCallback(async () => {
     const tk = getCartToken()
     if (!tk) return

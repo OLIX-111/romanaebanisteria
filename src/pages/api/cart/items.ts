@@ -6,13 +6,15 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
   if (req.method === 'POST') {
     try {
       const { id_producto, id_variacion, producto_id, variacion_id, cantidad } = req.body || {}
+      const { token } = req.query
       // Prefer new naming (id_producto / id_variacion) fallback to old if provided
       const payload = {
         id_producto: id_producto || producto_id,
         id_variacion: id_variacion || variacion_id,
         cantidad,
       }
-      const upstream = await fetch(`${BASE_URL}/carrito/items`, {
+      const endpoint = `${BASE_URL}/carrito/items${token && typeof token==='string' ? `?token=${encodeURIComponent(token)}` : ''}`
+      const upstream = await fetch(endpoint, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
