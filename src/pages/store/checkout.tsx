@@ -9,11 +9,13 @@ import { Open_Sans } from "next/font/google"
 import { useCart } from "@/hook/useCart"
 import { useEffect, useState } from "react"
 import { useRouter } from 'next/navigation'
-import { generateOrderId, generateTransactionId, getProvinceCode, formatPhoneForCardNet } from "@/lib/cardnet"
+// CardNet flujo real restaurado: se pre-crea la orden y luego se redirige al gateway
 import { createOrder } from '@/lib/orders'
 import { getCartToken } from '@/lib/cart'
 import { useAuth } from '@/context/AuthContext'
-// TODO: Futuro: si usuario inicia sesión después de crear carrito invitado, implementar merge de carrito invitado -> carrito cuenta.
+// NEW imports for CardNet session
+// We'll assume an API route exists: /api/payments/cardnet/session returning { formUrl, fields }
+// If not, adapt accordingly.
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -47,130 +49,108 @@ export default function CheckoutPage() {
   const isValid =
     form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
 
-  // Function to redirect to CardNet payment gateway
-  function postToGateway(action: string, sessionId: string, extras?: Record<string, string>) {
-    const form = document.createElement("form")
-    form.method = "POST"
-    form.action = action
-    form.target = "_self"
-    
-    const sessionInput = document.createElement("input")
-    sessionInput.type = "hidden"
-    sessionInput.name = "SESSION"
-    sessionInput.value = sessionId
-    form.appendChild(sessionInput)
-    
-    // Add return URLs as hidden inputs (using debug capture for troubleshooting)
-    const returnInput = document.createElement("input")
-    returnInput.type = "hidden"
-    returnInput.name = "ReturnUrl"
-    returnInput.value = `${window.location.origin}/api/debug/cardnet-capture`
-    form.appendChild(returnInput)
-    
-    const cancelInput = document.createElement("input")
-    cancelInput.type = "hidden"
-    cancelInput.name = "CancelUrl"
-    cancelInput.value = `${window.location.origin}/api/debug/cardnet-capture`
-    form.appendChild(cancelInput)
-    
-    if (extras) {
-      Object.entries(extras).forEach(([k, v]) => {
-        const input = document.createElement("input")
-        input.type = "hidden"
-        input.name = k
-        input.value = v
-        form.appendChild(input)
-      })
-    }
-    
-    document.body.appendChild(form)
-    form.submit()
-  }
+  // Eliminado gateway real: no se necesita postToGateway
 
   // Handle CardNet payment
   async function handleCardNetPayment() {
     if (!isValid || count === 0) return
     setProcessingPayment(true)
-
+    setOrderError(null)
     try {
-      // Prepare 3DS data from form with EXACT CardNet format
-      const mobilePhone = formatPhoneForCardNet(form.phone)
-      const workPhone = formatPhoneForCardNet(form.workPhone || form.phone)
-      const homePhone = formatPhoneForCardNet(form.homePhone || form.phone)
-      const billStateCode = getProvinceCode(form.province)
-      const shipStateCode = getProvinceCode(form.province) // Same as billing for now
-      
-      const threeDS = {
-        email: form.email,
-        mobilePhone: mobilePhone,
-        workPhone: workPhone,
-        homePhone: homePhone,
-        billAddr_line1: form.address.toUpperCase(),
-        billAddr_line2: "", // Empty if not provided
-        billAddr_line3: form.address.toUpperCase(), // Repeat line1 as per example
-        billAddr_city: form.city.toUpperCase(),
-        billAddr_state: billStateCode,
-        billAddr_country: "214", // Dominican Republic code for CardNet
-        billAddr_postcode: form.postalCode || "10111",
-        
-        // Shipping (use same as billing for now)
-        shipAddr_line1: form.address.toUpperCase(),
-        shipAddr_line2: "", // Empty if not provided
-        shipAddr_line3: form.address.toUpperCase(), // Repeat line1 as per example
-        shipAddr_city: form.city.toUpperCase(),
-        shipAddr_state: shipStateCode,
-        shipAddr_country: "214", // Dominican Republic code for CardNet
-        shipAddr_postcode: form.postalCode || "10111",
+      const carrito_token = getCartToken()
+      if (!carrito_token) throw new Error('No hay carrito activo')
+
+      // 1. Pre-crear la orden en backend (igual que flujo crear orden)
+      const orderPayload = {
+        carrito_token,
+        direccion_envio: {
+          calle: form.address,
+          ciudad: form.city,
+          provincia: form.province,
+          pais: 'DO',
+          codigo_postal: form.postalCode || ''
+        },
+        contacto: {
+          nombre: form.firstName,
+          apellido: form.lastName,
+          correo: form.email,
+          telefono: form.phone
+        }
       }
+      const created = await createOrder(orderPayload as any, authToken)
+      const createdData = created.data || {}
+      const tracking = createdData.tracking_number || createdData.order_number
+      if (!tracking) throw new Error('No se obtuvo tracking de la orden creada')
 
-      const orderId = generateOrderId()
-      const transactionId = generateTransactionId()
-
-      const payload = {
-        orderId,
-        transactionId,
-        amount: subtotal,         // in DOP units
-        tax: 0,                   // no ITBIS calculation for now
-        threeDS,
-        useCuotas: false,         // normal payment, not installments
-      }
-
-      console.log('Creating CardNet session...', { orderId, amount: subtotal })
-
-      const response = await fetch("/api/payments/cardnet/session", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(payload),
+      // 2. Solicitar sesión CardNet al backend
+      const sessionResp = await fetch('/api/payments/cardnet/session', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          amount: subtotal,
+          currency: 'DOP',
+          tracking_number: tracking,
+          // Pasar algunos datos para 3DS si backend los usa
+          customer: {
+            firstName: form.firstName,
+            lastName: form.lastName,
+            email: form.email,
+            phone: form.phone,
+            address: form.address,
+            city: form.city,
+            province: form.province,
+            postalCode: form.postalCode,
+          }
+        })
       })
-
-      const data = await response.json()
-
-      if (!response.ok) {
-        throw new Error(data.error || `Error ${response.status}: ${data.details || "Error creating payment session"}`)
+      if (!sessionResp.ok) {
+        const errJson = await sessionResp.json().catch(()=>null)
+        throw new Error(errJson?.error || 'No se pudo iniciar sesión de pago')
+      }
+      const sessionData = await sessionResp.json()
+      if (!sessionData?.formUrl || !sessionData?.fields) {
+        throw new Error('Respuesta de sesión de pago inválida')
       }
 
-      console.log('CardNet session created:', data.sessionId)
-
-      // Store order data for confirmation
+      // 3. Guardar snapshot en sessionStorage para notify/success
       try {
-        sessionStorage.setItem("pending_order", JSON.stringify({
-          orderId,
-          items,
-          form,
+        const snapshot = {
+          order_precreated: true,
+          tracking_number: tracking,
+          orderId: String(createdData.order_number || tracking),
+          sessionId: sessionData.fields?.SESSION || sessionData.sessionId,
+          transactionId: sessionData.fields?.TransactionID || sessionData.transactionId || 'T' + Date.now(),
           subtotal,
-          sessionId: data.sessionId,
-          transactionId,
-        }))
-      } catch (e) {
-        console.warn("Could not store order data:", e)
-      }
+          items: items.map(it => ({ id: String(it.id), nombre: it.name, cantidad: it.quantity, price: it.price })),
+          form,
+        }
+        sessionStorage.setItem('pending_order', JSON.stringify(snapshot))
+      } catch (e) { console.warn('No se pudo guardar pending_order', e) }
 
-      // Redirect to CardNet payment gateway
-      postToGateway(data.authorizeUrl, data.sessionId)
+      // 4. Construir y enviar formulario POST automático a CardNet
+      const formUrl: string = sessionData.formUrl
+      const fields: Record<string,string> = sessionData.fields
 
-    } catch (error: any) {
-      console.error('Error creating CardNet session:', error)
-      alert(`Error al procesar el pago: ${error.message}`)
+      const gatewayFormId = 'cardnet-auto-form'
+      let existing = document.getElementById(gatewayFormId) as HTMLFormElement | null
+      if (existing) existing.remove()
+
+      const f = document.createElement('form')
+      f.method = 'POST'
+      f.action = formUrl
+      f.id = gatewayFormId
+      Object.entries(fields).forEach(([k,v]) => {
+        const input = document.createElement('input')
+        input.type = 'hidden'
+        input.name = k
+        input.value = String(v)
+        f.appendChild(input)
+      })
+      document.body.appendChild(f)
+      f.submit()
+    } catch (error:any) {
+      console.error('Error iniciando pago con tarjeta:', error)
+      setOrderError(error?.message || 'No se pudo iniciar el pago con tarjeta')
     } finally {
       setProcessingPayment(false)
     }

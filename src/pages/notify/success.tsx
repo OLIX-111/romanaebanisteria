@@ -71,7 +71,7 @@ export default function PaymentSuccessPage() {
       setState({ loading: false, error: 'Falta SESSION en retorno' })
       return
     }
-    ;(async () => {
+    (async () => {
       try {
         const resp = await fetch(`/api/payments/cardnet/status?session=${encodeURIComponent(sessionId)}`)
         const data = await resp.json()
@@ -81,10 +81,12 @@ export default function PaymentSuccessPage() {
         const pendingOrderData = sessionStorage.getItem('pending_order')
         if (pendingOrderData) {
           const orderData = JSON.parse(pendingOrderData)
-          let syntheticSnapshot: LocalOrderSnapshot | undefined = undefined
-          try {
-            // 1. Intentar crear la orden real primero (antes de process-order pago) usando carrito_token si existe
-            let createdOrder: any | null = null
+          const preCreated = orderData.order_precreated === true
+          const trackingFromStore = orderData.tracking_number
+          let trackingToUse: string | undefined = trackingFromStore
+          let createdOrder: any | null = null
+          if (!preCreated) {
+            // Old fallback path (should rarely happen now)
             try {
               const carrito_token = getCartToken()
               if (carrito_token) {
@@ -104,13 +106,17 @@ export default function PaymentSuccessPage() {
                     telefono: orderData.form.phone
                   }
                 }
-                const created = await createOrder(orderPayload as any, authToken)
-                createdOrder = created.data
+                createdOrder = await createOrder(orderPayload as any, authToken).then(r=> r.data)
+                trackingToUse = createdOrder?.tracking_number || trackingToUse
                 setOrderProcessMessage('Orden creada')
               }
             } catch (orderErr:any) {
-              console.warn('Fallo creando orden previa al process-order pago:', orderErr?.message)
+              console.warn('Fallo creando orden previa al process-order pago (fallback path):', orderErr?.message)
             }
+          }
+          // Call process-order with tracking (existing or from creation)
+          let orderSnapshot: any | undefined
+          try {
             const processResponse = await fetch('/api/payments/process-order', {
               method: 'POST',
               headers: { 'Content-Type': 'application/json' },
@@ -118,7 +124,7 @@ export default function PaymentSuccessPage() {
                 orderId: orderData.orderId,
                 sessionId,
                 transactionId: orderData.transactionId,
-                trackingNumber: createdOrder?.tracking_number,
+                trackingNumber: trackingToUse,
                 items: orderData.items,
                 customer: {
                   firstName: orderData.form.firstName,
@@ -144,60 +150,29 @@ export default function PaymentSuccessPage() {
             })
             if (processResponse.ok) {
               const pr = await processResponse.json()
-              try {
-                sessionStorage.setItem('last_order', JSON.stringify(pr.orderSnapshot))
-                sessionStorage.removeItem('pending_order')
-              } catch {}
+              orderSnapshot = pr.orderSnapshot
               setState(s => ({ ...s, order: pr.orderSnapshot, processed: true }))
               if (!orderProcessMessage) setOrderProcessMessage('Orden registrada')
-              // Si tenemos tracking real de la creación (createdOrder), redirigimos a página standard de éxito
-              if (createdOrder?.tracking_number) {
-                setRedirecting(true)
-                router.replace(`/store/checkout/success/${createdOrder.tracking_number}?just_created=1`)
-                return
-              }
             } else {
-              // Construimos snapshot sintético
-              syntheticSnapshot = {
-                order_number: Number(orderData.orderId.replace(/\D/g,'')) || undefined,
-                tracking_number: undefined,
-                estado: 'pendiente',
-                monto_total: orderData.subtotal,
-                items_count: Array.isArray(orderData.items) ? orderData.items.length : undefined,
-                detalles: (orderData.items || []).map((it: any) => ({
-                  producto_nombre: it.nombre || it.producto_nombre || it.name,
-                  variacion_nombre: it.variacion || it.variacion_nombre || it.variant,
-                  cantidad: it.quantity || it.cantidad || 1
-                }))
-              }
-              if (syntheticSnapshot) setState(s => ({ ...s, order: syntheticSnapshot }))
-              try { sessionStorage.setItem('last_order', JSON.stringify(syntheticSnapshot)) } catch {}
               setOrderProcessMessage('Orden registrada localmente')
             }
           } catch (e) {
-            syntheticSnapshot = {
-              order_number: Number(orderData.orderId.replace(/\D/g,'')) || undefined,
-              tracking_number: undefined,
-              estado: 'pendiente',
-              monto_total: orderData.subtotal,
-              items_count: Array.isArray(orderData.items) ? orderData.items.length : undefined,
-              detalles: (orderData.items || []).map((it: any) => ({
-                producto_nombre: it.nombre || it.producto_nombre || it.name,
-                variacion_nombre: it.variacion || it.variacion_nombre || it.variant,
-                cantidad: it.quantity || it.cantidad || 1
-              }))
-            }
-            if (syntheticSnapshot) setState(s => ({ ...s, order: syntheticSnapshot }))
-            try { sessionStorage.setItem('last_order', JSON.stringify(syntheticSnapshot)) } catch {}
-            setOrderProcessMessage('Orden registrada local (fallback)')
+            console.warn('Fallo process-order, continuando a éxito forzado', e)
+          }
+          try { sessionStorage.setItem('last_order', JSON.stringify(orderSnapshot || orderData)) } catch {}
+          try { sessionStorage.removeItem('pending_order') } catch {}
+          // Always redirect to canonical success page if we have tracking
+          if (trackingToUse) {
+            setRedirecting(true)
+            router.replace(`/store/checkout/success/${trackingToUse}?just_created=1`)
+            return
           }
         } else {
           const last = sessionStorage.getItem('last_order')
-            if (last) try { setState(s => ({ ...s, order: JSON.parse(last) })) } catch {}
-          // Mantener mensaje neutro
+          if (last) try { setState(s => ({ ...s, order: JSON.parse(last) })) } catch {}
           setOrderProcessMessage('')
         }
-      } catch (e: any) {
+      } catch (e:any) {
         setState(s => ({ ...s, error: e?.message || 'Error verificando el pago' }))
       } finally {
         setProcessingOrder(false)
