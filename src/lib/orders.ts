@@ -148,6 +148,36 @@ export async function fetchOrders(authToken?: string | null, page: number = 1) :
   }
 }
 
+export async function fetchOrderAdmin() : Promise<OrdersListResponse> {
+  try {
+    const r = await fetch(`/crm/ordenes`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer 5|7yud9D0naVbdhuHOtTHRo6zM9AZAZAgER8AsVy3n17ded992`
+      },
+      redirect: 'manual'
+    })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudieron obtener las órdenes')
+    return json as OrdersListResponse
+  } catch (err) {
+    const r = await fetch(`${BASE_URL}/crm/ordenes`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer 5|7yud9D0naVbdhuHOtTHRo6zM9AZAZAgER8AsVy3n17ded992`
+      },
+      redirect: 'manual'
+    })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudieron obtener las órdenes')
+    return json as OrdersListResponse
+  }
+}
+
 export async function fetchOrderByTracking(tracking: string, authToken?: string | null, include: string = 'detalles,seguimientos'): Promise<OrderDetailResponse> {
   const qp = `?include=${encodeURIComponent(include)}`
   try {
@@ -168,6 +198,38 @@ export async function fetchOrderByTracking(tracking: string, authToken?: string 
         'Accept': 'application/json',
         'X-Requested-With': 'XMLHttpRequest',
         ...(authToken ? { 'Authorization': `Bearer ${authToken}` } : {})
+      },
+      redirect: 'manual'
+    })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudo cargar la orden')
+    return json as OrderDetailResponse
+  }
+}
+
+// Admin: fetch single order by ID (includes detalles by default)
+export async function fetchAdminOrderById(id: string, include: string = 'detalles'): Promise<OrderDetailResponse> {
+  const qp = include ? `?include=${encodeURIComponent(include)}` : ''
+  try {
+    const r = await fetch(`/crm/ordenes/${id}${qp}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer 5|7yud9D0naVbdhuHOtTHRo6zM9AZAZAgER8AsVy3n17ded992`
+      },
+      redirect: 'manual'
+    })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudo cargar la orden')
+    return json as OrderDetailResponse
+  } catch (err) {
+    const r = await fetch(`${BASE_URL}/crm/ordenes/${id}${qp}`, {
+      method: 'GET',
+      headers: {
+        'Accept': 'application/json',
+        'X-Requested-With': 'XMLHttpRequest',
+        'Authorization': `Bearer 5|7yud9D0naVbdhuHOtTHRo6zM9AZAZAgER8AsVy3n17ded992`
       },
       redirect: 'manual'
     })

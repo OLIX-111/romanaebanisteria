@@ -1,9 +1,9 @@
 import Head from 'next/head'
-import { useAdminAuth } from '@/components/admin/useAdminAuth'
 import AdminLayout from '@/components/admin/AdminLayout'
-import DashboardOverview from '@/components/admin/DashboardOverview'
+import OrdersManagement from '@/components/admin/OrdersManagement'
+import { useAdminAuth } from '@/components/admin/useAdminAuth'
 
-export default function AdminDashboardHome() {
+export default function AdminOrdersPage() {
   const { loading, isAdmin, user } = useAdminAuth()
 
   const handleTabChange = (tab: 'dashboard' | 'orders' | 'clients') => {
@@ -29,12 +29,11 @@ export default function AdminDashboardHome() {
   return (
     <>
       <Head>
-        <title>Admin Dashboard | Romana Ebanistería</title>
+        <title>Órdenes | Romana Ebanistería Admin</title>
       </Head>
-      <AdminLayout activeTab="dashboard" onTabChange={handleTabChange} user={user}>
-        <DashboardOverview />
+      <AdminLayout activeTab="orders" onTabChange={handleTabChange} user={user}>
+        <OrdersManagement />
       </AdminLayout>
     </>
   )
 }
-

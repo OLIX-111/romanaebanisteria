@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import { fetchOrderAdmin } from '@/lib/orders'
 import {
   Search,
   Filter,
@@ -88,6 +89,9 @@ const STATE_STYLES: Record<string, { label: string; color: string }> = {
 export default function OrdersManagement() {
   const [orders, setOrders] = useState<CrmOrder[]>([])
   const [filteredOrders, setFilteredOrders] = useState<CrmOrder[]>([])
+  const [currentPage, setCurrentPage] = useState(1)
+  const [totalPages, setTotalPages] = useState(1)
+  const [totalOrders, setTotalOrders] = useState(0)
   const [loading, setLoading] = useState(true)
   const [selectedOrder, setSelectedOrder] = useState<CrmOrder | null>(null)
   const [showOrderDetail, setShowOrderDetail] = useState(false)
@@ -103,26 +107,25 @@ export default function OrdersManagement() {
     dateRange: 'all'
   })
 
-  useEffect(() => {
-  loadOrders()
-  }, [])
+  useEffect(() => { loadOrders(currentPage) }, [currentPage])
 
   useEffect(() => {
     filterOrders()
   }, [orders, filters, searchTerm])
 
-  const loadOrders = async () => {
+  const loadOrders = async (page: number = 1) => {
     setLoading(true); setError(null)
     try {
-      const token = localStorage.getItem('romana_token') || ''
-      const res = await fetch('/api/admin/orders', {
-        headers: { Authorization: `Bearer ${token}` }
-      })
-      const json = await res.json()
-      if (!res.ok) throw json?.error || new Error('Error cargando órdenes')
-      const list: CrmOrder[] = json.data || []
+      const res = await fetchOrderAdmin() // API actual no soporta paginación cliente -> se usa todo y se pagina local
+      const list: CrmOrder[] = (res.data as any) || []
+      // Ordenar descendente por fecha
+      list.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       setOrders(list)
-    } catch (e:any) {
+      const total = list.length
+      setTotalOrders(total)
+      const perPage = 20
+      setTotalPages(Math.max(1, Math.ceil(total / perPage)))
+    } catch (e: any) {
       console.error('Error loading orders:', e)
       setError(e?.message || 'No se pudieron cargar las órdenes')
     } finally {
@@ -154,7 +157,13 @@ export default function OrdersManagement() {
       }
       filtered = filtered.filter(o => new Date(o.created_at) >= start)
     }
-    setFilteredOrders(filtered)
+    // Paginar localmente
+    const perPage = 20
+    const startIdx = (currentPage - 1) * perPage
+    const pageSlice = filtered.slice(startIdx, startIdx + perPage)
+    setFilteredOrders(pageSlice)
+    setTotalPages(Math.max(1, Math.ceil(filtered.length / perPage)))
+    setTotalOrders(filtered.length)
   }
 
   const handleStatusChange = async (_orderId: string, _new: string) => {
@@ -205,11 +214,15 @@ export default function OrdersManagement() {
           </p>
         </div>
         <div className="flex items-center gap-3">
-          <button onClick={loadOrders} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
+          <button onClick={() => loadOrders(currentPage)} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors">
             <RefreshCw size={18} />
             Refrescar
           </button>
         </div>
+      </div>
+      <div className="flex items-center justify-between text-xs text-gray-500 -mt-2">
+        <span>Total: {totalOrders} órdenes</span>
+        <span>Página {currentPage} de {totalPages}</span>
       </div>
 
       {/* Filters */}
@@ -250,7 +263,7 @@ export default function OrdersManagement() {
               onChange={(e) => setFilters({ ...filters, priority: e.target.value })}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             >
-              <option value="">Todas las prioridades</option>
+              <option value="">Artículos</option>
               <option value="normal">Normal</option>
             </select>
           </div>
@@ -314,7 +327,7 @@ export default function OrdersManagement() {
                   Fecha
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Prioridad
+                  Artículos
                 </th>
                 <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                   Acciones
@@ -352,7 +365,7 @@ export default function OrdersManagement() {
                     {new Date(order.created_at).toLocaleDateString('es-DO')}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">{order.items_count} ítem(s)</span>
+                    <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">{order.items_count} Artículo(s)</span>
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
                     <div className="flex items-center gap-2">
@@ -380,6 +393,24 @@ export default function OrdersManagement() {
             <p className="mt-1 text-sm text-gray-500">
               No se encontraron órdenes con los filtros aplicados.
             </p>
+          </div>
+        )}
+        {/* Pagination */}
+        {filteredOrders.length > 0 && totalPages > 1 && (
+          <div className="flex items-center justify-between px-4 py-3 border-t bg-gray-50 text-sm">
+            <div className="flex items-center gap-2">
+              <button
+                disabled={currentPage === 1}
+                onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                className="px-3 py-1 rounded border text-gray-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >Anterior</button>
+              <button
+                disabled={currentPage === totalPages}
+                onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                className="px-3 py-1 rounded border text-gray-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
+              >Siguiente</button>
+            </div>
+            <div className="text-xs text-gray-500">Mostrando {(currentPage - 1)*20 + 1} - {Math.min(currentPage*20, totalOrders)} de {totalOrders}</div>
           </div>
         )}
       </div>

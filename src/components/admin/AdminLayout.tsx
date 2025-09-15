@@ -48,7 +48,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, user }: 
   }
 
   const SidebarContent = () => (
-    <div className="flex flex-col h-full bg-white border-r border-gray-200">
+    <div className="flex flex-col h-full max-h-screen bg-white border-r border-gray-200">
       {/* Header */}
       <div
         className={`flex items-center gap-3 px-6 py-5 border-b border-gray-200 bg-white ${sidebarCollapsed ? "px-4 justify-center" : ""}`}
@@ -102,7 +102,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, user }: 
       </nav>
 
       {/* User Section */}
-      <div className="border-t border-gray-200 bg-white p-4">
+      <div className="border-t border-gray-200 bg-white p-4 ">
         <div className={`flex items-center gap-3 mb-4 ${sidebarCollapsed ? "justify-center" : ""}`}>
           <div className="h-10 w-10 bg-gray-100 rounded-full flex items-center justify-center">
             <span className="text-gray-600 font-semibold text-sm">{user?.email?.charAt(0).toUpperCase() || "A"}</span>
@@ -133,7 +133,8 @@ export default function AdminLayout({ children, activeTab, onTabChange, user }: 
   )
 
   return (
-    <div className="flex min-h-screen bg-gray-50">
+    // Root layout now locks to viewport height; only main content area scrolls.
+    <div className="flex h-screen overflow-hidden bg-gray-50">
       {/* Mobile sidebar overlay */}
       {sidebarOpen && (
         <div className="fixed inset-0 z-40 lg:hidden bg-black bg-opacity-50" onClick={() => setSidebarOpen(false)} />
@@ -144,12 +145,13 @@ export default function AdminLayout({ children, activeTab, onTabChange, user }: 
         className={`fixed inset-y-0 left-0 z-50 bg-white border-r border-gray-200 transition-all duration-300 ease-in-out lg:relative lg:translate-x-0 ${
           sidebarOpen ? "translate-x-0" : "-translate-x-full"
         } ${sidebarCollapsed ? "w-20" : "w-72"}`}
+        style={{height: '100vh'}}
       >
         <SidebarContent />
       </aside>
 
       {/* Main content wrapper */}
-      <div className="flex-1 flex flex-col min-w-0">
+  <div className="flex-1 flex flex-col min-w-0 h-screen overflow-hidden lg:ml-0">
         {/* Mobile header */}
         <header className="sticky top-0 z-30 bg-white bg-opacity-95 backdrop-blur border-b border-gray-200 lg:hidden">
           <div className="flex items-center justify-between px-4 py-3">
@@ -185,7 +187,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, user }: 
         </header>
 
         {/* Page content */}
-        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-auto">
+        <main className="flex-1 p-4 sm:p-6 lg:p-8 overflow-y-auto">
           <div className="mx-auto max-w-7xl">{children}</div>
         </main>
       </div>
