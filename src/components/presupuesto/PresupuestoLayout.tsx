@@ -35,7 +35,7 @@ export default function PresupuestoLayout() {
     tipoCodia?: boolean
     empresa?: string
     website?: string
-  codia?: string
+    codia?: string
   }>(null)
   // Control explícito del modal: si no hay gateData, se mostrará igual aunque esto sea false
   const [showGateModal, setShowGateModal] = useState(false)
@@ -47,7 +47,7 @@ export default function PresupuestoLayout() {
     tipoCodia: false,
     empresa: '',
     website: '',
-  codia: '',
+    codia: '',
   })
   const [submitted, setSubmitted] = useState(false)
 
@@ -73,7 +73,7 @@ export default function PresupuestoLayout() {
         // Si no hay datos, mostrar modal de entrada
         setShowGateModal(true)
       }
-    } catch {}
+    } catch { }
   }, [])
 
   const onSubmitGate = (e: React.FormEvent) => {
@@ -82,27 +82,27 @@ export default function PresupuestoLayout() {
     if (!form.nombre.trim() || !form.numero.trim() || !form.email.trim()) return
     if (form.tipoDesarrollador && !form.empresa.trim()) return
     if (form.tipoCodia && !form.codia.trim()) return
-  const payload = {
+    const payload = {
       nombre: form.nombre.trim(),
       numero: form.numero.trim(),
       email: form.email.trim(),
       tipo: form.tipoDesarrollador && form.tipoCodia
         ? 'Desarrollador y Agente del codia'
         : form.tipoDesarrollador
-        ? 'Desarrollador'
-        : form.tipoCodia
-        ? 'Agente del codia'
-        : undefined,
+          ? 'Desarrollador'
+          : form.tipoCodia
+            ? 'Agente del codia'
+            : undefined,
       tipoDesarrollador: form.tipoDesarrollador || undefined,
       tipoCodia: form.tipoCodia || undefined,
       empresa: form.tipoDesarrollador ? form.empresa.trim() : undefined,
       website: form.tipoDesarrollador ? form.website.trim() : undefined,
       codia: form.tipoCodia ? form.codia.trim() : undefined,
-  }
-  setGateData(payload)
-  try { localStorage.setItem('presu_customer', JSON.stringify(payload)) } catch {}
+    }
+    setGateData(payload)
+    try { localStorage.setItem('presu_customer', JSON.stringify(payload)) } catch { }
     setSubmitted(true)
-  setShowGateModal(false)
+    setShowGateModal(false)
   }
 
   if (loading) {
@@ -159,12 +159,12 @@ export default function PresupuestoLayout() {
               <p className="text-gray-600">Selecciona productos y genera tu presupuesto personalizado</p>
               {gateData && (
                 <div className="mt-2 text-sm text-gray-700">
-          <span className="font-medium">Cliente:</span> {gateData.nombre}
-          {gateData.tipo ? <> • {gateData.tipo}</> : null}
-          {(gateData.tipoDesarrollador || gateData.tipo?.includes('Desarrollador')) && gateData.empresa ? (
+                  <span className="font-medium">Cliente:</span> {gateData.nombre}
+                  {gateData.tipo ? <> • {gateData.tipo}</> : null}
+                  {(gateData.tipoDesarrollador || gateData.tipo?.includes('Desarrollador')) && gateData.empresa ? (
                     <> • {gateData.empresa}{gateData.website ? ` (${gateData.website})` : ''}</>
                   ) : null}
-          {(gateData.tipoCodia || gateData.tipo?.includes('Agente del codia')) && gateData.codia ? (
+                  {(gateData.tipoCodia || gateData.tipo?.includes('Agente del codia')) && gateData.codia ? (
                     <> • CODIA: {gateData.codia}</>
                   ) : null}
                 </div>
@@ -186,7 +186,97 @@ export default function PresupuestoLayout() {
 
         <div className="grid grid-cols-1 lg:grid-cols-5 gap-8">
           <div className="lg:col-span-3">
-            <LeftColumn search={search} setSearch={setSearch} filteredProducts={filteredProducts} onAdd={addItem} />
+            {/* Gate form only blocks product selection area */}
+            {(!gateData || showGateModal) ? (
+              <div className="bg-white border border-gray-200 rounded-lg shadow-sm p-6 relative">
+                {gateData && (
+                  <button
+                    type="button"
+                    aria-label="Cerrar edición"
+                    onClick={() => setShowGateModal(false)}
+                    className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
+                  >
+                    ×
+                  </button>
+                )}
+                <h2 className="text-xl font-bold text-gray-900 mb-2">{gateData ? 'Editar datos del cliente' : 'Crear cotización'}</h2>
+                <p className="text-gray-600 mb-5">Completa tus datos para continuar</p>
+                <form onSubmit={onSubmitGate} className="space-y-4">
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">Nombre completo</label>
+                    <input value={form.nombre} onChange={(e) => setForm(prev => ({ ...prev, nombre: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">Número</label>
+                    <input value={form.numero} onChange={(e) => setForm(prev => ({ ...prev, numero: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">Correo electrónico</label>
+                    <input type="email" value={form.email} onChange={(e) => setForm(prev => ({ ...prev, email: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm" required />
+                  </div>
+                  <div>
+                    <label className="block text-sm text-gray-700 mb-1">¿Qué tipo de cliente eres? <span className="text-gray-500">(opcional)</span></label>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                      <label className="flex items-center gap-2 text-sm text-gray-800">
+                        <input
+                          type="checkbox"
+                          checked={form.tipoDesarrollador}
+                          onChange={(e) => setForm((prev) => ({ ...prev, tipoDesarrollador: e.target.checked }))}
+                          className="h-4 w-4 border-gray-300"
+                        />
+                        Desarrollador
+                      </label>
+                      <label className="flex items-center gap-2 text-sm text-gray-800">
+                        <input
+                          type="checkbox"
+                          checked={form.tipoCodia}
+                          onChange={(e) => setForm((prev) => ({ ...prev, tipoCodia: e.target.checked }))}
+                          className="h-4 w-4 border-gray-300"
+                        />
+                        Agente del codia
+                      </label>
+                    </div>
+                  </div>
+                  {form.tipoDesarrollador && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">Nombre de la empresa</label>
+                        <input value={form.empresa} onChange={(e) => setForm(prev => ({ ...prev, empresa: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm" required />
+                      </div>
+                      <div>
+                        <label className="block text-sm text-gray-700 mb-1">URL del website (opcional)</label>
+                        <input value={form.website} onChange={(e) => setForm(prev => ({ ...prev, website: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm" placeholder="https://..." />
+                      </div>
+                    </div>
+                  )}
+                  {form.tipoCodia && (
+                    <div>
+                      <label className="block text-sm text-gray-700 mb-1">Número de identificación del CODIA</label>
+                      <input value={form.codia} onChange={(e) => setForm(prev => ({ ...prev, codia: e.target.value }))} className="w-full border rounded-md px-3 py-2 text-sm" placeholder="Ej. CODIA-12345" />
+                    </div>
+                  )}
+                  <div className="pt-2 flex justify-end gap-3">
+                    {gateData && (
+                      <button
+                        type="button"
+                        onClick={() => setShowGateModal(false)}
+                        className="inline-flex items-center gap-2 border px-4 py-2 text-sm rounded-md hover:bg-gray-50"
+                      >
+                        Cancelar
+                      </button>
+                    )}
+                    <button type="submit" className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 text-sm rounded-md hover:bg-primary/90">{gateData ? 'Guardar' : 'Continuar'}</button>
+                  </div>
+                  {submitted && !gateData && (
+                    <p className="text-xs text-red-600">Revisa los campos requeridos.</p>
+                  )}
+                </form>
+              </div>
+            ) : (
+              <div className={showGateModal ? 'pointer-events-none opacity-40' : ''}>
+                <LeftColumn search={search} setSearch={setSearch} filteredProducts={filteredProducts} onAdd={addItem} />
+              </div>
+            )}
           </div>
           <div className="lg:col-span-2">
             <RightColumn
@@ -202,88 +292,6 @@ export default function PresupuestoLayout() {
           </div>
         </div>
       </div>
-      {/* Overlay del formulario de inicio/edición */}
-      {(!gateData || showGateModal) && (
-        <div className="fixed inset-0 z-50 bg-black/40 flex items-center justify-center p-4" onKeyDown={(e)=>{
-          if(e.key==='Escape' && gateData){ setShowGateModal(false) }
-        }}>
-          <div className="w-full max-w-md bg-white border border-gray-200 rounded-lg shadow-xl p-6" role="dialog" aria-modal="true">
-            {gateData && (
-              <button
-                type="button"
-                aria-label="Cerrar"
-                onClick={() => setShowGateModal(false)}
-                className="absolute top-3 right-3 text-gray-400 hover:text-gray-600"
-              >
-                ×
-              </button>
-            )}
-            <h2 className="text-xl font-bold text-gray-900 mb-2">Crear cotización</h2>
-            <p className="text-gray-600 mb-5">Completa tus datos para continuar</p>
-            <form onSubmit={onSubmitGate} className="space-y-4">
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">Nombre completo</label>
-                <input value={form.nombre} onChange={(e)=>setForm(prev=>({...prev, nombre: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" required />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">Número</label>
-                <input value={form.numero} onChange={(e)=>setForm(prev=>({...prev, numero: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" required />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">Correo electrónico</label>
-                <input type="email" value={form.email} onChange={(e)=>setForm(prev=>({...prev, email: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" required />
-              </div>
-              <div>
-                <label className="block text-sm text-gray-700 mb-1">¿Qué tipo de cliente eres? <span className="text-gray-500">(opcional)</span></label>
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
-                  <label className="flex items-center gap-2 text-sm text-gray-800">
-                    <input
-                      type="checkbox"
-                      checked={form.tipoDesarrollador}
-                      onChange={(e) => setForm((prev) => ({ ...prev, tipoDesarrollador: e.target.checked }))}
-                      className="h-4 w-4 border-gray-300"
-                    />
-                    Desarrollador
-                  </label>
-                  <label className="flex items-center gap-2 text-sm text-gray-800">
-                    <input
-                      type="checkbox"
-                      checked={form.tipoCodia}
-                      onChange={(e) => setForm((prev) => ({ ...prev, tipoCodia: e.target.checked }))}
-                      className="h-4 w-4 border-gray-300"
-                    />
-                    Agente del codia
-                  </label>
-                </div>
-              </div>
-              {form.tipoDesarrollador && (
-                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">Nombre de la empresa</label>
-                    <input value={form.empresa} onChange={(e)=>setForm(prev=>({...prev, empresa: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" required />
-                  </div>
-                  <div>
-                    <label className="block text-sm text-gray-700 mb-1">URL del website (opcional)</label>
-                    <input value={form.website} onChange={(e)=>setForm(prev=>({...prev, website: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" placeholder="https://..." />
-                  </div>
-                </div>
-              )}
-              {form.tipoCodia && (
-                <div>
-                  <label className="block text-sm text-gray-700 mb-1">Número de identificación del CODIA</label>
-                  <input value={form.codia} onChange={(e)=>setForm(prev=>({...prev, codia: e.target.value}))} className="w-full border rounded-md px-3 py-2 text-sm" placeholder="Ej. CODIA-12345" />
-                </div>
-              )}
-              <div className="pt-2 flex justify-end gap-3">
-                <button type="submit" className="inline-flex items-center gap-2 bg-primary text-white px-5 py-2.5 text-sm rounded-md hover:bg-primary/90">Continuar</button>
-              </div>
-              {submitted && !gateData && (
-                <p className="text-xs text-red-600">Revisa los campos requeridos.</p>
-              )}
-            </form>
-          </div>
-        </div>
-      )}
       <Footer />
     </main>
   )
