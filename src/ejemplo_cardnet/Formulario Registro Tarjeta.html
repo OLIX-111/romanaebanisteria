@@ -1,0 +1,48 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+<script type="text/javascript"
+        src="https://lab.cardnet.com.do/servicios/tokens/v1/Scripts/PWCheckout.js?key=J_eHXPYlDo9wlFpFXjgalm_I56ONV7HQ">
+    </script>
+
+</head>
+<div>
+    <form id="form_1">
+        <input name="PWToken" type="hidden" id="PWToken" />
+        <input value="Checkout" type="button" id="btnCheckout" />
+    </form>
+</div>
+<script>
+    PWCheckout.Bind("tokenCreated", OnTokenReceived);
+    PWCheckout.SetProperties({
+        "name": "Demo Test.",
+        "email": "",
+        "image": "https://www.cardnet.com.do/capp/images/logo_nuevo_x_2.png",
+        "button_label": "Pagar #monto#",
+        "description": "Cardnet Test.",
+        "currency": "DOP",
+        "amount": "",
+        "lang": "ING",
+        "form_id": "form_1",
+        "checkout_card": 1,
+        "autoSubmit": "false",
+        "empty": "false"
+    });
+
+    function OnTokenReceived(token) {
+        console.log(token);
+    }
+
+    var captureUrl = "https://lab.cardnet.com.do/servicios/tokens/v1/Capture/";
+    var UniqueId = "UI_atn2jhow-hnlg-irg3-giym-funtmz16s27m";
+    //"UniqueID": "UI_8f410691-3d53-41ac-8da5-36019ecb75a6",
+    document.getElementById("btnCheckout").addEventListener("click", function (event) {
+        event.preventDefault(); 
+        PWCheckout.OpenIframeCustom(captureUrl + "?key=" + "J_eHXPYlDo9wlFpFXjgalm_I56ONV7HQ" + "&session_id=" +
+            UniqueId, UniqueId);
+    });
+</script>
+</body>
+
+</html>

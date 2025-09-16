@@ -1,123 +1,41 @@
-# CardNet Payment Integration Setup
+# (Deprecated) CardNet Payment Integration
 
-## Overview
+La integración con la pasarela de pagos CardNet fue eliminada del proyecto. Este archivo se conserva únicamente como referencia histórica y para evitar confusiones sobre variables de entorno antiguas.
 
-This implementation integrates CardNet payment gateway with your Next.js application using the API Consulta method. It includes:
+## Estado Actual
 
-- Session creation with 3DS authentication
-- Secure payment processing
-- Order confirmation and email notifications
-- Support for both LAB and PRODUCTION environments
+- Ya NO existe flujo de pago en línea.
+- El checkout solo crea la orden internamente (flujo manual / pago fuera de línea).
+- Los endpoints `/api/payments/cardnet/*` responden 410 (Gone).
+- Las páginas de depuración y retorno (`/debug/*`, `/notify/*`) relacionadas a CardNet fueron reemplazadas por stubs o removidas.
 
-## Environment Variables
+## Qué Debes Hacer
 
-Add these variables to your `.env.local` file:
+1. Eliminar cualquier variable de entorno `CARDNET_*` de tus archivos `.env` si ya no se usarán para otros fines.
+2. Verificar que no existan automatizaciones externas apuntando a URLs antiguas de retorno.
+3. Comunicar a los usuarios (si aplica) que los pagos ahora se coordinan manualmente tras colocar la orden.
 
-```env
-# CardNet Environment Configuration
-CARDNET_ENV=lab  # Change to 'prod' for production
+## Restaurar (Opcional / Futuro)
 
-# LAB Environment (for testing)
-CARDNET_LAB_BASE_URL=https://lab.cardnet.com.do
-CARDNET_LAB_MERCHANT_NUMBER=349000000
-CARDNET_LAB_TERMINAL_ID=58585858
-CARDNET_LAB_MERCHANT_TYPE=7997
-CARDNET_LAB_ACQUIRER=349
+Si en el futuro se desea reintroducir pagos en línea:
 
-# PRODUCTION Environment (get these from CardNet)
-CARDNET_PROD_BASE_URL=https://ecommerce.cardnet.com.do
-CARDNET_PROD_MERCHANT_NUMBER=YOUR_MERCHANT_NUMBER
-CARDNET_PROD_TERMINAL_ID=YOUR_TERMINAL_ID
-CARDNET_PROD_MERCHANT_TYPE=YOUR_MERCHANT_TYPE
-CARDNET_PROD_ACQUIRER=349
+- Implementar nuevamente un módulo de pasarela (recomendado hacerlo desacoplado detrás de una interfaz `PaymentProvider`).
+- Añadir pruebas unitarias para normalización de respuestas y validaciones de montos.
+- Usar variables de entorno namespaced (ej: `PAYMENTS_CARDNET_*`) para aislar configuraciones.
 
-# Currency and Language
-CARDNET_CURRENCY=214          # 214 for DOP, 840 for USD
-CARDNET_PAGE_LANG=ESP         # ESP for Spanish, ENG for English
+## Historial Breve
 
-# Merchant Information
-CARDNET_MERCHANT_OWNER="ROMANA EBANISTERIA SRL"
-CARDNET_MERCHANT_CITY="LA ROMANA"
-CARDNET_MERCHANT_STATE="   "  # 3 characters
-CARDNET_MERCHANT_COUNTRY="DO" # 2-character country code
+La antigua versión incluía:
+- Creación de sesión con parámetros 3DS
+- Normalización de respuesta y polling de estado
+- Páginas de notificación `/notify/success` y `/notify/cancelled`
+- Emails diferenciados para pago aprobado
 
-# Public URLs (replace with your domain)
-PUBLIC_BASE_URL=http://localhost:3000
-CARDNET_RETURN_URL=${PUBLIC_BASE_URL}/api/payments/cardnet/return
-CARDNET_CANCEL_URL=${PUBLIC_BASE_URL}/api/payments/cardnet/return?type=cancelled
+Todo esto ha sido eliminado para simplificar el flujo comercial actual.
 
-# For local development:
-# PUBLIC_BASE_URL=http://localhost:3000
-```
+---
 
-## Testing with LAB Environment
-
-### Test Cards
-
-Use these test cards in the LAB environment:
-
-- **Visa**: 4761 3400 0000 0035
-- **MasterCard**: 5461 3400 0000 2700
-- **CVV**: Any 3-digit number
-- **Expiry**: Any future date
-
-### Test Flow
-
-1. Set `CARDNET_ENV=lab` in your environment
-2. Go to `/store/checkout` with items in cart
-3. Fill out customer information
-4. Select "Pagar con tarjeta ahora"
-5. Click "Pagar ahora" - you'll be redirected to CardNet's test gateway
-6. Use test card details
-7. Complete the payment
-8. You'll return to `/notify/success` with transaction details
-
-## Production Deployment
-
-1. **Get Production Credentials**: Contact CardNet to get your production merchant credentials
-2. **Update Environment**: Set production values in your environment variables
-3. **Switch Environment**: Change `CARDNET_ENV=prod`
-4. **Test**: Perform a small real transaction (RD$1.00) to verify
-5. **Go Live**: Enable for customers
-
-## API Endpoints
-
-### Created Endpoints
-
-- `POST /api/payments/cardnet/session` - Creates payment session
-- `GET /api/payments/cardnet/status` - Verifies payment status  
-- `POST /api/payments/process-order` - Processes successful orders
-- `GET /notify/success` - Payment success page
-- `GET /notify/cancelled` - Payment cancelled page
-
-## Security Features
-
-- ✅ 3DS authentication mandatory (v1.2 compliant)
-- ✅ TLS 1.2+ encryption
-- ✅ Session keys never exposed to client
-- ✅ Server-side amount validation
-- ✅ Idempotent transaction processing
-- ✅ Timeout protection on API calls
-- ✅ Input sanitization and validation
-- ✅ Dominican province code mapping
-- ✅ Phone number formatting for CardNet
-
-## 3DS Data Requirements
-
-CardNet requires ALL these 3DS fields in exact format:
-
-### Mandatory Fields
-- `3DS_email`: Valid email address
-- `3DS_mobilePhone`: 10-15 digit phone (e.g., "18298062770")
-- `3DS_workPhone`: Work phone (fallback to mobile if not provided)
-- `3DS_homePhone`: Home phone (fallback to mobile if not provided)
-- `3DS_billAddr_line1`: Billing address line 1 (UPPERCASE, max 50 chars)
-- `3DS_billAddr_line2`: Billing address line 2 (can be empty)
-- `3DS_billAddr_line3`: Billing address line 3 (often repeat of line1)
-- `3DS_billAddr_city`: Billing city (UPPERCASE, max 50 chars)
-- `3DS_billAddr_state`: Province code (2 digits, e.g., "25" for Santiago)
-- `3DS_billAddr_country`: Country code ("214" for Dominican Republic)
-- `3DS_billAddr_postcode`: Postal code (e.g., "51000")
+Si encuentras referencias residuales a "CardNet" en el código, realiza un grep global y elimínalas. Cualquier duda: documentar en README principal.
 
 ### Shipping Fields (usually same as billing)
 - `3DS_shipAddr_line1`: Shipping address line 1

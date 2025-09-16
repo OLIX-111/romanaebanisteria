@@ -252,7 +252,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
             <td style="padding:20px 24px;">
               <div style="background:#e8f5e8;border:1px solid #4ade80;border-radius:8px;padding:16px;margin-bottom:20px;">
                 <h3 style="margin:0 0 8px 0;color:#166534;font-size:16px;">✅ Pago confirmado</h3>
-                <p style="margin:0;color:#166534;font-size:14px;">El cliente ha completado el pago exitosamente a través de CardNet.</p>
+                <p style="margin:0;color:#166534;font-size:14px;">El pedido ha sido registrado (flujo sin pasarela de pago en línea).</p>
               </div>
               ${qrDataUrl ? `<div style=\"margin:0 0 20px 0;display:flex;align-items:center;gap:16px;\">
                 <div>

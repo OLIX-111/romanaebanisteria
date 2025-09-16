@@ -22,81 +22,12 @@ export default function OrderSuccessPage() {
   const [order, setOrder] = useState<any>(null)
   const [fallbackOrder, setFallbackOrder] = useState<any>(null)
   const [showToast, setShowToast] = useState(false)
-  const [processingGateway, setProcessingGateway] = useState(false)
-  const [gatewayError, setGatewayError] = useState<string | null>(null)
+  // Eliminado procesamiento de pasarela (CardNet)
   const [debugInfo, setDebugInfo] = useState<any>(null)
 
   useEffect(()=> {
     let active = true
-    async function finalizeFromGateway() {
-      if (!tracking || Array.isArray(tracking)) return
-      const usp = new URLSearchParams(window.location.search)
-      const fromGateway = usp.get('from_gateway') === '1'
-      if (!fromGateway) return
-      // Si venimos del gateway: obtener snapshot y finalizar (similar a notify/success)
-      const pendingRaw = sessionStorage.getItem('pending_order')
-      if (!pendingRaw) return
-      let pending: any
-      try { pending = JSON.parse(pendingRaw) } catch {}
-      if (!pending) return
-      // Validar tracking coincide
-      if (pending.tracking_number !== tracking) {
-        console.warn('Tracking mismatch pending_order vs URL')
-      }
-      setProcessingGateway(true)
-      try {
-        // 1. Verificar status (si falla seguimos aprobando forzado)
-        if (pending.sessionId) {
-          try {
-            await fetch(`/api/payments/cardnet/status?session=${encodeURIComponent(pending.sessionId)}`)
-              .then(r=> r.json())
-              .catch(()=>null)
-          } catch (e) {
-            console.warn('Fallo status cardnet (ignorado)', e)
-          }
-        }
-        // 2. Enviar process-order (emails + QR) con tracking ya creado
-        try {
-          await fetch('/api/payments/process-order', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-              orderId: pending.orderId,
-              sessionId: pending.sessionId,
-              transactionId: pending.transactionId,
-              trackingNumber: pending.tracking_number,
-              items: pending.items.map((it:any)=> ({ id: it.id, name: it.nombre || it.name, quantity: it.cantidad || it.quantity, price: it.price, image: it.image })),
-              customer: {
-                firstName: pending.form.firstName,
-                lastName: pending.form.lastName,
-                email: pending.form.email,
-                phone: pending.form.phone,
-                address: pending.form.address,
-                city: pending.form.city,
-                province: pending.form.province,
-                postalCode: pending.form.postalCode,
-                notes: pending.form.notes,
-              },
-              totals: { subtotal: pending.subtotal, tax: 0, total: pending.subtotal },
-              payment: {
-                responseCode: '00',
-                authCode: 'AUTO',
-                rrn: 'AUTO-' + Math.random().toString(36).slice(2,8).toUpperCase(),
-                maskedPan: '411111******1111'
-              }
-            })
-          }).catch(()=>null)
-        } catch (e) {
-          console.warn('Fallo process-order (continuamos)', e)
-        }
-        try { sessionStorage.setItem('last_order', pendingRaw) } catch {}
-        try { sessionStorage.removeItem('pending_order') } catch {}
-      } catch (e:any) {
-        setGatewayError(e?.message || 'Error finalizando pago')
-      } finally {
-        setProcessingGateway(false)
-      }
-    }
+    // Ya no se procesa retorno de pasarela.
 
     async function load(){
       if (!tracking || Array.isArray(tracking)) return
@@ -135,8 +66,7 @@ export default function OrderSuccessPage() {
       if (active) setLoading(false)
     }
 
-    if (typeof window !== 'undefined') finalizeFromGateway().then(()=> load())
-    return () => { active = false }
+  if (typeof window !== 'undefined') load()
   }, [tracking, token])
 
   // Detect query param just_created=1 to show ephemeral toast
@@ -159,14 +89,14 @@ export default function OrderSuccessPage() {
       <Header />
       <div className="min-h-screen bg-slate-50/40">
         <div className="max-w-4xl mx-auto px-6 pt-32 pb-32">
-          { (loading || processingGateway) ? (
+          { loading ? (
             <div className="py-32 text-center">
               <div className="inline-flex items-center gap-3 text-slate-600 text-sm">
                 <svg className="animate-spin w-4 h-4" viewBox="0 0 24 24" fill="none">
                   <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" />
                   <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" />
                 </svg>
-                {processingGateway ? 'Finalizando pago...' : 'Cargando orden...'}
+                Cargando orden...
               </div>
             </div>
           ) : error ? (
@@ -196,11 +126,7 @@ export default function OrderSuccessPage() {
             </div>
           ) : (
               <div className="space-y-12">
-                {gatewayError && (
-                  <div className="p-4 border border-amber-300 bg-amber-50 text-amber-800 text-xs rounded">
-                    Pago finalizado pero con advertencia: {gatewayError}
-                  </div>
-                )}
+                {/* Mensajes de pasarela eliminados */}
               <header className="text-center space-y-6">
                 <div className="mx-auto w-16 h-16 rounded-full bg-emerald-100 flex items-center justify-center">
                   <svg className="w-8 h-8 text-emerald-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">

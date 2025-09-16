@@ -1,0 +1,215 @@
+{
+	"info": {
+		"_postman_id": "83017482-9845-4d7c-804a-e2511b754efb",
+		"name": "Tokenizacion_Registrado_Authenticacion",
+		"schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json",
+		"_exporter_id": "12726382",
+		"_collection_link": "https://servicios-espaciales-jjjj.postman.co/workspace/Team-Workspace~f00e4542-6caa-4a4d-810b-1e85e087bbbd/collection/12726382-83017482-9845-4d7c-804a-e2511b754efb?action=share&source=collection_link&creator=12726382"
+	},
+	"item": [
+		{
+			"name": "PostCustomer",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic ezfpRktb6R4-_xT9IRGDv2rReBpkmn5q8xb9eXjIst5jWq2XUSWTPw__ ",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": " {\r\n    \"Email\": \"vintage234@hotmail.com\",\r\n    //\"ShippingAddress\": \"Calle Max Henriquez Ureña No. 6\",\r\n    //\"BillingAddress\": \"Calle 1 No 10, Piantiñi\",\r\n   // \"FirstName\": \"Emmanuel\",\r\n   // \"LastName\": \"De los Santos\",\r\n   // \"DocumentTypeId\": 2,\r\n   // \"DocNumber\": \"00116784240\",\r\n    //\"PhoneNumber\": \"8096042082\",\r\n    \"Enable\": \"true\"\r\n   \r\n   \r\n}"
+				},
+				"url": {
+					"raw": "https://lab.cardnet.com.do/servicios/tokens/v1/api/Customer",
+					"protocol": "https",
+					"host": [
+						"lab",
+						"cardnet",
+						"com",
+						"do"
+					],
+					"path": [
+						"servicios",
+						"tokens",
+						"v1",
+						"api",
+						"Customer"
+					]
+				},
+				"description": "Crear El CustomerID"
+			},
+			"response": []
+		},
+		{
+			"name": "GetCustomer",
+			"request": {
+				"method": "GET",
+				"header": [
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					},
+					{
+						"key": "Authorization",
+						"value": "Basic 9kYH2uY5zoTD-WBMEoc0KNRQYrC7crPRJ7zPegg3suXguw_8L-rZDQ__",
+						"type": "text"
+					}
+				],
+				"url": {
+					"raw": "https://lab.cardnet.com.do/servicios/tokens/v1/api/Customer/51266",
+					"protocol": "https",
+					"host": [
+						"lab",
+						"cardnet",
+						"com",
+						"do"
+					],
+					"path": [
+						"servicios",
+						"tokens",
+						"v1",
+						"api",
+						"Customer",
+						"51266"
+					]
+				},
+				"description": "Obtener los datos del Usuario."
+			},
+			"response": []
+		},
+		{
+			"name": "ActivacionPayment",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic 9kYH2uY5zoTD-WBMEoc0KNRQYrC7crPRJ7zPegg3suXguw_8L-rZDQ__",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"Token\": \"CT__G4GVrSL5Z2eg7RUCF_xdtc0GvdEWpsc2x1YjBSQN6l8_\",\r\n    \"ActivationCode\": \"T10YJL\"\r\n}"
+				},
+				"url": {
+					"raw": "https://lab.cardnet.com.do/servicios/tokens/v1/api/Customer/100/activate",
+					"protocol": "https",
+					"host": [
+						"lab",
+						"cardnet",
+						"com",
+						"do"
+					],
+					"path": [
+						"servicios",
+						"tokens",
+						"v1",
+						"api",
+						"Customer",
+						"100",
+						"activate"
+					]
+				},
+				"description": "Crear El CustomerID"
+			},
+			"response": []
+		},
+		{
+			"name": "PostPurchase",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic 9kYH2uY5zoTD-WBMEoc0KNRQYrC7crPRJ7zPegg3suXguw_8L-rZDQ__",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": "{\r\n    \"TrxToken\": \"CT__i6DGwM16igWg7RUCF_xdtQvuHzbRHV_EAbUUu1Px-u0_\",\r\n    //\"Order\": \"000001\",\r\n    \"Amount\": 10000,\r\n    //\"Tip\": 0,\r\n    \"Currency\": \"DOP\",\r\n    //\"AdditionalData\": \"Mas Informacion\",\r\n    //\"Installments\": 2,\r\n    //\"UniqueID\": \"6002e6de187a4959a03231647ef7123a\",\r\n    //\"Capture\": true,\r\n    //\"CustomerIP\": \"108.100.81.211\",\r\n    \"DataDo\": {\r\n        //\"Tax\": \"245\",\r\n        \"Invoice\": \"000021\"\r\n    } //,\r\n    //\"DataUY\": {\r\n    //  \"IsFinalConsumer\": true,\r\n    // \"Invoice\": \"12345\",\r\n    //  \"TaxableAmount\": 0},\r\n    //\"PlanID\":\"1913\",\r\n    //\"Description\": \"Pruebas de Description\"\r\n}"
+				},
+				"url": {
+					"raw": "https://lab.cardnet.com.do/servicios/tokens/v1/api/Purchase",
+					"protocol": "https",
+					"host": [
+						"lab",
+						"cardnet",
+						"com",
+						"do"
+					],
+					"path": [
+						"servicios",
+						"tokens",
+						"v1",
+						"api",
+						"Purchase"
+					]
+				}
+			},
+			"response": []
+		},
+		{
+			"name": "PaymentProfileDelete",
+			"request": {
+				"method": "POST",
+				"header": [
+					{
+						"key": "Authorization",
+						"value": "Basic 9kYH2uY5zoTD-WBMEoc0KNRQYrC7crPRJ7zPegg3suXguw_8L-rZDQ__",
+						"type": "text"
+					},
+					{
+						"key": "Content-Type",
+						"value": "application/json",
+						"type": "text"
+					}
+				],
+				"body": {
+					"mode": "raw",
+					"raw": " {\r\n   \"PaymentProfileId\":14196\r\n }"
+				},
+				"url": {
+					"raw": "https://lab.cardnet.com.do/servicios/tokens/v1/api/Customer/12523/PaymentProfileDelete",
+					"protocol": "https",
+					"host": [
+						"lab",
+						"cardnet",
+						"com",
+						"do"
+					],
+					"path": [
+						"servicios",
+						"tokens",
+						"v1",
+						"api",
+						"Customer",
+						"12523",
+						"PaymentProfileDelete"
+					]
+				}
+			},
+			"response": []
+		}
+	]
+}
