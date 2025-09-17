@@ -13,6 +13,7 @@ import { useRouter } from 'next/navigation'
 import { createOrder } from '@/lib/orders'
 import { getCartToken } from '@/lib/cart'
 import { useAuth } from '@/context/AuthContext'
+import { File } from "lucide-react"
 // (Se removieron imports y lógica de CardNet)
 
 const openSans = Open_Sans({ subsets: ["latin"] })
@@ -51,6 +52,33 @@ export default function CheckoutPage() {
   const [redirecting, setRedirecting] = useState(false)
   const [voucherError, setVoucherError] = useState<string | null>(null)
   const [voucherDragging, setVoucherDragging] = useState(false)
+  const [copiedField, setCopiedField] = useState<string | null>(null)
+
+  type BankAccount = {
+    id: string
+    currency: string
+    tipo: string
+    numero: string
+    banco: string
+    nombre: string
+    rnc: string
+  }
+
+  const bankAccounts: BankAccount[] = [
+    { id: 'usd-ahorro-popular', currency: 'USD', tipo: 'Cuenta de Ahorro', numero: '797745478', banco: 'Banco Popular', nombre: 'Romana Ebanistería', rnc: '131132359' },
+    { id: 'dop-ahorro-popular', currency: 'DOP', tipo: 'Cuenta de Ahorro', numero: '0786475814', banco: 'Banco Popular', nombre: 'Romana Ebanistería S.R.L', rnc: '131132359' },
+    { id: 'dop-corriente-reservas', currency: 'DOP', tipo: 'Cuenta Corriente', numero: '3850000860', banco: 'Banco Reservas RD', nombre: 'Romana Ebanistería', rnc: '131132359' }
+  ]
+
+  function copyToClipboard(label: string, value: string) {
+    try {
+      navigator.clipboard.writeText(value)
+      setCopiedField(label + value)
+      setTimeout(() => setCopiedField(null), 2500)
+    } catch (e) {
+      console.warn('No se pudo copiar', e)
+    }
+  }
 
   const MAX_VOUCHER_SIZE = 5 * 1024 * 1024 // 5MB
 
@@ -462,9 +490,9 @@ export default function CheckoutPage() {
                             />
                             {!form.voucherFile && (
                               <div className="flex flex-col items-center justify-center px-6 py-10 text-center select-none">
-                                <svg className="w-8 h-8 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 15V9a5 5 0 0110 0v6" />
-                                </svg>
+                                <div className="">
+                                  <File className="mb-2 opacity-35"/>
+                                </div>
                                 <p className="text-slate-600 font-medium">Arrastra y suelta el archivo aquí</p>
                                 <p className="text-xs text-slate-500 mt-1">o haz clic para seleccionar</p>
                                 <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400">JPG · PNG · WEBP · PDF · Máx 5MB</p>
@@ -509,6 +537,57 @@ export default function CheckoutPage() {
                           )}
                           <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
                             Adjuntar el comprobante ayuda a acelerar la validación de tu pago por transferencia.
+                          </p>
+                        </div>
+
+                        {/* Cuentas bancarias */}
+                        <div className="space-y-3 pt-4 border-t border-slate-100">
+                          <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                            Cuentas bancarias para transferencia
+                            <span className="text-[10px] font-medium tracking-wide text-slate-500 uppercase">Confirma que el nombre coincida</span>
+                          </h3>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            {bankAccounts.map(acc => (
+                              <div key={acc.id} className={`relative rounded-md border p-4 bg-white shadow-sm hover:shadow transition group`}> 
+                                <div className="flex items-start justify-between gap-2">
+                                  <div className="space-y-1 min-w-0">
+                                    <p className="text-xs font-medium text-slate-900 flex items-center gap-1">
+                                      {acc.tipo}
+                                      <span className="inline-block px-1.5 py-0.5 text-[10px] rounded bg-slate-100 text-slate-600 font-normal">{acc.currency}</span>
+                                    </p>
+                                    <button
+                                      type="button"
+                                      onClick={() => copyToClipboard('numero', acc.numero)}
+                                      className="text-[11px] font-mono tracking-wide text-slate-800 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 hover:bg-slate-100 flex items-center gap-1"
+                                      title="Copiar número de cuenta"
+                                    >
+                                      {acc.numero}
+                                      <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-9 8h10a2 2 0 002-2V8a2 2 0 00-2-2h-5l-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                    </button>
+                                    <p className="text-[11px] text-slate-600 truncate" title={acc.banco}>{acc.banco}</p>
+                                    <p className="text-[11px] text-slate-600 truncate" title={acc.nombre}>{acc.nombre}</p>
+                                    <div className="flex items-center gap-1 mt-1">
+                                      <span className="text-[10px] text-slate-500">RNC:</span>
+                                      <button
+                                        type="button"
+                                        onClick={() => copyToClipboard('rnc', acc.rnc)}
+                                        className="text-[10px] font-medium text-slate-700 hover:text-slate-900 flex items-center gap-0.5"
+                                        title="Copiar RNC"
+                                      >
+                                        {acc.rnc}
+                                        <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-9 8h10a2 2 0 002-2V8a2 2 0 00-2-2h-5l-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                      </button>
+                                    </div>
+                                  </div>
+                                </div>
+                                {copiedField && (copiedField === 'numero' + acc.numero || copiedField === 'rnc' + acc.rnc) && (
+                                  <div className="absolute top-2 right-2 text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-sm font-medium shadow">Copiado</div>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                          <p className="text-[11px] text-slate-500 leading-relaxed">
+                            Una vez realices la transferencia, adjunta el comprobante o puedes enviarlo luego respondiendo al correo de confirmación. Verificaremos el pago y actualizaremos el estado de tu orden.
                           </p>
                         </div>
                       </div>
