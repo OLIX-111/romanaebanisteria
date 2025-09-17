@@ -32,6 +32,13 @@ export default function CheckoutPage() {
     province: "",
     postalCode: "",
     notes: "",
+    cedula: "",
+    paymentMethod: "transferencia", // transferencia | tarjeta
+    valorFiscal: false,
+    rnc: "",
+    comentarioPago: "",
+    voucherFile: undefined as File | undefined,
+    voucherPreview: "", // base64 para enviar
   })
   const [submitting, setSubmitting] = useState(false)
   const [submitted, setSubmitted] = useState(false)
@@ -42,9 +49,40 @@ export default function CheckoutPage() {
   const { token: authToken } = useAuth()
   const router = useRouter()
   const [redirecting, setRedirecting] = useState(false)
+  const [voucherError, setVoucherError] = useState<string | null>(null)
+  const [voucherDragging, setVoucherDragging] = useState(false)
+
+  const MAX_VOUCHER_SIZE = 5 * 1024 * 1024 // 5MB
+
+  function handleVoucherFile(file: File | undefined) {
+    if (!file) {
+      setVoucherError(null)
+      setForm(f => ({ ...f, voucherFile: undefined, voucherPreview: '' }))
+      return
+    }
+    // Validaciones básicas
+    const allowed = ['image/jpeg', 'image/png', 'image/webp', 'image/gif', 'application/pdf']
+    if (!allowed.includes(file.type)) {
+      setVoucherError('Formato no soportado. Usa JPG, PNG, WEBP, GIF o PDF.')
+      setForm(f => ({ ...f, voucherFile: undefined, voucherPreview: '' }))
+      return
+    }
+    if (file.size > MAX_VOUCHER_SIZE) {
+      setVoucherError('El archivo excede el tamaño máximo de 5MB.')
+      setForm(f => ({ ...f, voucherFile: undefined, voucherPreview: '' }))
+      return
+    }
+    setVoucherError(null)
+    const reader = new FileReader()
+    reader.onload = ev => {
+      const result = ev.target?.result as string
+      setForm(f => ({ ...f, voucherFile: file, voucherPreview: result }))
+    }
+    reader.readAsDataURL(file)
+  }
 
   const isValid =
-    form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province
+    form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province && form.cedula && (form.paymentMethod !== 'transferencia' || form.paymentMethod === 'transferencia') && (!form.valorFiscal || (form.valorFiscal && form.rnc))
 
   // Eliminado flujo de pago con tarjeta.
 
@@ -75,7 +113,13 @@ export default function CheckoutPage() {
               nombre: form.firstName,
               apellido: form.lastName,
               correo: form.email,
-              telefono: form.phone
+              telefono: form.phone,
+              cedula: form.cedula,
+              payment_method: form.paymentMethod,
+              valor_fiscal: form.valorFiscal,
+              rnc: form.rnc || null,
+              comentario_pago: form.comentarioPago || null,
+              voucher: form.voucherPreview || null
             }
           }
           const resp = await createOrder(payload, authToken)
@@ -104,10 +148,13 @@ export default function CheckoutPage() {
                 },
                 totals: { subtotal, tax: 0, total: subtotal },
                 payment: {
-                  responseCode: '00', // forzamos éxito
-                  authCode: 'SIMULATED',
-                  rrn: 'SIM-' + Math.random().toString(36).slice(2,8).toUpperCase(),
-                  maskedPan: '411111******1111'
+                  metodo: form.paymentMethod,
+                  valorFiscal: form.valorFiscal,
+                  rnc: form.rnc || null,
+                  cedula: form.cedula,
+                  comentario: form.comentarioPago || null,
+                  voucher: form.voucherPreview || null,
+                  tarjetaDisponible: false
                 }
               })
             }).catch(err => console.warn('Fallo simulando process-order:', err))
@@ -263,6 +310,16 @@ export default function CheckoutPage() {
                             required
                           />
                         </div>
+                        <div className="space-y-2 sm:col-span-2">
+                          <label className="text-sm font-medium text-slate-700">Cédula *</label>
+                          <input
+                            className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition-colors duration-200 placeholder:text-slate-400"
+                            placeholder="000-0000000-0"
+                            value={form.cedula}
+                            onChange={(e) => setForm({ ...form, cedula: e.target.value })}
+                            required
+                          />
+                        </div>
                         
                         {/* Campos adicionales para pasarela eliminados */}
                       </div>
@@ -327,7 +384,135 @@ export default function CheckoutPage() {
                       </div>
                     </section>
 
-                    {/* Se eliminó selección de métodos de pago. */}
+                    {/* Métodos de pago */}
+                    <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
+                      <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">Pago</h2>
+                      <div className="space-y-6">
+                        <div className="space-y-3">
+                          <p className="text-sm font-medium text-slate-700">Método de pago</p>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <label className={`border rounded-sm p-4 cursor-pointer flex items-start gap-3 ${form.paymentMethod==='transferencia' ? 'border-slate-900 ring-1 ring-slate-900' : 'border-slate-200 hover:border-slate-300'}`}> 
+                              <input type="radio" name="paymentMethod" value="transferencia" className="mt-1" checked={form.paymentMethod==='transferencia'} onChange={()=> setForm({...form, paymentMethod:'transferencia'})} />
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-slate-900">Transferencia bancaria</p>
+                                <p className="text-xs text-slate-600">Adjunta el comprobante (voucher) para acelerar la verificación.</p>
+                              </div>
+                            </label>
+                            <label className={`border rounded-sm p-4 flex items-start gap-3 opacity-50 cursor-not-allowed bg-slate-50`}>
+                              <input type="radio" name="paymentMethod" value="tarjeta" className="mt-1" disabled />
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-slate-900">Tarjeta (no disponible)</p>
+                                <p className="text-xs text-slate-600">Temporalmente deshabilitado.</p>
+                              </div>
+                            </label>
+                          </div>
+                        </div>
+
+                        <div className="flex items-center gap-2">
+                          <input id="valorFiscal" type="checkbox" checked={form.valorFiscal} onChange={(e)=> setForm({...form, valorFiscal: e.target.checked})} />
+                          <label htmlFor="valorFiscal" className="text-sm text-slate-700">¿Requieres comprobante con valor fiscal?</label>
+                        </div>
+                        {form.valorFiscal && (
+                          <div className="space-y-2">
+                            <label className="text-sm font-medium text-slate-700">RNC *</label>
+                            <input
+                              className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0"
+                              placeholder="RNC"
+                              value={form.rnc}
+                              onChange={(e)=> setForm({...form, rnc: e.target.value })}
+                              required={form.valorFiscal}
+                            />
+                          </div>
+                        )}
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700">Comentario del pago</label>
+                          <textarea
+                            className="w-full border border-slate-200 rounded-sm px-4 py-3 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 resize-none"
+                            rows={3}
+                            placeholder="Información adicional sobre el pago."
+                            value={form.comentarioPago}
+                            onChange={(e)=> setForm({...form, comentarioPago: e.target.value })}
+                          />
+                        </div>
+
+                        <div className="space-y-2">
+                          <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                            Voucher / Comprobante
+                            <span className="text-xs font-normal text-slate-400">(imagen o PDF, máx 5MB)</span>
+                          </label>
+
+                          <div
+                            className={`mt-1 rounded-md border text-sm transition relative ${voucherDragging ? 'border-slate-900 bg-slate-50' : 'border-dashed border-slate-300 hover:border-slate-400 bg-white'}`}
+                            onDragOver={e => { e.preventDefault(); setVoucherDragging(true) }}
+                            onDragLeave={() => setVoucherDragging(false)}
+                            onDrop={e => {
+                              e.preventDefault();
+                              setVoucherDragging(false)
+                              const file = e.dataTransfer.files?.[0]
+                              handleVoucherFile(file)
+                            }}
+                          >
+                            <input
+                              id="voucherInput"
+                              type="file"
+                              accept="image/*,application/pdf"
+                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                              onChange={e => handleVoucherFile(e.target.files?.[0])}
+                            />
+                            {!form.voucherFile && (
+                              <div className="flex flex-col items-center justify-center px-6 py-10 text-center select-none">
+                                <svg className="w-8 h-8 text-slate-400 mb-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M3 15a4 4 0 004 4h10a4 4 0 004-4M7 15V9a5 5 0 0110 0v6" />
+                                </svg>
+                                <p className="text-slate-600 font-medium">Arrastra y suelta el archivo aquí</p>
+                                <p className="text-xs text-slate-500 mt-1">o haz clic para seleccionar</p>
+                                <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400">JPG · PNG · WEBP · PDF · Máx 5MB</p>
+                              </div>
+                            )}
+                            {form.voucherFile && (
+                              <div className="flex items-center gap-4 p-4">
+                                <div className="w-16 h-16 border border-slate-200 rounded-sm flex items-center justify-center overflow-hidden bg-slate-50">
+                                  {form.voucherFile.type === 'application/pdf' ? (
+                                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h10M7 12h10M7 17h6" />
+                                    </svg>
+                                  ) : (
+                                    // eslint-disable-next-line @next/next/no-img-element
+                                    <img
+                                      src={form.voucherPreview}
+                                      alt="Voucher preview"
+                                      className="object-cover w-full h-full"
+                                    />
+                                  )}
+                                </div>
+                                <div className="flex-1 min-w-0 space-y-1">
+                                  <p className="text-xs font-medium text-slate-900 truncate">{form.voucherFile.name}</p>
+                                  <p className="text-[11px] text-slate-500">{Math.round(form.voucherFile.size / 1024)} KB • {form.voucherFile.type === 'application/pdf' ? 'PDF' : 'Imagen'}</p>
+                                  <button
+                                    type="button"
+                                    onClick={() => handleVoucherFile(undefined)}
+                                    className="text-[11px] font-medium text-slate-500 hover:text-slate-700 inline-flex items-center gap-1"
+                                  >
+                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                    </svg>
+                                    Quitar
+                                  </button>
+                                </div>
+                              </div>
+                            )}
+                          </div>
+                          {voucherError && <p className="mt-2 text-xs text-red-600 font-medium">{voucherError}</p>}
+                          {!voucherError && form.voucherFile && (
+                            <p className="mt-2 text-[11px] text-emerald-600 font-medium">Archivo listo para enviar.</p>
+                          )}
+                          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+                            Adjuntar el comprobante ayuda a acelerar la validación de tu pago por transferencia.
+                          </p>
+                        </div>
+                      </div>
+                    </section>
 
                     <div className="flex justify-end">
                       <button
