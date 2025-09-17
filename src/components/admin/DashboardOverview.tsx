@@ -1,17 +1,19 @@
 "use client"
 
 import { useEffect, useState } from 'react'
-import { Package, CheckCircle, AlertTriangle, Clock } from 'lucide-react'
+import { Package, CheckCircle, AlertTriangle, Clock, Truck } from 'lucide-react'
 import { fetchOrderAdmin } from '@/lib/orders'
+import { getOrderStatusInfo } from '@/utils/orderStatus'
 
 interface DashboardStats {
   totalOrders: number
   totalRevenue: number
-  pendingOrders: number
-  processingOrders: number
-  shippedOrders: number
-  deliveredOrders: number
-  cancelledOrders: number
+  pendingApproval: number
+  created: number
+  processing: number
+  inTransit: number
+  delivered: number
+  cancelled: number
   avgOrderValue: number
 }
 
@@ -19,11 +21,12 @@ export default function DashboardOverview() {
   const [stats, setStats] = useState<DashboardStats>({
     totalOrders: 0,
     totalRevenue: 0,
-    pendingOrders: 0,
-    processingOrders: 0,
-    shippedOrders: 0,
-    deliveredOrders: 0,
-    cancelledOrders: 0,
+    pendingApproval: 0,
+    created: 0,
+    processing: 0,
+    inTransit: 0,
+    delivered: 0,
+    cancelled: 0,
     avgOrderValue: 0
   })
   const [loading, setLoading] = useState(true)
@@ -50,22 +53,22 @@ export default function DashboardOverview() {
         const totalOrders = list.length
         const totalRevenue = list.reduce((acc: number, o: any) => acc + toNumber(o.monto_total), 0)
         const statusCounts = list.reduce((acc: Record<string, number>, o: any) => {
-          const est = (o.estado || '').toLowerCase()
-            || 'pending'
-          acc[est] = (acc[est] || 0) + 1
+          const info = getOrderStatusInfo(o.estado)
+          acc[info.code] = (acc[info.code] || 0) + 1
           return acc
-        }, {})
+        }, {} as Record<string, number>)
 
         const avgOrderValue = totalOrders ? Math.round(totalRevenue / totalOrders) : 0
 
         setStats({
           totalOrders,
           totalRevenue,
-          pendingOrders: statusCounts['pending'] || 0,
-          processingOrders: statusCounts['processing'] || 0,
-          shippedOrders: statusCounts['shipped'] || 0,
-          deliveredOrders: statusCounts['delivered'] || 0,
-          cancelledOrders: statusCounts['cancelled'] || 0,
+          pendingApproval: statusCounts['pending_approval'] || 0,
+          created: statusCounts['created'] || 0,
+          processing: statusCounts['processing'] || 0,
+          inTransit: statusCounts['in_transit'] || 0,
+          delivered: statusCounts['delivered'] || 0,
+          cancelled: statusCounts['cancelled'] || 0,
           avgOrderValue
         })
       } catch (err: any) {
@@ -98,34 +101,11 @@ export default function DashboardOverview() {
   )
 
   const orderStatusCards = [
-    {
-      title: 'Pendientes',
-      value: stats.pendingOrders,
-      icon: Clock,
-      bgColor: 'bg-yellow-50',
-      textColor: 'text-yellow-700'
-    },
-    {
-      title: 'En Proceso',
-      value: stats.processingOrders,
-      icon: Package,
-      bgColor: 'bg-blue-50',
-      textColor: 'text-blue-700'
-    },
-    {
-      title: 'Enviadas',
-      value: stats.shippedOrders,
-      icon: CheckCircle,
-      bgColor: 'bg-green-50',
-      textColor: 'text-green-700'
-    },
-    {
-      title: 'Entregadas',
-      value: stats.deliveredOrders,
-      icon: CheckCircle,
-      bgColor: 'bg-orange-50',
-      textColor: 'text-orange-700'
-    },
+    { title: 'Pendiente aprobación', value: stats.pendingApproval, icon: Clock, bgColor: 'bg-gray-50/20', textColor: 'text-gray-700' },
+    { title: 'Orden creada', value: stats.created, icon: Package, bgColor: 'bg-orange-50/20', textColor: 'text-gray-700' },
+    { title: 'En proceso', value: stats.processing, icon: Package, bgColor: 'bg-orange-50/50', textColor: 'text-gray-800' },
+    { title: 'En tránsito', value: stats.inTransit, icon: Truck, bgColor: 'bg-orange-50/80', textColor: 'text-gray-800' },
+    { title: 'Entregado', value: stats.delivered, icon: CheckCircle, bgColor: 'bg-orange-100/90', textColor: 'text-gray-800' },
   ]
 
   return (
@@ -208,7 +188,7 @@ export default function DashboardOverview() {
           </div>
         </div>
         <h3 className="text-sm font-semibold text-gray-700 mb-3">Estados</h3>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
+  <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-4">
           {orderStatusCards.map((status, index) => {
             const Icon = status.icon
             return (
@@ -255,7 +235,11 @@ export default function DashboardOverview() {
                 const diffDay = Math.floor(diffHr/24)
                 const relative = diffMin < 60 ? `${diffMin}m` : diffHr < 24 ? `${diffHr}h` : `${diffDay}d`
                 return (
-                  <li key={o.id} className="group flex items-center gap-4 py-3 px-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer">
+                  <li
+                    key={o.id}
+                    onClick={() => { window.location.href = `/ebadmin/orders/${o.id}` }}
+                    className="group flex items-center gap-4 py-3 px-2 rounded-md hover:bg-gray-50 transition-colors cursor-pointer"
+                  >
                     <div className="flex flex-col min-w-[64px]">
                       <span className="text-sm font-semibold text-gray-900 leading-none">#{o.order_number}</span>
                       <span className="text-[11px] text-gray-500 mt-1 font-mono" title={fecha.toLocaleString('es-DO')}>{relative}</span>

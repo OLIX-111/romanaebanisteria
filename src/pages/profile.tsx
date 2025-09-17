@@ -4,6 +4,7 @@ import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { Open_Sans } from "next/font/google"
 import { useEffect, useState } from "react"
+import { getOrderStatusInfo } from '@/utils/orderStatus'
 import { useRouter } from "next/router"
 import Link from "next/link"
 import { useAuth } from "@/context/AuthContext"
@@ -182,7 +183,15 @@ export default function ProfilePage() {
                 </div>
                 <div>
                   <p className="text-[11px] uppercase tracking-wide text-gray-500">Estado</p>
-                  <span className="inline-flex items-center rounded-sm bg-gray-900 text-white px-2 py-0.5 text-[11px] font-medium">{trackedOrder?.order?.estado}</span>
+                  {(() => { const info = getOrderStatusInfo(trackedOrder?.order?.estado); const map: Record<string,string> = {
+                    pending_approval: 'bg-amber-100 text-amber-800',
+                    created: 'bg-indigo-100 text-indigo-700',
+                    processing: 'bg-blue-100 text-blue-700',
+                    in_transit: 'bg-sky-100 text-sky-700',
+                    delivered: 'bg-emerald-100 text-emerald-700',
+                    cancelled: 'bg-rose-100 text-rose-700',
+                    refunded: 'bg-cyan-100 text-cyan-700'
+                  }; const cls = map[info.code] || 'bg-gray-200 text-gray-700'; return <span className={`inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-medium ${cls}`}>{info.label}</span> })()}
                 </div>
                 <div>
                   <p className="text-[11px] uppercase tracking-wide text-gray-500">Creada</p>

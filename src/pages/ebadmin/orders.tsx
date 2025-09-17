@@ -6,11 +6,12 @@ import { useAdminAuth } from '@/components/admin/useAdminAuth'
 export default function AdminOrdersPage() {
   const { loading, isAdmin, user } = useAdminAuth()
 
-  const handleTabChange = (tab: 'dashboard' | 'orders' | 'clients') => {
+  const handleTabChange = (tab: 'dashboard' | 'orders' | 'clients' | 'services') => {
     switch (tab) {
       case 'dashboard': window.location.href = '/ebadmin'; break
       case 'orders': window.location.href = '/ebadmin/orders'; break
       case 'clients': window.location.href = '/ebadmin/clients'; break
+      case 'services': window.location.href = '/ebadmin/services/requests'; break
     }
   }
 

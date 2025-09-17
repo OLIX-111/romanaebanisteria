@@ -7,8 +7,8 @@ import { LayoutDashboard, Package, Users, LogOut, Menu, Bell, ChevronLeft } from
 
 interface AdminLayoutProps {
   children: React.ReactNode
-  activeTab: "dashboard" | "orders" | "clients"
-  onTabChange: (tab: "dashboard" | "orders" | "clients") => void
+  activeTab: "dashboard" | "orders" | "clients" | "services"
+  onTabChange: (tab: "dashboard" | "orders" | "clients" | "services") => void
   user: any
 }
 
@@ -30,6 +30,12 @@ const navigation = [
     id: "clients" as const,
     icon: Users,
     description: "Gestión de clientes",
+  },
+  {
+    name: "Servicios",
+    id: "services" as const,
+    icon: Package, // Could replace with a more fitting icon later
+    description: "Solicitudes de servicios",
   },
 ]
 

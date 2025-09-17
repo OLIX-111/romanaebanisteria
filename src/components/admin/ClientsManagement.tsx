@@ -16,6 +16,8 @@ import {
   MoreHorizontal,
   Plus
 } from 'lucide-react'
+import { useRouter } from 'next/router'
+import { fetchAdminUsers, AdminUserListItem } from '@/lib/users'
 
 // Interfaces para los tipos de datos de clientes
 interface Client {
@@ -119,96 +121,46 @@ const mockClients: Client[] = [
 ]
 
 export default function ClientsManagement() {
-  const [clients, setClients] = useState<Client[]>([])
-  const [filteredClients, setFilteredClients] = useState<Client[]>([])
+  const router = useRouter()
+  // real data state
+  const [users, setUsers] = useState<AdminUserListItem[]>([])
+  const [page, setPage] = useState(1)
+  const [perPage] = useState(20)
+  const [total, setTotal] = useState(0)
+  const [lastPage, setLastPage] = useState(1)
   const [loading, setLoading] = useState(true)
-  const [selectedClient, setSelectedClient] = useState<Client | null>(null)
-  const [showClientDetail, setShowClientDetail] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const [searchTerm, setSearchTerm] = useState('')
-  const [statusFilter, setStatusFilter] = useState('')
+  const [debouncedSearch, setDebouncedSearch] = useState('')
 
-  const loadClients = useCallback(async () => {
+  // debounce search
+  useEffect(()=>{ const h = setTimeout(()=> setDebouncedSearch(searchTerm), 450); return ()=> clearTimeout(h)}, [searchTerm])
+
+  const load = useCallback(async ()=> {
+    setLoading(true); setError(null)
     try {
-      // En producción, esto vendría de la API
-      // const response = await fetch('/api/admin/clients')
-      // const data = await response.json()
+      const resp = await fetchAdminUsers({ page, per_page: perPage, busqueda: debouncedSearch || undefined })
+      setUsers(resp.data)
+      setTotal(resp.meta.pagination.total)
+      setLastPage(resp.meta.pagination.last_page)
+    } catch(e:any){
+      console.error('Error cargando usuarios', e)
+      setError(e.message || 'No se pudo cargar usuarios')
+    } finally { setLoading(false) }
+  }, [page, perPage, debouncedSearch])
 
-      setClients(mockClients)
-    } catch (error) {
-      console.error('Error loading clients:', error)
-    } finally {
-      setLoading(false)
-    }
-  }, [])
+  useEffect(()=> { load() }, [load])
 
-  const filterClients = useCallback(() => {
-    let filtered = clients
+  const formatCurrency = (amount: number) => new Intl.NumberFormat('es-DO',{style:'currency',currency:'DOP'}).format(amount)
 
-    // Filtro por búsqueda
-    if (searchTerm) {
-      filtered = filtered.filter(client =>
-        client.firstName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.lastName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.email.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        client.phone.includes(searchTerm)
-      )
-    }
+  const handleRowClick = (id: string) => router.push(`/ebadmin/clients/${id}`)
 
-    // Filtro por estado
-    if (statusFilter) {
-      filtered = filtered.filter(client => client.status === statusFilter)
-    }
-
-    setFilteredClients(filtered)
-  }, [clients, searchTerm, statusFilter])
-
-  useEffect(() => {
-    loadClients()
-  }, [loadClients])
-
-  useEffect(() => {
-    filterClients()
-  }, [filterClients])
-
-  const formatCurrency = (amount: number) => {
-    return new Intl.NumberFormat('es-DO', {
-      style: 'currency',
-      currency: 'DOP'
-    }).format(amount)
-  }
-
-  const getStatusBadge = (status: Client['status']) => {
-    return (
-      <span className={`inline-flex px-2 py-1 text-xs font-medium rounded-full ${
-        status === 'active'
-          ? 'bg-green-100 text-green-800'
-          : 'bg-gray-100 text-gray-800'
-      }`}>
-        {status === 'active' ? 'Activo' : 'Inactivo'}
-      </span>
-    )
-  }
-
-  if (loading) {
-    return (
-      <div className="space-y-6">
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold text-gray-900">Gestión de Clientes</h1>
-        </div>
-        <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="animate-pulse space-y-4">
-            {[...Array(5)].map((_, i) => (
-              <div key={i} className="h-16 bg-gray-100 rounded"></div>
-            ))}
-          </div>
-        </div>
-      </div>
-    )
-  }
+  // simplified active/inactive derived from orders for now
+  const activeCount = users.filter(u => u.ordenes > 0).length
+  const totalSpent = users.reduce((sum,u)=> sum + (u.total_gastado||0),0)
 
   return (
     <div className="space-y-8">
-      {/* Header */}
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Gestión de Clientes</h1>
@@ -216,262 +168,120 @@ export default function ClientsManagement() {
             Administra la información de tus clientes
           </p>
         </div>
-        <div className="flex items-center gap-3">
-          <button className="inline-flex items-center gap-2 px-4 py-2 bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-colors">
-            <Plus size={18} />
-            Nuevo Cliente
-          </button>
-        </div>
       </div>
 
-      {/* Stats Cards */}
+      {/* Stats */}
       <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Total Clientes</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">{clients.length}</p>
-            </div>
-            <div className="p-3 rounded-lg bg-blue-50">
-              <User className="w-6 h-6 text-blue-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center">
-            <span className="text-sm font-medium text-green-600">
-              +12%
-            </span>
-            <span className="text-sm text-gray-500 ml-2">vs mes anterior</span>
-          </div>
+          <p className="text-sm font-medium text-gray-600">Total Clientes</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{total}</p>
         </div>
-
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Clientes Activos</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {clients.filter(c => c.status === 'active').length}
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-green-50">
-              <User className="w-6 h-6 text-green-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center">
-            <span className="text-sm font-medium text-green-600">
-              {Math.round((clients.filter(c => c.status === 'active').length / clients.length) * 100)}%
-            </span>
-            <span className="text-sm text-gray-500 ml-2">tasa de actividad</span>
-          </div>
+          <p className="text-sm font-medium text-gray-600">Con Órdenes</p>
+            <p className="text-2xl font-bold text-gray-900 mt-2">{activeCount}</p>
         </div>
-
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {formatCurrency(clients.reduce((sum, client) => sum + client.totalSpent, 0))}
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-orange-50">
-              <DollarSign className="w-6 h-6 text-orange-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center">
-            <span className="text-sm font-medium text-green-600">
-              +18%
-            </span>
-            <span className="text-sm text-gray-500 ml-2">vs mes anterior</span>
-          </div>
+          <p className="text-sm font-medium text-gray-600">Ingresos Totales</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(totalSpent)}</p>
         </div>
-
         <div className="bg-white rounded-lg border border-gray-200 p-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-gray-600">Promedio por Cliente</p>
-              <p className="text-2xl font-bold text-gray-900 mt-2">
-                {formatCurrency(
-                  clients.length > 0
-                    ? clients.reduce((sum, client) => sum + client.totalSpent, 0) / clients.length
-                    : 0
-                )}
-              </p>
-            </div>
-            <div className="p-3 rounded-lg bg-purple-50">
-              <DollarSign className="w-6 h-6 text-purple-600" />
-            </div>
-          </div>
-          <div className="mt-4 flex items-center">
-            <span className="text-sm font-medium text-blue-600">
-              +5%
-            </span>
-            <span className="text-sm text-gray-500 ml-2">vs mes anterior</span>
-          </div>
+          <p className="text-sm font-medium text-gray-600">Promedio por Cliente</p>
+          <p className="text-2xl font-bold text-gray-900 mt-2">{formatCurrency(total ? totalSpent/total : 0)}</p>
         </div>
       </div>
 
       {/* Filters */}
       <div className="bg-white rounded-lg border border-gray-200 p-6">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-          {/* Search */}
           <div className="md:col-span-2">
             <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
                 type="text"
-                placeholder="Buscar por nombre, email o teléfono..."
+                placeholder="Buscar por nombre o email..."
                 value={searchTerm}
-                onChange={(e) => setSearchTerm(e.target.value)}
+                onChange={(e)=> { setSearchTerm(e.target.value); setPage(1) }}
                 className="w-full pl-10 pr-4 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
               />
             </div>
           </div>
-
-          {/* Status Filter */}
-          <div>
-            <select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-orange-500 focus:border-orange-500 outline-none"
-            >
-              <option value="">Todos los estados</option>
-              <option value="active">Activos</option>
-              <option value="inactive">Inactivos</option>
-            </select>
+          <div className="flex items-center justify-end">
+            <button onClick={()=> load()} disabled={loading} className="inline-flex items-center gap-2 px-3 py-2 text-sm border rounded hover:bg-gray-50 disabled:opacity-50">Recargar</button>
           </div>
         </div>
-
-        {/* Active Filters */}
-        {(searchTerm || statusFilter) && (
+        {(debouncedSearch) && (
           <div className="flex flex-wrap gap-2 mt-4">
-            {searchTerm && (
-              <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                Búsqueda: &quot;{searchTerm}&quot;
-                <button
-                  onClick={() => setSearchTerm('')}
-                  className="hover:text-gray-900"
-                >
-                  ×
-                </button>
-              </span>
-            )}
-            {statusFilter && (
-              <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-                Estado: {statusFilter === 'active' ? 'Activo' : 'Inactivo'}
-                <button
-                  onClick={() => setStatusFilter('')}
-                  className="hover:text-gray-900"
-                >
-                  ×
-                </button>
-              </span>
-            )}
+            <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
+              Búsqueda: "{debouncedSearch}"
+              <button onClick={()=> { setSearchTerm(''); setDebouncedSearch('') }} className="hover:text-gray-900">×</button>
+            </span>
           </div>
         )}
       </div>
 
-      {/* Clients Table */}
+      {/* Table */}
       <div className="bg-white rounded-lg border border-gray-200 overflow-hidden">
         <div className="overflow-x-auto">
           <table className="w-full">
             <thead className="bg-gray-50 border-b border-gray-200">
               <tr>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Cliente
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Contacto
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Órdenes
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Total Gastado
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Última Orden
-                </th>
-                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                  Acciones
-                </th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Cliente</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Contacto</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Órdenes</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Total Gastado</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Última Orden</th>
+                <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acción</th>
               </tr>
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
-              {filteredClients.map((client) => (
-                <tr key={client.id} className="hover:bg-gray-50">
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="flex items-center">
-                      <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
-                        <span className="text-orange-600 font-semibold text-sm">
-                          {client.firstName.charAt(0)}{client.lastName.charAt(0)}
-                        </span>
-                      </div>
-                      <div className="ml-4">
-                        <div className="text-sm font-medium text-gray-900">
-                          {client.firstName} {client.lastName}
+              {loading && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">
+                  Cargando clientes...
+                </td></tr>)}
+              {!loading && !error && users.map(u => {
+                const initials = u.cliente.split(' ').slice(0,2).map(p=> p.charAt(0).toUpperCase()).join('')
+                return (
+                  <tr key={u.id} className="hover:bg-gray-50 cursor-pointer" onClick={()=> handleRowClick(u.id)}>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="flex items-center">
+                        <div className="h-10 w-10 bg-orange-100 rounded-full flex items-center justify-center">
+                          <span className="text-orange-600 font-semibold text-sm">{initials}</span>
                         </div>
-                        <div className="text-sm text-gray-500">
-                          Cliente desde {new Date(client.createdAt).toLocaleDateString('es-DO', {
-                            year: 'numeric',
-                            month: 'short'
-                          })}
+                        <div className="ml-4">
+                          <div className="text-sm font-medium text-gray-900">{u.cliente}</div>
+                          <div className="text-sm text-gray-500">Desde {u.fecha_creacion}</div>
                         </div>
                       </div>
-                    </div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm text-gray-900">{client.email}</div>
-                    <div className="text-sm text-gray-500">{client.phone}</div>
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {client.totalOrders}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                    {formatCurrency(client.totalSpent)}
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                    {client.lastOrderDate
-                      ? new Date(client.lastOrderDate).toLocaleDateString('es-DO')
-                      : 'Sin órdenes'
-                    }
-                  </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <button
-                      onClick={() => {
-                        setSelectedClient(client)
-                        setShowClientDetail(true)
-                      }}
-                      className="text-orange-600 hover:text-orange-900 mr-3"
-                    >
-                      <Eye size={18} />
-                    </button>
-                    <button className="text-gray-600 hover:text-gray-900">
-                      <Edit size={18} />
-                    </button>
-                  </td>
-                </tr>
-              ))}
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap">
+                      <div className="text-sm text-gray-900">{u.contacto.email}</div>
+                      <div className="text-sm text-gray-500">{u.contacto.telefono || '—'}</div>
+                    </td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{u.ordenes}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-900">{formatCurrency(u.total_gastado)}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm text-gray-500">{u.ultima_orden || '—'}</td>
+                    <td className="px-6 py-4 whitespace-nowrap text-sm font-medium"><span className="text-gray-400 text-xs">Ver detalle →</span></td>
+                  </tr>
+                )
+              })}
+              {!loading && !error && users.length===0 && (
+                <tr><td colSpan={6} className="px-6 py-8 text-center text-sm text-gray-500">Sin clientes</td></tr>
+              )}
+              {!loading && error && (
+                <tr><td colSpan={6} className="px-6 py-6 text-center text-sm text-red-600">{error}</td></tr>
+              )}
             </tbody>
           </table>
         </div>
-
-        {filteredClients.length === 0 && (
-          <div className="text-center py-12">
-            <User className="mx-auto h-12 w-12 text-gray-400" />
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No hay clientes</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              No se encontraron clientes con los filtros aplicados.
-            </p>
+        {/* Pagination */}
+        <div className="flex items-center justify-between px-4 py-3 bg-white border-t border-gray-200 text-sm">
+          <div className="text-gray-600">Página {page} de {lastPage} • {total} clientes</div>
+          <div className="flex items-center gap-2">
+            <button disabled={page<=1 || loading} onClick={()=> setPage(p=> p-1)} className="px-3 py-1.5 border rounded disabled:opacity-40">Anterior</button>
+            <button disabled={page>=lastPage || loading} onClick={()=> setPage(p=> p+1)} className="px-3 py-1.5 border rounded disabled:opacity-40">Siguiente</button>
           </div>
-        )}
+        </div>
       </div>
-
-      {/* Client Detail Modal */}
-      {showClientDetail && selectedClient && (
-        <ClientDetailModal
-          client={selectedClient}
-          onClose={() => setShowClientDetail(false)}
-        />
-      )}
     </div>
   )
 }

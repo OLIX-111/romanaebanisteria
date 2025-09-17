@@ -132,20 +132,20 @@ export default function PresupuestoLayout() {
     const payload = {
       nombre: values.nombre.trim(),
       numero: values.numero.trim(),
-      email: values.email.trim(),
-      tipo: values.tipoDesarrollador && values.tipoCodia
+      correo: values.email.trim(),
+      tipoUsuario: values.tipoDesarrollador && values.tipoCodia
         ? 'Desarrollador y Agente del codia'
         : values.tipoDesarrollador
           ? 'Desarrollador'
           : values.tipoCodia
             ? 'Agente del codia'
-            : undefined,
+            : 'Particular',
       tipoDesarrollador: values.tipoDesarrollador || undefined,
       tipoCodia: values.tipoCodia || undefined,
       empresa: values.tipoDesarrollador ? values.empresa.trim() : undefined,
       website: values.tipoDesarrollador ? values.website.trim() : undefined,
       datos_codia: values.tipoCodia ? {
-        codia: values.codia.trim(),
+        codiaNumero: values.codia.trim(),
         codiaValidated: true,
         codiaNombre: codiaData?.nombre,
         codiaRegional: codiaData?.regional,
@@ -157,10 +157,13 @@ export default function PresupuestoLayout() {
     setSubmitError(null)
     try {
       const base = process.env.BASE_URL || 'https://romana-ebanisteria-api-production.up.railway.app/api/v1'
-      const res = await fetch(`${base}/presupuestos/users`, {
+      const res = await fetch(`${base}/presupuestos/user`, {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(payload)
+        headers: { 
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer 5|7yud9D0naVbdhuHOtTHRo6zM9AZAZAgER8AsVy3n17ded992'
+        },
+        body: JSON.stringify(payload),
       })
       if (!res.ok) {
         const text = await res.text().catch(() => '')

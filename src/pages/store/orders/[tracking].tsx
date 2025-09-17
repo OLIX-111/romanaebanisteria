@@ -7,6 +7,7 @@ import Header from '@/components/layout/Header'
 import Footer from '@/components/layout/Footer'
 import { Open_Sans } from 'next/font/google'
 import { fetchOrderByTracking as fetchOrderByTrackingMaybe } from '@/lib/orders'
+import { getOrderStatusInfo } from '@/utils/orderStatus'
 import { useAuth } from '@/context/AuthContext'
 
 const openSans = Open_Sans({ subsets: ['latin'] })
@@ -125,14 +126,19 @@ export default function OrderDetailPage() {
 // ---- Sub Components ----
 function statusStyle(status?: string) {
   const base = 'inline-flex items-center gap-1 px-2 py-0.5 rounded-sm text-[11px] font-medium'
-  const map: Record<string,string> = {
-    pending: 'bg-amber-100 text-amber-800',
+  if (!status) return base + ' bg-slate-200 text-slate-700'
+  const info = getOrderStatusInfo(status)
+  // Map to utility classes approximating color; fallback generic
+  const classMap: Record<string,string> = {
+    pending_approval: 'bg-amber-100 text-amber-800',
+    created: 'bg-indigo-100 text-indigo-700',
     processing: 'bg-blue-100 text-blue-700',
-    shipped: 'bg-indigo-100 text-indigo-700',
+    in_transit: 'bg-sky-100 text-sky-700',
     delivered: 'bg-emerald-100 text-emerald-700',
     cancelled: 'bg-rose-100 text-rose-700',
+    refunded: 'bg-cyan-100 text-cyan-700'
   }
-  return base + ' ' + (status ? (map[status] || 'bg-slate-200 text-slate-700') : 'bg-slate-200 text-slate-700')
+  return base + ' ' + (classMap[info.code] || 'bg-slate-200 text-slate-700')
 }
 
 const OrderHeader = ({ order }: { order: any }) => {
@@ -144,7 +150,7 @@ const OrderHeader = ({ order }: { order: any }) => {
           <h1 className="text-3xl font-bold tracking-tight text-slate-900">Orden #{order.order_number}</h1>
           <div className="mt-3 flex flex-wrap gap-4 text-xs text-slate-600">
             <div>Creada <span className="font-medium text-slate-900">{order.created_at ? new Date(order.created_at).toLocaleString('es-DO') : '—'}</span></div>
-            <div>Estado <span className={statusStyle(order.estado)}>{order.estado}</span></div>
+            <div>Estado <span className={statusStyle(order.estado)}>{getOrderStatusInfo(order.estado).label}</span></div>
             <div>Total <span className="font-medium text-slate-900">{Number(order.monto_total||0).toLocaleString('es-DO',{ style:'currency', currency:'DOP' })}</span></div>
           </div>
         </div>

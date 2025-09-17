@@ -11,6 +11,8 @@ import { getServiceBySlug } from "../../../../sanity/sanityQueries"
 import { CheckCircle, AlertTriangle, Clock, Calendar, DollarSign, Tag } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/hook/UseTranslation"
+import { createServiceRequest } from '@/lib/serviceRequests'
+import { useAuth } from '@/context/AuthContext'
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -45,6 +47,8 @@ export default function ServicePage({ service }: ServicePageProps) {
   const [errorMessage, setErrorMessage] = useState<string | null>(null)
   const [activeImage, setActiveImage] = useState<string>(service?.imageUrl || "")
   const [currentStep, setCurrentStep] = useState<number>(1)
+  const { token: authToken } = useAuth()
+  const [serviceRequestResult, setServiceRequestResult] = useState<any>(null)
 
   const todayStr = useMemo(() => {
     const d = new Date()
@@ -83,22 +87,21 @@ export default function ServicePage({ service }: ServicePageProps) {
     setErrorMessage(null)
 
     try {
-      const response = await fetch("/api/cotiza", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          ...values,
-          serviceName: service.name,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Ocurrió un error al enviar la solicitud")
+      const payload = {
+        desiredDate: values.desiredDate,
+        address: values.address,
+        suburb: values.suburb,
+        state: values.state,
+        postcode: values.postcode,
+        fullName: values.fullName,
+        email: values.email,
+        phone: values.phone,
+        company: values.company,
+        projectDescription: values.projectDescription,
+        serviceName: service.name
       }
-
+      const resp = await createServiceRequest(payload, authToken)
+      setServiceRequestResult(resp.data)
       setSubmitStatus("success")
       resetForm()
       setCurrentStep(4)
@@ -392,12 +395,22 @@ export default function ServicePage({ service }: ServicePageProps) {
                                   </div>
                                 </div>
                                 {submitStatus === "success" && (
-                                  <div className="p-4 bg-green-50 border-l-4 border-green-500 flex items-start">
-                                    <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
-                                    <div>
-                                      <h3 className="text-green-800 font-medium">{quoteRequest.form.success.title}</h3>
-                                      <p className="text-green-700 text-sm mt-1">{quoteRequest.form.success.message}</p>
+                                  <div className="p-4 bg-green-50 border-l-4 border-green-500 flex flex-col gap-3">
+                                    <div className="flex items-start">
+                                      <CheckCircle className="h-5 w-5 text-green-500 mr-2 flex-shrink-0 mt-0.5" />
+                                      <div>
+                                        <h3 className="text-green-800 font-medium">{quoteRequest.form.success.title}</h3>
+                                        <p className="text-green-700 text-sm mt-1">{quoteRequest.form.success.message}</p>
+                                      </div>
                                     </div>
+                                    {serviceRequestResult && (
+                                      <div className="text-xs text-green-800 bg-green-100/60 border border-green-200 rounded p-3 space-y-1">
+                                        <p><span className="font-semibold">ID:</span> {serviceRequestResult.id}</p>
+                                        <p><span className="font-semibold">Estado:</span> {serviceRequestResult.estado}</p>
+                                        <p><span className="font-semibold">Servicio:</span> {serviceRequestResult.nombre_servicio}</p>
+                                        <p><span className="font-semibold">Fecha deseada:</span> {serviceRequestResult.fecha_deseada}</p>
+                                      </div>
+                                    )}
                                   </div>
                                 )}
                                 {submitStatus === "error" && (

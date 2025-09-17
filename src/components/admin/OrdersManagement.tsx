@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import { fetchOrderAdmin } from '@/lib/orders'
+import { getOrderStatusInfo, ORDER_STATUS_FILTERS } from '@/utils/orderStatus'
 import {
   Search,
   Filter,
@@ -76,15 +77,7 @@ interface CrmOrder {
   detalles: CrmOrderDetail[]
 }
 
-// Map simple estado -> styling
-const STATE_STYLES: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pendiente', color: '#F59E0B' },
-  processing: { label: 'Procesando', color: '#3B82F6' },
-  shipped: { label: 'Envío', color: '#6366F1' },
-  delivered: { label: 'Entregado', color: '#16A34A' },
-  cancelled: { label: 'Cancelado', color: '#DC2626' },
-  refunded: { label: 'Reembolsado', color: '#0891B2' },
-}
+// Estados ahora centralizados en utils/orderStatus.
 
 export default function OrdersManagement() {
   const [orders, setOrders] = useState<CrmOrder[]>([])
@@ -178,10 +171,10 @@ export default function OrdersManagement() {
   }
 
   const getEstadoBadge = (estado: string) => {
-    const style = STATE_STYLES[estado] || { label: estado, color: '#6B7280' }
+    const info = getOrderStatusInfo(estado)
     return (
-      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: style.color + '20', color: style.color }}>
-        {style.label}
+      <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: info.color + '20', color: info.color }}>
+        {info.label}
       </span>
     )
   }
@@ -250,8 +243,8 @@ export default function OrdersManagement() {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-primary outline-none"
             >
               <option value="">Todos los estados</option>
-              {Object.keys(STATE_STYLES).map(k => (
-                <option key={k} value={k}>{STATE_STYLES[k].label}</option>
+              {ORDER_STATUS_FILTERS.map(s => (
+                <option key={s.code} value={s.code}>{s.label}</option>
               ))}
             </select>
           </div>
@@ -336,7 +329,13 @@ export default function OrdersManagement() {
             </thead>
             <tbody className="bg-white divide-y divide-gray-200">
               {filteredOrders.map((order) => (
-                <tr key={order.id} className="hover:bg-gray-50">
+                <tr
+                  key={order.id}
+                  className="hover:bg-gray-50 cursor-pointer transition-colors"
+                  onClick={() => {
+                    window.location.href = `/ebadmin/orders/${order.id}`
+                  }}
+                >
                   <td className="px-6 py-4 whitespace-nowrap">
                     <div className="text-sm font-medium text-gray-900">
                       #{order.order_number}
@@ -367,19 +366,7 @@ export default function OrdersManagement() {
                   <td className="px-6 py-4 whitespace-nowrap">
                     <span className="inline-flex px-2 py-1 text-xs font-medium rounded-full bg-gray-100 text-gray-700">{order.items_count} Artículo(s)</span>
                   </td>
-                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium">
-                    <div className="flex items-center gap-2">
-                      <button
-                        onClick={() => {
-                          setSelectedOrder(order)
-                          setShowOrderDetail(true)
-                        }}
-                        className="text-blue-600 hover:text-blue-900"
-                      >
-                        <Eye size={18} />
-                      </button>
-                    </div>
-                  </td>
+                  <td className="px-6 py-4 whitespace-nowrap text-sm font-medium text-blue-600">Ver detalle →</td>
                 </tr>
               ))}
             </tbody>
@@ -431,8 +418,8 @@ interface CrmOrderDetailModalProps { order: CrmOrder; onClose: () => void }
 function CrmOrderDetailModal({ order, onClose }: CrmOrderDetailModalProps) {
   const formatCurrency = (amount: number) => new Intl.NumberFormat('es-DO',{style:'currency',currency:'DOP'}).format(amount)
   const badge = (estado: string) => {
-    const style = STATE_STYLES[estado] || { label: estado, color: '#6B7280' }
-    return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{backgroundColor: style.color + '20', color: style.color}}>{style.label}</span>
+    const info = getOrderStatusInfo(estado)
+    return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{backgroundColor: info.color + '20', color: info.color}}>{info.label}</span>
   }
   return (
     <div className="fixed inset-0 z-50 overflow-y-auto">

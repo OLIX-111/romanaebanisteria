@@ -5,6 +5,7 @@ import AdminLayout from '@/components/admin/AdminLayout'
 import { useAdminAuth } from '@/components/admin/useAdminAuth'
 import { fetchAdminOrderById } from '@/lib/orders'
 import { ArrowLeft, Package, User, MapPin, AlertTriangle, RefreshCw } from 'lucide-react'
+import { getOrderStatusInfo } from '@/utils/orderStatus'
 
 interface CrmOrderDetail {
   id: string
@@ -45,24 +46,6 @@ interface CrmOrder {
   detalles: CrmOrderDetail[]
 }
 
-const STATE_STYLES: Record<string, { label: string; color: string }> = {
-  pending: { label: 'Pendiente', color: '#F59E0B' },
-  processing: { label: 'Procesando', color: '#3B82F6' },
-  shipped: { label: 'Envío', color: '#6366F1' },
-  delivered: { label: 'Entregado', color: '#16A34A' },
-  cancelled: { label: 'Cancelado', color: '#DC2626' },
-  refunded: { label: 'Reembolsado', color: '#0891B2' },
-}
-
-function EstadoBadge({ estado }: { estado: string }) {
-  const style = STATE_STYLES[estado] || { label: estado, color: '#6B7280' }
-  return (
-    <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-xs font-medium" style={{ backgroundColor: style.color + '20', color: style.color }}>
-      {style.label}
-    </span>
-  )
-}
-
 function formatCurrency(amount: number) {
   return new Intl.NumberFormat('es-DO', { style: 'currency', currency: 'DOP' }).format(amount)
 }
@@ -82,6 +65,11 @@ function LoadingSkeleton() {
   )
 }
 
+function StatusBadge({ estado }: { estado: string }) {
+  const info = getOrderStatusInfo(estado)
+  return <span className="inline-flex items-center gap-1 px-2 py-1 rounded-full text-[11px] font-medium" style={{backgroundColor: info.color + '20', color: info.color}}>{info.label}</span>
+}
+
 export default function AdminOrderDetailPage() {
   const router = useRouter()
   const { id } = router.query as { id?: string }
@@ -90,11 +78,12 @@ export default function AdminOrderDetailPage() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  const handleTabChange = (tab: 'dashboard' | 'orders' | 'clients') => {
+  const handleTabChange = (tab: 'dashboard' | 'orders' | 'clients' | 'services') => {
     switch (tab) {
       case 'dashboard': window.location.href = '/ebadmin'; break
       case 'orders': window.location.href = '/ebadmin/orders'; break
       case 'clients': window.location.href = '/ebadmin/clients'; break
+      case 'services': window.location.href = '/ebadmin/services/requests'; break
     }
   }
 
@@ -102,6 +91,7 @@ export default function AdminOrderDetailPage() {
     setLoading(true); setError(null)
     try {
       const resp = await fetchAdminOrderById(oid, 'detalles')
+      // resp.data is guaranteed after normalization
       setOrder(resp.data as any)
     } catch (e: any) {
       console.error('Error cargando orden', e)
@@ -150,21 +140,28 @@ export default function AdminOrderDetailPage() {
             </div>
           </div>
         )}
+        {!loading && !error && !order && (
+          <div className="p-4 bg-yellow-50 border border-yellow-200 rounded text-sm text-yellow-800">No se encontró la orden.</div>
+        )}
         {!loading && !error && order && (
           <div className="space-y-10">
             {/* Summary cards */}
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-              <div className="bg-blue-50 border border-blue-100 rounded-lg p-4">
-                <p className="text-[11px] font-medium uppercase text-blue-700">Creada</p>
-                <p className="text-sm font-semibold text-blue-900 mt-1">{new Date(order.created_at).toLocaleString('es-DO')}</p>
+            <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <p className="text-[11px] font-medium uppercase text-gray-500">Estado</p>
+                <div className="mt-1"><StatusBadge estado={order.estado} /></div>
               </div>
-              <div className="bg-amber-50 border border-amber-100 rounded-lg p-4">
-                <p className="text-[11px] font-medium uppercase text-amber-700">Estado</p>
-                <div className="mt-1"><EstadoBadge estado={order.estado} /></div>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <p className="text-[11px] font-medium uppercase text-gray-500">Creada</p>
+                <p className="text-sm font-semibold text-gray-900 mt-1">{new Date(order.created_at).toLocaleString('es-DO')}</p>
               </div>
-              <div className="bg-emerald-50 border border-emerald-100 rounded-lg p-4">
-                <p className="text-[11px] font-medium uppercase text-emerald-700">Total</p>
-                <p className="text-sm font-semibold text-emerald-900 mt-1">{formatCurrency(Number(order.monto_total||0))}</p>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <p className="text-[11px] font-medium uppercase text-gray-500">Total</p>
+                <p className="text-sm font-semibold text-gray-900 mt-1">{formatCurrency(Number(order.monto_total||0))}</p>
+              </div>
+              <div className="bg-white border border-gray-200 rounded-lg p-4">
+                <p className="text-[11px] font-medium uppercase text-gray-500">Artículos</p>
+                <p className="text-sm font-semibold text-gray-900 mt-1">{order.items_count}</p>
               </div>
             </div>
 
