@@ -212,7 +212,7 @@ export default function ClientsManagement() {
         {(debouncedSearch) && (
           <div className="flex flex-wrap gap-2 mt-4">
             <span className="inline-flex items-center gap-2 px-3 py-1 bg-gray-100 text-gray-700 rounded-full text-sm">
-              Búsqueda: "{debouncedSearch}"
+              Búsqueda: &quot;{debouncedSearch}&quot;
               <button onClick={()=> { setSearchTerm(''); setDebouncedSearch('') }} className="hover:text-gray-900">×</button>
             </span>
           </div>

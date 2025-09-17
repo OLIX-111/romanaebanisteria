@@ -128,6 +128,29 @@ export default function PresupuestoLayout() {
     codia: gateData?.codia || '',
   }
 
+  // Mirror of relevant Formik fields for hook-based side effects (cannot use hooks inside render props)
+  const [formikMirror, setFormikMirror] = useState({ tipoCodia: initialValues.tipoCodia, codia: initialValues.codia })
+
+  // Effect previously inside Formik render: keeps CODIA validation state in sync
+  useEffect(() => {
+    const { tipoCodia, codia } = formikMirror
+    if (!tipoCodia) {
+      setCodiaStatus('idle')
+      setCodiaData(null)
+      lastValidatedRef.current = ''
+      return
+    }
+    if (!codia.trim()) {
+      setCodiaStatus('idle')
+      setCodiaData(null)
+      lastValidatedRef.current = ''
+      return
+    }
+    if (lastValidatedRef.current && codia.trim() !== lastValidatedRef.current) {
+      setCodiaStatus('idle')
+    }
+  }, [formikMirror.tipoCodia, formikMirror.codia])
+
   const handleSubmit = async (values: typeof initialValues) => {
     const payload = {
       nombre: values.nombre.trim(),
@@ -286,24 +309,13 @@ export default function PresupuestoLayout() {
                   onSubmit={handleSubmit}
                 >
                   {({ values, errors, touched, setFieldValue, isSubmitting, handleSubmit }) => {
-                    // Sincronizar lógica de validación CODIA con cambios de Formik
-                    useEffect(() => {
-                      if (!values.tipoCodia) {
-                        setCodiaStatus('idle')
-                        setCodiaData(null)
-                        lastValidatedRef.current = ''
-                        return
-                      }
-                      if (!values.codia.trim()) {
-                        setCodiaStatus('idle')
-                        setCodiaData(null)
-                        lastValidatedRef.current = ''
-                        return
-                      }
-                      if (lastValidatedRef.current && values.codia.trim() !== lastValidatedRef.current) {
-                        setCodiaStatus('idle')
-                      }
-                    }, [values.tipoCodia, values.codia])
+                    // Update mirror state for top-level effect (no hooks here)
+                    if (formikMirror.tipoCodia !== values.tipoCodia || formikMirror.codia !== values.codia) {
+                      // Micro-batch update
+                      setFormikMirror(prev => (
+                        prev.tipoCodia === values.tipoCodia && prev.codia === values.codia ? prev : { tipoCodia: values.tipoCodia, codia: values.codia }
+                      ))
+                    }
 
                     return (
                       <Form onSubmit={handleSubmit} className="space-y-4">

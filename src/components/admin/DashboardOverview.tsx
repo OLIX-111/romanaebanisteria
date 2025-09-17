@@ -1,6 +1,7 @@
 "use client"
 
 import { useEffect, useState } from 'react'
+import Link from 'next/link'
 import { Package, CheckCircle, AlertTriangle, Clock, Truck } from 'lucide-react'
 import { fetchOrderAdmin } from '@/lib/orders'
 import { getOrderStatusInfo } from '@/utils/orderStatus'
@@ -210,10 +211,10 @@ export default function DashboardOverview() {
           <h2 className="text-xl font-semibold text-gray-900">Órdenes Recientes</h2>
           <div className="flex items-center gap-3">
             {loading && <span className="text-xs text-gray-400">Cargando...</span>}
-            <a
-              href="/ebadmin/orders"
-              className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
-            >Ver todas</a>
+              <Link
+                href="/ebadmin/orders"
+                className="text-xs font-medium text-blue-600 hover:text-blue-700 hover:underline focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 rounded"
+              >Ver todas</Link>
           </div>
         </div>
         {loading && loadingSkeleton}
