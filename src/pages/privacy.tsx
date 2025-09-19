@@ -29,7 +29,7 @@ export default function Privacy() {
           <p className="text-gray-700">
             En <strong>ROMAna Ebanistería</strong>, nos comprometemos a proteger tu privacidad y garantizar la seguridad de tu información personal. 
             Esta política de privacidad explica cómo recopilamos, utilizamos y protegemos tus datos cuando visitas nuestro sitio web 
-            (<a href="http://localhost:3000" className="text-blue-600 underline">www.romanaebanisteria.com</a>).
+            (<a href="www.romanaebanisteria.com" className="text-blue-600 underline">www.romanaebanisteria.com</a>).
           </p>
 
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">2. Información que Recopilamos</h2>

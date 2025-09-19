@@ -29,7 +29,7 @@ function formatCurrency(amount: number, currency: string) {
 
 function buildOrderHtml(data: any, opts: { client: boolean }): string {
   const currency = data.currency || "DOP"
-  const storeUrl = "http://localhost:3000"
+  const storeUrl = "www.romanaebanisteria.com"
   const logoUrl = "https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png"
   const items = (data.items || []) as Array<any>
   const itemsRows = items

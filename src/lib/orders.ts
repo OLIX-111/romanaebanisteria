@@ -148,9 +148,10 @@ export async function fetchOrders(authToken?: string | null, page: number = 1) :
   }
 }
 
-export async function fetchOrderAdmin() : Promise<OrdersListResponse> {
+export async function fetchOrderAdmin(page: number = 1) : Promise<OrdersListResponse> {
+  const qp = `?page=${page}`
   try {
-    const r = await fetch(`/crm/ordenes`, {
+    const r = await fetch(`/crm/ordenes${qp}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -163,7 +164,7 @@ export async function fetchOrderAdmin() : Promise<OrdersListResponse> {
     if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudieron obtener las órdenes')
     return json as OrdersListResponse
   } catch (err) {
-    const r = await fetch(`${BASE_URL}/crm/ordenes`, {
+    const r = await fetch(`${BASE_URL}/crm/ordenes${qp}`, {
       method: 'GET',
       headers: {
         'Accept': 'application/json',
@@ -224,4 +225,41 @@ export async function fetchAdminOrderById(id: string, include: string = 'detalle
     return json as OrderDetailResponse
   }
   return { data: json as any } as OrderDetailResponse
+}
+
+// Admin: update order status
+export interface AdminUpdateOrderStatusPayload { estado: string; nota?: string }
+export interface AdminUpdateOrderStatusResponse {
+  message?: string
+  data?: {
+    id: string
+    order_number?: string
+    estado_anterior?: string
+    estado_nuevo?: string
+    nota?: string
+    fecha_cambio?: string
+  }
+}
+
+export async function updateAdminOrderStatus(id: string, payload: AdminUpdateOrderStatusPayload): Promise<AdminUpdateOrderStatusResponse> {
+  const path = `/crm/ordenes/${id}/estado`
+  const headers: Record<string,string> = {
+    'Content-Type': 'application/json',
+    'Accept': 'application/json',
+    'X-Requested-With': 'XMLHttpRequest',
+    'Authorization': `Bearer 5|7yud9D0naVbdhuHOtTHRo6zM9AZAZAgER8AsVy3n17ded992`
+  }
+  // Try proxy first
+  try {
+    const r = await fetch(path, { method: 'PUT', headers, body: JSON.stringify(payload), redirect: 'manual' })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudo actualizar el estado')
+    return json as AdminUpdateOrderStatusResponse
+  } catch (err) {
+    const url = `${BASE_URL}${path}`
+    const r = await fetch(url, { method: 'PUT', headers, body: JSON.stringify(payload), redirect: 'manual' })
+    const json = await r.json().catch(()=>({}))
+    if (!r.ok) throw new Error(json?.message || json?.error || 'No se pudo actualizar el estado')
+    return json as AdminUpdateOrderStatusResponse
+  }
 }

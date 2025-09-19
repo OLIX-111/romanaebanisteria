@@ -33,38 +33,49 @@ export const ORDER_STATUS_MAP: Record<string, OrderStatusInfo> = {
     label: 'Pendiente aprobación',
     color: '#F59E0B',
     group: 'active',
-    legacyAliases: ['pending']
+    legacyAliases: ['pending', 'pendiente']
   },
   created: {
     code: 'created',
     label: 'Orden creada',
     color: '#6366F1',
-    group: 'active'
+    group: 'active',
+    legacyAliases: ['creada']
   },
   processing: {
     code: 'processing',
     label: 'En proceso',
     color: '#2563EB',
-    group: 'active'
+    group: 'active',
+    legacyAliases: ['processed', 'en_proceso', 'procesando']
   },
   in_transit: {
     code: 'in_transit',
     label: 'En tránsito',
     color: '#0EA5E9',
     group: 'active',
-    legacyAliases: ['shipped']
+    legacyAliases: ['shipped', 'en_transito', 'enviado']
   },
   delivered: {
     code: 'delivered',
     label: 'Entregado',
     color: '#16A34A',
-    group: 'terminal'
+    group: 'terminal',
+    legacyAliases: ['completed', 'entregado']
+  },
+  cancelled: {
+    code: 'cancelled',
+    label: 'Cancelado',
+    color: '#F43F5E',
+    group: 'terminal',
+    legacyAliases: ['canceled', 'cancelado']
   },
   refunded: {
     code: 'refunded',
     label: 'Reembolsado',
     color: '#0891B2',
-    group: 'terminal'
+    group: 'terminal',
+    legacyAliases: ['reembolsado']
   }
 }
 

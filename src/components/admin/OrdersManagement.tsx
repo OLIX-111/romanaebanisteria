@@ -70,7 +70,7 @@ interface CrmOrder {
     telefono: string
   } | null
   reclamada: boolean
-  order_number: number
+  order_number: string
   tracking_number: string
   items_count: number
   created_at: string
@@ -109,15 +109,14 @@ export default function OrdersManagement() {
   const loadOrders = async (page: number = 1) => {
     setLoading(true); setError(null)
     try {
-      const res = await fetchOrderAdmin() // API actual no soporta paginación cliente -> se usa todo y se pagina local
+      const res = await fetchOrderAdmin(page)
       const list: CrmOrder[] = (res.data as any) || []
-      // Ordenar descendente por fecha
-      list.sort((a: any, b: any) => new Date(b.created_at).getTime() - new Date(a.created_at).getTime())
       setOrders(list)
-      const total = list.length
-      setTotalOrders(total)
-      const perPage = 20
-      setTotalPages(Math.max(1, Math.ceil(total / perPage)))
+      // meta pagination from API
+      const meta = (res as any)?.meta || {}
+      const pagination = meta.pagination || meta
+      setTotalPages(Number(pagination?.last_page || 1))
+      setTotalOrders(Number(pagination?.total || list.length))
     } catch (e: any) {
       console.error('Error loading orders:', e)
       setError(e?.message || 'No se pudieron cargar las órdenes')
@@ -131,14 +130,14 @@ export default function OrdersManagement() {
     if (searchTerm) {
       const q = searchTerm.toLowerCase()
       filtered = filtered.filter(o =>
-        String(o.order_number).includes(q) ||
+        String(o.order_number).toLowerCase().includes(q) ||
         o.tracking_number.toLowerCase().includes(q) ||
         (o.contacto?.correo || '').toLowerCase().includes(q) ||
         (o.contacto?.nombre || '').toLowerCase().includes(q)
       )
     }
     if (filters.status) {
-      filtered = filtered.filter(o => o.estado === filters.status)
+      filtered = filtered.filter(o => getOrderStatusInfo(o.estado).code === filters.status)
     }
     if (filters.dateRange !== 'all') {
       const now = new Date(); let start: Date
@@ -150,13 +149,8 @@ export default function OrdersManagement() {
       }
       filtered = filtered.filter(o => new Date(o.created_at) >= start)
     }
-    // Paginar localmente
-    const perPage = 20
-    const startIdx = (currentPage - 1) * perPage
-    const pageSlice = filtered.slice(startIdx, startIdx + perPage)
-    setFilteredOrders(pageSlice)
-    setTotalPages(Math.max(1, Math.ceil(filtered.length / perPage)))
-    setTotalOrders(filtered.length)
+    // No paginar localmente: API entrega paginación. Sólo filtrado local sobre la página actual.
+    setFilteredOrders(filtered)
   }
 
   const handleStatusChange = async (_orderId: string, _new: string) => {
@@ -214,8 +208,8 @@ export default function OrdersManagement() {
         </div>
       </div>
       <div className="flex items-center justify-between text-xs text-gray-500 -mt-2">
-        <span>Total: {totalOrders} órdenes</span>
-        <span>Página {currentPage} de {totalPages}</span>
+  <span>Total: {totalOrders} órdenes</span>
+  <span>Página {currentPage} de {totalPages}</span>
       </div>
 
       {/* Filters */}
@@ -337,9 +331,7 @@ export default function OrdersManagement() {
                   }}
                 >
                   <td className="px-6 py-4 whitespace-nowrap">
-                    <div className="text-sm font-medium text-gray-900">
-                      #{order.order_number}
-                    </div>
+                    <div className="text-sm font-medium text-gray-900">{order.order_number}</div>
                     <div className="text-sm text-gray-500">
                       {order.tracking_number}
                     </div>
@@ -397,7 +389,7 @@ export default function OrdersManagement() {
                 className="px-3 py-1 rounded border text-gray-600 hover:bg-white disabled:opacity-40 disabled:cursor-not-allowed"
               >Siguiente</button>
             </div>
-            <div className="text-xs text-gray-500">Mostrando {(currentPage - 1)*20 + 1} - {Math.min(currentPage*20, totalOrders)} de {totalOrders}</div>
+            <div className="text-xs text-gray-500">Página {currentPage} de {totalPages} • Total {totalOrders}</div>
           </div>
         )}
       </div>

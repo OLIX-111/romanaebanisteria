@@ -363,7 +363,7 @@ export default function PresupuestoLayout() {
                   )}
                   {values.tipoCodia && (
                     <div>
-                      <label className="block text-sm text-gray-700 mb-1 flex items-center gap-2">Número de identificación del CODIA
+                      <label className="text-sm text-gray-700 mb-1 flex items-center gap-2">Número de identificación del CODIA
                         {codiaStatus === 'valid' && <span className="text-green-600 text-xs font-medium">Válido</span>}
                         {codiaStatus === 'not_found' && <span className="text-red-600 text-xs font-medium">No encontrado</span>}
                         {codiaStatus === 'error' && <span className="text-orange-600 text-xs font-medium">Error</span>}

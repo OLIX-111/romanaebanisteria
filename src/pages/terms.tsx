@@ -28,7 +28,7 @@ export default function Terms() {
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Introducción</h2>
           <p className="text-gray-700">
             Bienvenido a <strong>ROMAna Ebanistería</strong>. Al acceder y utilizar nuestro sitio web 
-            (<a href="http://localhost:3000" className="text-blue-600 underline">www.romanaebanisteria.com</a>), 
+            (<a href="www.romanaebanisteria.com" className="text-blue-600 underline">www.romanaebanisteria.com</a>), 
             aceptas cumplir con los siguientes términos y condiciones de uso. Si no estás de acuerdo con alguno de estos términos, 
             por favor, no utilices nuestro sitio.
           </p>

@@ -8,7 +8,7 @@ index e16981e..676686b 100644
      remotePatterns: [
 -      {
 -        protocol: "https",
--        hostname: "http://localhost:3000",
+-        hostname: "www.romanaebanisteria.com",
 -      },
 -      {
 -        protocol: "https",

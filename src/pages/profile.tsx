@@ -10,6 +10,7 @@ import Link from "next/link"
 import { useAuth } from "@/context/AuthContext"
 // NOTE: fetchOrders remains imported; fetchOrderByTracking may not exist if lib/orders missing in project tree.
 import { fetchOrders, fetchOrderByTracking as fetchOrderByTrackingMaybe } from '@/lib/orders'
+import { fetchServiceRequestTrackingByNumber, fetchUserServiceServiceRequests, UserServiceRequestItem, ServiceRequestTrackingResponse } from '@/lib/serviceRequests'
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -25,6 +26,15 @@ export default function ProfilePage() {
   const [trackingLoading, setTrackingLoading] = useState(false)
   const [trackingError, setTrackingError] = useState<string | null>(null)
   const [trackedOrder, setTrackedOrder] = useState<any | null>(null)
+  // Service Requests (usuario autenticado)
+  const [serviceRequests, setServiceRequests] = useState<UserServiceRequestItem[]>([])
+  const [serviceRequestsLoading, setServiceRequestsLoading] = useState(false)
+  const [serviceRequestsError, setServiceRequestsError] = useState<string | null>(null)
+  // Tracking de solicitudes de servicio (público / autenticado)
+  const [serviceTrackingCode, setServiceTrackingCode] = useState("")
+  const [serviceTrackingLoading, setServiceTrackingLoading] = useState(false)
+  const [serviceTrackingError, setServiceTrackingError] = useState<string | null>(null)
+  const [trackedServiceRequest, setTrackedServiceRequest] = useState<ServiceRequestTrackingResponse['data'] | null>(null)
 
   // Removed auto-redirect to allow public tracking access when not authenticated.
   // We'll conditionally render login prompt + tracking UI instead.
@@ -54,6 +64,28 @@ export default function ProfilePage() {
       }
     }
     load()
+    return () => { active = false }
+  }, [user, token])
+
+  // Fetch user service requests
+  useEffect(() => {
+    let active = true
+    async function loadServiceRequests() {
+      if(!user || !token) return
+      setServiceRequestsLoading(true)
+      setServiceRequestsError(null)
+      try {
+        const resp = await fetchUserServiceServiceRequests(token)
+        if(!active) return
+        setServiceRequests(resp.data || [])
+      } catch(e:any) {
+        if(!active) return
+        setServiceRequestsError(e?.message || 'No se pudieron cargar las solicitudes de servicio')
+      } finally {
+        if(active) setServiceRequestsLoading(false)
+      }
+    }
+    loadServiceRequests()
     return () => { active = false }
   }, [user, token])
 
@@ -95,7 +127,7 @@ export default function ProfilePage() {
             {flash}
           </div>
         )}
-        <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Perfil y rastreo de órdenes</h1>
+  <h1 className="text-3xl font-semibold tracking-tight text-gray-900">Perfil, órdenes y servicios</h1>
         {/* Tracking Section (always visible) */}
         <section className="mt-8 border border-gray-200 p-6">
           <h2 className="text-sm font-semibold tracking-wide text-gray-800 mb-4">Rastrea tu orden</h2>
@@ -266,6 +298,118 @@ export default function ProfilePage() {
             </div>
           )}
         </section>
+
+        {/* Tracking Solicitudes de Servicio */}
+        <section className="mt-8 border border-gray-200 p-6">
+          <h2 className="text-sm font-semibold tracking-wide text-gray-800 mb-4">Rastrea tu solicitud de servicio</h2>
+          <p className="text-sm text-gray-600 mb-4">Ingresa el número de solicitud (Ej: SRV-0001) para ver su estado y progreso.</p>
+          <form
+            onSubmit={async (e) => {
+              e.preventDefault()
+              const code = serviceTrackingCode.trim()
+              if(!code){ setServiceTrackingError('Ingresa un número de solicitud'); return }
+              setServiceTrackingError(null)
+              setTrackedServiceRequest(null)
+              setServiceTrackingLoading(true)
+              try {
+                const resp = await fetchServiceRequestTrackingByNumber(code)
+                setTrackedServiceRequest(resp.data)
+              } catch(err:any) {
+                // Handle various error shapes: { error: { code, message } }, axios-like, or generic Error
+                try {
+                  const apiErr = err?.error || err
+                  const status = err?.response?.status ?? err?.status
+                  const codeKey = apiErr?.code || apiErr?.error?.code
+                  if (status === 404 || codeKey === 'SOLICITUD_NOT_FOUND') {
+                    setServiceTrackingError('Solicitud no encontrada')
+                  } else if (typeof status === 'number' && status >= 500) {
+                    setServiceTrackingError('Error del servidor. Inténtalo de nuevo más tarde.')
+                  } else if (typeof apiErr?.message === 'string' && apiErr.message.trim()) {
+                    setServiceTrackingError(apiErr.message)
+                  } else {
+                    setServiceTrackingError('No se pudo realizar el rastreo en este momento')
+                  }
+                } catch {
+                  setServiceTrackingError('No se pudo realizar el rastreo en este momento')
+                }
+              } finally {
+                setServiceTrackingLoading(false)
+              }
+            }}
+            className="flex flex-col sm:flex-row gap-3 items-stretch sm:items-end"
+          >
+            <div className="flex-1">
+              <label className="block text-xs font-medium text-gray-500 mb-1">Número de solicitud</label>
+              <input
+                type="text"
+                value={serviceTrackingCode}
+                onChange={e=> setServiceTrackingCode(e.target.value.toUpperCase())}
+                placeholder="Ej: SRV-0001"
+                className="w-full border border-gray-300 px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-gray-800 focus:border-gray-800 uppercase"
+                disabled={serviceTrackingLoading}
+              />
+            </div>
+            <button
+              type="submit"
+              disabled={serviceTrackingLoading}
+              className="px-5 py-2 text-sm bg-gray-900 text-white hover:bg-gray-800 disabled:opacity-60 disabled:cursor-not-allowed"
+            >{serviceTrackingLoading ? 'Buscando...' : 'Rastrear'}</button>
+          </form>
+          {serviceTrackingError && <p className="mt-3 text-xs text-red-600">{serviceTrackingError}</p>}
+          {trackedServiceRequest && (
+            <div className="mt-6 border border-gray-200">
+              <div className="p-5 grid gap-4 md:grid-cols-4 text-sm">
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">Solicitud</p>
+                  <p className="font-semibold text-gray-900">{trackedServiceRequest.numero_solicitud || trackedServiceRequest.id}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">Servicio</p>
+                  <p className="font-medium text-gray-800">{trackedServiceRequest.servicio?.nombre}</p>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">Estado</p>
+                  <span className="inline-flex items-center rounded-sm px-2 py-0.5 text-[11px] font-medium bg-gray-900 text-white">{trackedServiceRequest.estado_actual}</span>
+                </div>
+                <div>
+                  <p className="text-[11px] uppercase tracking-wide text-gray-500">Creada</p>
+                  <p>{new Date(trackedServiceRequest.fecha_creacion).toLocaleString('es-DO')}</p>
+                </div>
+              </div>
+              {/* Historial agrupado */}
+              <div className="border-t border-gray-200">
+                <div className="p-5">
+                  <h3 className="text-xs font-semibold tracking-wide text-gray-700 mb-3">Historial por estado</h3>
+                  {trackedServiceRequest.historial_por_estado && Object.keys(trackedServiceRequest.historial_por_estado).length > 0 ? (
+                    <div className="space-y-5">
+                      {Object.entries(trackedServiceRequest.historial_por_estado).map(([estado, eventos]) => (
+                        <div key={estado} className="border border-gray-100">
+                          <div className="px-4 py-2 bg-gray-50 text-xs font-semibold text-gray-700 flex items-center gap-2">
+                            <span className="inline-flex h-2 w-2 rounded-full bg-gray-900" /> {estado}
+                          </div>
+                          <ol className="p-4 space-y-3 text-xs">
+                            {eventos.map((ev, idx) => (
+                              <li key={idx} className="flex items-start gap-3">
+                                <span className="mt-0.5 h-2 w-2 rounded-full bg-gray-400 flex-shrink-0" />
+                                <div className="flex-1">
+                                  <p className="font-medium text-gray-800">{new Date(ev.fecha).toLocaleString('es-DO')}</p>
+                                  {ev.nota && <p className="text-[11px] text-gray-600">{ev.nota}</p>}
+                                  {ev.usuario?.nombre && <p className="text-[11px] text-gray-500">Por: {ev.usuario.nombre}</p>}
+                                </div>
+                              </li>
+                            ))}
+                          </ol>
+                        </div>
+                      ))}
+                    </div>
+                  ) : (
+                    <p className="text-xs text-gray-600">Sin historial disponible.</p>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+        </section>
         {user && (
           <div className="mt-8 grid gap-8 lg:grid-cols-2">
             <section className="border border-gray-200 p-6">
@@ -327,6 +471,53 @@ export default function ProfilePage() {
             >Refrescar</button>
           </div>
         </section>
+        )}
+
+        {user && (
+          <section className="mt-8 border border-gray-200 p-6">
+            <div className="flex items-start justify-between gap-4 mb-4">
+              <h2 className="text-sm font-semibold tracking-wide text-gray-800">Solicitudes de servicio</h2>
+              <button
+                onClick={() => {
+                  if(!token) return
+                  setServiceRequestsLoading(true)
+                  fetchUserServiceServiceRequests(token).then(r=> setServiceRequests(r.data||[])).catch(e=> setServiceRequestsError(e?.message||'Error refrescando')).finally(()=> setServiceRequestsLoading(false))
+                }}
+                className="text-xs px-3 py-2 border border-gray-300 hover:bg-gray-50"
+                disabled={serviceRequestsLoading}
+              >Refrescar</button>
+            </div>
+            {serviceRequestsLoading ? (
+              <p className="text-sm text-gray-600">Cargando solicitudes...</p>
+            ) : serviceRequestsError ? (
+              <p className="text-sm text-red-600">{serviceRequestsError}</p>
+            ) : serviceRequests.length === 0 ? (
+              <p className="text-sm text-gray-600">No hay solicitudes todavía.</p>
+            ) : (
+              <div className="overflow-hidden border border-gray-200 divide-y">
+                {serviceRequests.map(sr => (
+                  <div key={sr.id} className="p-4 flex flex-col sm:flex-row sm:items-center gap-4 text-sm">
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium text-gray-900">Solicitud {sr.numero_solicitud || sr.id}</p>
+                      <p className="text-gray-600">{new Date(sr.created_at).toLocaleString('es-DO')}</p>
+                      <p className="text-xs text-gray-500 mt-1">Estado: <span className="font-medium text-gray-700">{sr.estado}</span></p>
+                    </div>
+                    <div className="flex items-center gap-4 flex-shrink-0">
+                      {sr.fecha_deseada && <div className="text-xs text-gray-600">Fecha deseada: {new Date(sr.fecha_deseada).toLocaleDateString('es-DO')}</div>}
+                      <button
+                        onClick={() => { setServiceTrackingCode(sr.numero_solicitud || sr.id); setTrackedServiceRequest(null); setTimeout(()=>{ (document?.activeElement as HTMLElement)?.blur?.(); },0) }}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-xs font-medium hover:bg-gray-50"
+                      >Rastrear</button>
+                      <Link
+                        href={`/profile/servicios/solicitudes/${sr.id}`}
+                        className="inline-flex items-center gap-1 px-3 py-1.5 border border-gray-300 text-xs font-medium hover:bg-gray-50"
+                      >Ver detalle</Link>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            )}
+          </section>
         )}
       </div>
       <Footer />
