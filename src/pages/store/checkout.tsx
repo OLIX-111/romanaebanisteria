@@ -82,7 +82,9 @@ export default function CheckoutPage() {
 
   const MAX_VOUCHER_SIZE = 5 * 1024 * 1024 // 5MB
 
-  function handleVoucherFile(file: File | undefined) {
+  const [uploading, setUploading] = useState(false);
+
+  async function handleVoucherFile(file: File | undefined) {
     if (!file) {
       setVoucherError(null)
       setForm(f => ({ ...f, voucherFile: undefined, voucherPreview: '' }))
@@ -101,12 +103,29 @@ export default function CheckoutPage() {
       return
     }
     setVoucherError(null)
-    const reader = new FileReader()
-    reader.onload = ev => {
-      const result = ev.target?.result as string
-      setForm(f => ({ ...f, voucherFile: file, voucherPreview: result }))
+    setUploading(true);
+    const formData = new FormData();
+    formData.append('file', file);
+
+    try {
+      const response = await fetch('/api/uplaod-file', {
+        method: 'POST',
+        body: formData,
+      });
+
+      if (!response.ok) {
+        throw new Error('Error al subir el archivo');
+      }
+
+      const { url } = await response.json();
+      setForm(f => ({ ...f, voucherFile: file, voucherPreview: url }));
+    } catch (error) {
+      console.error('Error uploading file:', error);
+      setVoucherError('Error al subir el archivo. Intenta de nuevo.');
+      setForm(f => ({ ...f, voucherFile: undefined, voucherPreview: '' }));
+    } finally {
+      setUploading(false);
     }
-    reader.readAsDataURL(file)
   }
 
   const isValid =
