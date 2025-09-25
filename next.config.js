@@ -66,7 +66,8 @@ const nextConfig = {
       'storage.googleapis.com',
   'fontanasrl.odoo.com',
   'encrypted-tbn0.gstatic.com',
-  'puertasdesegura.com'
+  'puertasdesegura.com',
+  'ochoa.com.do'
     ],
   },
   i18n: {
