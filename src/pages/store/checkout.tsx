@@ -13,8 +13,107 @@ import { useRouter } from 'next/navigation'
 import { createOrder } from '@/lib/orders'
 import { getCartToken } from '@/lib/cart'
 import { useAuth } from '@/context/AuthContext'
-import { File } from "lucide-react"
+import { File, CreditCard, ShieldCheck, CheckCircle2, Lock } from "lucide-react"
 // (Se removieron imports y lógica de CardNet)
+
+type CardFormState = {
+  cardNumber: string
+  name: string
+  expMonth: string
+  expYear: string
+  cvv: string
+  email: string
+}
+
+const sanitizeCardNumber = (value: string) => value.replace(/\D/g, "").slice(0, 19)
+
+const formatCardNumber = (value: string) => {
+  const sanitized = sanitizeCardNumber(value)
+  return sanitized.replace(/(\d{1,4})/g, "$1 ").trim()
+}
+
+const maskCardNumber = (value: string) => {
+  const sanitized = sanitizeCardNumber(value)
+  if (sanitized.length <= 4) return sanitized
+  const maskedSection = sanitized.slice(0, -4).replace(/\d/g, "•")
+  return `${maskedSection}${sanitized.slice(-4)}`.replace(/(.{4})/g, "$1 ").trim()
+}
+
+const luhnCheck = (value: string) => {
+  const digits = sanitizeCardNumber(value)
+  if (!digits) return false
+  let sum = 0
+  let shouldDouble = false
+  for (let i = digits.length - 1; i >= 0; i--) {
+    let digit = parseInt(digits.charAt(i), 10)
+    if (shouldDouble) {
+      digit *= 2
+      if (digit > 9) digit -= 9
+    }
+    sum += digit
+    shouldDouble = !shouldDouble
+  }
+  return sum % 10 === 0
+}
+
+const extractXmlTagValue = (xml: string | undefined, tag: string): string | null => {
+  if (!xml) return null
+  const regex = new RegExp(`<${tag}>(.*?)<\\/${tag}>`)
+  const match = xml.match(regex)
+  return match ? match[1] : null
+}
+
+const validateCardForm = (values: CardFormState) => {
+  const errors: Partial<Record<keyof CardFormState, string>> = {}
+  const numberDigits = sanitizeCardNumber(values.cardNumber)
+  if (!numberDigits) {
+    errors.cardNumber = "Ingresa el número de la tarjeta"
+  } else if (numberDigits.length < 13 || numberDigits.length > 19 || !luhnCheck(numberDigits)) {
+    errors.cardNumber = "Número de tarjeta inválido"
+  }
+
+  if (!values.name.trim()) {
+    errors.name = "Nombre requerido"
+  }
+
+  const month = parseInt(values.expMonth, 10)
+  if (!values.expMonth) {
+    errors.expMonth = "Mes requerido"
+  } else if (Number.isNaN(month) || month < 1 || month > 12) {
+    errors.expMonth = "Mes inválido"
+  }
+
+  const now = new Date()
+  const currentYear = now.getFullYear()
+  const currentMonth = now.getMonth() + 1
+  if (!values.expYear) {
+    errors.expYear = "Año requerido"
+  } else {
+    const normalizedYear = values.expYear.length === 2 ? Number(`20${values.expYear}`) : Number(values.expYear)
+    if (Number.isNaN(normalizedYear) || normalizedYear < currentYear) {
+      errors.expYear = "Año inválido"
+    } else if (normalizedYear === currentYear && month < currentMonth) {
+      errors.expMonth = "La tarjeta está vencida"
+    }
+  }
+
+  if (!values.cvv) {
+    errors.cvv = "CVV requerido"
+  } else if (!/^\d{3,4}$/.test(values.cvv)) {
+    errors.cvv = "CVV inválido"
+  }
+
+  if (!values.email) {
+    errors.email = "Correo requerido"
+  } else if (!/^.+@.+\..+$/.test(values.email)) {
+    errors.email = "Correo inválido"
+  }
+
+  return errors
+}
+
+const MONTH_OPTIONS = Array.from({ length: 12 }, (_, index) => String(index + 1).padStart(2, "0"))
+const YEAR_OPTIONS = Array.from({ length: 12 }, (_, index) => String(new Date().getFullYear() + index))
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -28,13 +127,13 @@ export default function CheckoutPage() {
     phone: "",
     workPhone: "",
     homePhone: "",
-    address: "", 
+    address: "",
     city: "",
     province: "",
     postalCode: "",
     notes: "",
     cedula: "",
-    paymentMethod: "transferencia", // transferencia | tarjeta
+    paymentMethod: "tarjeta", // transferencia | tarjeta
     valorFiscal: false,
     rnc: "",
     comentarioPago: "",
@@ -54,6 +153,18 @@ export default function CheckoutPage() {
   const [voucherDragging, setVoucherDragging] = useState(false)
   const [copiedField, setCopiedField] = useState<string | null>(null)
 
+  const [cardForm, setCardForm] = useState<CardFormState>({
+    cardNumber: "",
+    name: "",
+    expMonth: "",
+    expYear: "",
+    cvv: "",
+    email: "",
+  })
+  const [cardErrors, setCardErrors] = useState<Partial<Record<keyof CardFormState, string>>>({})
+  const [processingPayment, setProcessingPayment] = useState(false)
+  const [paymentError, setPaymentError] = useState<string | null>(null)
+  const [paymentReceipt, setPaymentReceipt] = useState<any>(null)
   type BankAccount = {
     id: string
     currency: string
@@ -70,6 +181,34 @@ export default function CheckoutPage() {
     { id: 'dop-corriente-reservas', currency: 'DOP', tipo: 'Cuenta Corriente', numero: '3850000860', banco: 'Banco Reservas RD', nombre: 'Romana Ebanistería', rnc: '131132359' }
   ]
 
+  useEffect(() => {
+    const fullName = `${form.firstName} ${form.lastName}`.trim()
+    setCardForm(prev => {
+      let changed = false
+      let next = prev
+
+      if (form.email && prev.email !== form.email) {
+        next = { ...next, email: form.email }
+        changed = true
+      }
+
+      if (fullName && !prev.name.trim()) {
+        next = { ...next, name: fullName }
+        changed = true
+      }
+
+      return changed ? next : prev
+    })
+  }, [form.firstName, form.lastName, form.email])
+
+  useEffect(() => {
+    if (form.paymentMethod === 'tarjeta') {
+      setCardErrors(validateCardForm(cardForm))
+    } else {
+      setCardErrors({})
+    }
+  }, [cardForm, form.paymentMethod])
+
   function copyToClipboard(label: string, value: string) {
     try {
       navigator.clipboard.writeText(value)
@@ -82,7 +221,7 @@ export default function CheckoutPage() {
 
   const MAX_VOUCHER_SIZE = 5 * 1024 * 1024 // 5MB
 
-  const [uploading, setUploading] = useState(false);
+  const [uploading, setUploading] = useState(false)
 
   async function handleVoucherFile(file: File | undefined) {
     if (!file) {
@@ -128,8 +267,21 @@ export default function CheckoutPage() {
     }
   }
 
-  const isValid =
-    form.firstName && form.lastName && form.email && form.phone && form.address && form.city && form.province && form.cedula && (form.paymentMethod !== 'transferencia' || form.paymentMethod === 'transferencia') && (!form.valorFiscal || (form.valorFiscal && form.rnc))
+  const baseFormValid = Boolean(
+    form.firstName &&
+    form.lastName &&
+    form.email &&
+    form.phone &&
+    form.address &&
+    form.city &&
+    form.province &&
+    form.cedula &&
+    (!form.valorFiscal || (form.valorFiscal && form.rnc))
+  )
+
+  const isCardValid = form.paymentMethod !== 'tarjeta' || Object.keys(cardErrors).length === 0
+
+  const isValid = baseFormValid && isCardValid
 
   // Eliminado flujo de pago con tarjeta.
 
@@ -137,93 +289,177 @@ export default function CheckoutPage() {
   async function handleCustomerInfoSubmit(e: React.FormEvent) {
     e.preventDefault()
     if (!isValid || count === 0) return
+
     setSubmitting(true)
+    setOrderError(null)
+    setPaymentError(null)
+
+    const amountString = subtotal.toFixed(2)
+    let paymentMeta: {
+      responseCode: string
+      authCode?: string | null
+      rrn?: string | null
+      maskedPan?: string | null
+      pnRef?: string | null
+      invoiceNumber?: string | null
+    } | null = null
 
     try {
       if (!isValid) return
-      {
-        setCreatingOrder(true)
-        setOrderError(null)
-        try {
-          const carrito_token = getCartToken()
-          if (!carrito_token) throw new Error('No hay carrito activo')
-          const payload = {
-            carrito_token,
-            direccion_envio: {
-              calle: form.address,
-              ciudad: form.city,
-              provincia: form.province,
-              pais: 'DO',
-              codigo_postal: form.postalCode || ''
-            },
-            contacto: {
-              nombre: form.firstName,
-              apellido: form.lastName,
-              correo: form.email,
-              telefono: form.phone,
-              cedula: form.cedula,
-              payment_method: form.paymentMethod,
-              valor_fiscal: form.valorFiscal,
-              rnc: form.rnc || null,
-              comentario_pago: form.comentarioPago || null,
-              voucher: form.voucherPreview || null
-            }
-          }
-          const resp = await createOrder(payload, authToken)
-          const data = resp.data
-          const tracking = data.tracking_number || data.order_number
 
-          // Simular pago inmediatamente y disparar emails con QR reutilizando el tracking real
-          try {
-            await fetch('/api/payments/process-order', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                orderId: String(data.order_number || Date.now()),
-                trackingNumber: tracking,
-                items: items.map(it => ({ id: String(it.id), name: it.name, quantity: it.quantity, price: it.price, image: it.image })),
-                customer: {
-                  firstName: form.firstName,
-                  lastName: form.lastName,
-                  email: form.email,
-                  phone: form.phone,
-                  address: form.address,
-                  city: form.city,
-                  province: form.province,
-                  postalCode: form.postalCode,
-                  notes: form.notes,
-                },
-                totals: { subtotal, tax: 0, total: subtotal },
-                payment: {
-                  metodo: form.paymentMethod,
-                  valorFiscal: form.valorFiscal,
-                  rnc: form.rnc || null,
-                  cedula: form.cedula,
-                  comentario: form.comentarioPago || null,
-                  voucher: form.voucherPreview || null,
-                  tarjetaDisponible: false
-                }
-              })
-            }).catch(err => console.warn('Fallo simulando process-order:', err))
-          } catch (simErr) {
-            console.warn('No se pudo simular el pago / enviar emails:', simErr)
-          }
+      if (form.paymentMethod === 'tarjeta') {
+        const errors = validateCardForm(cardForm)
+        setCardErrors(errors)
+        if (Object.keys(errors).length > 0) {
+          throw new Error('Corrige los datos de la tarjeta antes de continuar.')
+        }
 
-          try { await clear() } catch (clrErr) { console.warn('No se pudo vaciar el carrito después de crear la orden', clrErr) }
-          setRedirecting(true)
-          router.replace(`/store/checkout/success/${tracking}?just_created=1`)
-          return
-        } catch (er: any) {
-          console.error('Error creando orden:', er)
-          setOrderError(er?.message || 'No se pudo crear la orden')
-        } finally {
-          setCreatingOrder(false)
+        setProcessingPayment(true)
+        const paymentResponse = await fetch('/api/payments/card', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            cardNumber: sanitizeCardNumber(cardForm.cardNumber),
+            expMonth: cardForm.expMonth,
+            expYear: cardForm.expYear,
+            cvv: cardForm.cvv,
+            name: cardForm.name,
+            email: cardForm.email || form.email,
+            amount: amountString,
+          })
+        })
+
+        if (!paymentResponse.ok) {
+          const errorBody = await paymentResponse.json().catch(() => null)
+          const errorMessage = errorBody?.error || errorBody?.message || errorBody?.details?.message || 'No se pudo procesar el pago con tarjeta.'
+          throw new Error(errorMessage)
+        }
+
+        const paymentData = await paymentResponse.json()
+        const data = paymentData?.data || {}
+        const transaction = data?.transaction || {}
+        const approvalCode = extractXmlTagValue(data?.raw_body, 'approval-code')
+
+        paymentMeta = {
+          responseCode: transaction?.responseCode || data?.responseCode || '00',
+          authCode: approvalCode,
+          rrn: data?.reference_number || null,
+          maskedPan: maskCardNumber(cardForm.cardNumber),
+          pnRef: transaction?.pnRef || data?.pnRef || null,
+          invoiceNumber: data?.invoice_number || null,
+        }
+
+        setPaymentReceipt({
+          message: data?.message || 'Pago aprobado',
+          amount: data?.transaction?.amount || amountString,
+          reference: data?.reference_number || transaction?.pnRef,
+          approvalCode,
+        })
+
+        setProcessingPayment(false)
+      } else {
+        setPaymentReceipt(null)
+      }
+
+      setCreatingOrder(true)
+      const carrito_token = getCartToken()
+      if (!carrito_token) throw new Error('No hay carrito activo')
+
+      const payload = {
+        carrito_token,
+        payment_method: form.paymentMethod,
+        direccion_envio: {
+          calle: form.address,
+          ciudad: form.city,
+          provincia: form.province,
+          pais: 'DO',
+          codigo_postal: form.postalCode || ''
+        },
+        contacto: {
+          nombre: form.firstName,
+          apellido: form.lastName,
+          correo: form.email,
+          telefono: form.phone,
+          cedula: form.cedula,
+          valor_fiscal: form.valorFiscal,
+          rnc: form.rnc || null,
+          comentario_pago: form.comentarioPago || null,
+          voucher: form.paymentMethod === 'transferencia' ? form.voucherPreview || null : null
         }
       }
-    } catch (error) {
-      console.error('Error en validación:', error)
-      alert('Error al procesar la información. Intenta de nuevo.')
+
+      const resp = await createOrder(payload, authToken)
+      const data = resp.data
+      const tracking = data.tracking_number || data.order_number
+
+      try {
+        await fetch('/api/payments/process-order', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            orderId: String(data.order_number || Date.now()),
+            trackingNumber: tracking,
+            transactionId: paymentMeta?.pnRef || undefined,
+            sessionId: paymentMeta?.invoiceNumber || undefined,
+            items: items.map(it => ({ id: String(it.id), name: it.name, quantity: it.quantity, price: it.price, image: it.image })),
+            customer: {
+              firstName: form.firstName,
+              lastName: form.lastName,
+              email: form.email,
+              phone: form.phone,
+              address: form.address,
+              city: form.city,
+              province: form.province,
+              postalCode: form.postalCode,
+              notes: form.notes,
+            },
+            totals: { subtotal, tax: 0, total: subtotal },
+            payment: {
+              metodo: form.paymentMethod,
+              valorFiscal: form.valorFiscal,
+              rnc: form.rnc || null,
+              cedula: form.cedula,
+              comentario: form.comentarioPago || null,
+              voucher: form.paymentMethod === 'transferencia' ? form.voucherPreview || null : null,
+              tarjetaDisponible: form.paymentMethod === 'tarjeta',
+              responseCode: paymentMeta?.responseCode || '00',
+              authCode: paymentMeta?.authCode || null,
+              rrn: paymentMeta?.rrn || null,
+              maskedPan: paymentMeta?.maskedPan || null,
+            }
+          })
+        }).catch(err => console.warn('Fallo simulando process-order:', err))
+      } catch (simErr) {
+        console.warn('No se pudo simular el pago / enviar emails:', simErr)
+      }
+
+      if (form.paymentMethod === 'tarjeta') {
+        setCardForm({
+          cardNumber: '',
+          name: '',
+          expMonth: '',
+          expYear: '',
+          cvv: '',
+          email: form.email,
+        })
+      }
+
+      try { await clear() } catch (clrErr) { console.warn('No se pudo vaciar el carrito después de crear la orden', clrErr) }
+      setRedirecting(true)
+      router.replace(`/store/checkout/success/${tracking}?just_created=1`)
+      return
+    } catch (error: any) {
+      console.error('Error procesando checkout:', error)
+      if (form.paymentMethod === 'tarjeta' && (!paymentMeta || error?.message?.includes('tarjeta'))) {
+        setPaymentError(error?.message || 'No se pudo procesar el pago con tarjeta.')
+        setOrderError(null)
+        setPaymentReceipt(null)
+      } else {
+        setOrderError(error?.message || 'No se pudo crear la orden')
+      }
     } finally {
+      setProcessingPayment(false)
+      setCreatingOrder(false)
       setSubmitting(false)
     }
   }
@@ -367,7 +603,7 @@ export default function CheckoutPage() {
                             required
                           />
                         </div>
-                        
+
                         {/* Campos adicionales para pasarela eliminados */}
                       </div>
                     </section>
@@ -431,32 +667,17 @@ export default function CheckoutPage() {
                       </div>
                     </section>
 
+
+
+
                     {/* Métodos de pago */}
                     <section className="bg-white rounded-lg border border-slate-200/60 p-8 shadow-sm">
                       <h2 className="text-xl font-semibold tracking-tight text-slate-900 mb-8 pb-4 border-b border-slate-100">Pago</h2>
+
                       <div className="space-y-6">
-                        <div className="space-y-3">
-                          <p className="text-sm font-medium text-slate-700">Método de pago</p>
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            <label className={`border rounded-sm p-4 cursor-pointer flex items-start gap-3 ${form.paymentMethod==='transferencia' ? 'border-slate-900 ring-1 ring-slate-900' : 'border-slate-200 hover:border-slate-300'}`}> 
-                              <input type="radio" name="paymentMethod" value="transferencia" className="mt-1" checked={form.paymentMethod==='transferencia'} onChange={()=> setForm({...form, paymentMethod:'transferencia'})} />
-                              <div className="space-y-1">
-                                <p className="text-sm font-semibold text-slate-900">Transferencia bancaria</p>
-                                <p className="text-xs text-slate-600">Adjunta el comprobante (voucher) para acelerar la verificación.</p>
-                              </div>
-                            </label>
-                            <label className={`border rounded-sm p-4 flex items-start gap-3 opacity-50 cursor-not-allowed bg-slate-50`}>
-                              <input type="radio" name="paymentMethod" value="tarjeta" className="mt-1" disabled />
-                              <div className="space-y-1">
-                                <p className="text-sm font-semibold text-slate-900">Tarjeta (no disponible)</p>
-                                <p className="text-xs text-slate-600">Temporalmente deshabilitado.</p>
-                              </div>
-                            </label>
-                          </div>
-                        </div>
 
                         <div className="flex items-center gap-2">
-                          <input id="valorFiscal" type="checkbox" checked={form.valorFiscal} onChange={(e)=> setForm({...form, valorFiscal: e.target.checked})} />
+                          <input id="valorFiscal" type="checkbox" checked={form.valorFiscal} onChange={(e) => setForm({ ...form, valorFiscal: e.target.checked })} />
                           <label htmlFor="valorFiscal" className="text-sm text-slate-700">¿Requieres comprobante con valor fiscal?</label>
                         </div>
                         {form.valorFiscal && (
@@ -466,7 +687,7 @@ export default function CheckoutPage() {
                               className="w-full border border-slate-200 rounded-sm px-4 py-3.5 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0"
                               placeholder="RNC"
                               value={form.rnc}
-                              onChange={(e)=> setForm({...form, rnc: e.target.value })}
+                              onChange={(e) => setForm({ ...form, rnc: e.target.value })}
                               required={form.valorFiscal}
                             />
                           </div>
@@ -479,146 +700,320 @@ export default function CheckoutPage() {
                             rows={3}
                             placeholder="Información adicional sobre el pago."
                             value={form.comentarioPago}
-                            onChange={(e)=> setForm({...form, comentarioPago: e.target.value })}
+                            onChange={(e) => setForm({ ...form, comentarioPago: e.target.value })}
                           />
                         </div>
 
-                        <div className="space-y-2">
-                          <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
-                            Voucher / Comprobante
-                            <span className="text-xs font-normal text-slate-400">(imagen o PDF, máx 5MB)</span>
-                          </label>
+                        <div className="space-y-3">
+                          <p className="text-sm font-medium text-slate-700">Método de pago</p>
+                          <div className="grid gap-4 sm:grid-cols-2">
+                            <label className={`border rounded-sm p-4 cursor-pointer flex items-start gap-3 transition ${form.paymentMethod === 'tarjeta' ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-900/5' : 'border-slate-200 hover:border-slate-300 bg-white'}`}>
+                              <input
+                                type="radio"
+                                name="paymentMethod"
+                                value="tarjeta"
+                                className="mt-1"
+                                checked={form.paymentMethod === 'tarjeta'}
+                                onChange={() => {
+                                  setForm({ ...form, paymentMethod: 'tarjeta' })
+                                  setPaymentError(null)
+                                  setPaymentReceipt(null)
+                                }}
+                              />
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                                  <CreditCard className="w-4 h-4 text-slate-900" />
+                                  Tarjeta de crédito / débito
+                                </p>
+                                <p className="text-xs text-slate-600">Pago seguro en línea. Procesado al instante.</p>
+                              </div>
+                            </label>
 
-                          <div
-                            className={`mt-1 rounded-md border text-sm transition relative ${voucherDragging ? 'border-slate-900 bg-slate-50' : 'border-dashed border-slate-300 hover:border-slate-400 bg-white'}`}
-                            onDragOver={e => { e.preventDefault(); setVoucherDragging(true) }}
-                            onDragLeave={() => setVoucherDragging(false)}
-                            onDrop={e => {
-                              e.preventDefault();
-                              setVoucherDragging(false)
-                              const file = e.dataTransfer.files?.[0]
-                              handleVoucherFile(file)
-                            }}
-                          >
-                            <input
-                              id="voucherInput"
-                              type="file"
-                              accept="image/*,application/pdf"
-                              className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                              onChange={e => handleVoucherFile(e.target.files?.[0])}
-                            />
-                            {!form.voucherFile && (
-                              <div className="flex flex-col items-center justify-center px-6 py-10 text-center select-none">
-                                <div className="">
-                                  <File className="mb-2 opacity-35"/>
+                            <label className={`border rounded-sm p-4 cursor-pointer flex items-start gap-3 transition ${form.paymentMethod === 'transferencia' ? 'border-slate-900 ring-1 ring-slate-900 bg-slate-50/60' : 'border-slate-200 hover:border-slate-300 bg-white'}`}>
+                              <input
+                                type="radio"
+                                name="paymentMethod"
+                                value="transferencia"
+                                className="mt-1"
+                                checked={form.paymentMethod === 'transferencia'}
+                                onChange={() => {
+                                  setForm({ ...form, paymentMethod: 'transferencia' })
+                                  setPaymentError(null)
+                                  setPaymentReceipt(null)
+                                }}
+                              />
+                              <div className="space-y-1">
+                                <p className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                                  <ShieldCheck className="w-4 h-4 text-emerald-600" />
+                                  Transferencia bancaria
+                                </p>
+                                <p className="text-xs text-slate-600">Adjunta el comprobante (voucher) para acelerar la verificación.</p>
+                              </div>
+                            </label>
+                            
+                          </div>
+                        </div>
+
+                        {form.paymentMethod === 'tarjeta' && (
+                          <div className="rounded-lg border border-slate-900/10 bg-slate-900/[0.02] p-6 space-y-6">
+                            <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
+                              <div>
+                                <p className="text-sm font-semibold text-slate-900">Detalles de la tarjeta</p>
+                                <p className="text-xs text-slate-600">El cargo se procesará por <span className="font-medium">{subtotal.toLocaleString("es-DO", { style: "currency", currency: "DOP" })}</span>.</p>
+                              </div>
+                              <div className="inline-flex items-center gap-2 text-[11px] font-medium text-slate-500">
+                                <Lock className="w-3.5 h-3.5 text-slate-500" /> Pago cifrado y seguro
+                              </div>
+                            </div>
+
+                            <div className="grid gap-4">
+                              <div className="space-y-2">
+                                <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Número de tarjeta</label>
+                                <input
+                                  inputMode="numeric"
+                                  autoComplete="cc-number"
+                                  className={`w-full border rounded-sm px-4 py-3 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition ${cardErrors.cardNumber ? 'border-red-400' : 'border-slate-200'}`}
+                                  placeholder="0000 0000 0000 0000"
+                                  value={formatCardNumber(cardForm.cardNumber)}
+                                  onChange={(e) => setCardForm(prev => ({ ...prev, cardNumber: sanitizeCardNumber(e.target.value) }))}
+                                />
+                                {cardErrors.cardNumber && <p className="text-[11px] text-red-600">{cardErrors.cardNumber}</p>}
+                              </div>
+
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Nombre en la tarjeta</label>
+                                  <input
+                                    autoComplete="cc-name"
+                                    className={`w-full border rounded-sm px-4 py-3 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition ${cardErrors.name ? 'border-red-400' : 'border-slate-200'}`}
+                                    placeholder="Como aparece en la tarjeta"
+                                    value={cardForm.name}
+                                    onChange={(e) => setCardForm(prev => ({ ...prev, name: e.target.value }))}
+                                  />
+                                  {cardErrors.name && <p className="text-[11px] text-red-600">{cardErrors.name}</p>}
                                 </div>
-                                <p className="text-slate-600 font-medium">Arrastra y suelta el archivo aquí</p>
-                                <p className="text-xs text-slate-500 mt-1">o haz clic para seleccionar</p>
-                                <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400">JPG · PNG · WEBP · PDF · Máx 5MB</p>
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Correo de recibo</label>
+                                  <input
+                                    type="email"
+                                    autoComplete="email"
+                                    className={`w-full border rounded-sm px-4 py-3 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition ${cardErrors.email ? 'border-red-400' : 'border-slate-200'}`}
+                                    placeholder="email@dominio.com"
+                                    value={cardForm.email}
+                                    onChange={(e) => setCardForm(prev => ({ ...prev, email: e.target.value }))}
+                                  />
+                                  {cardErrors.email && <p className="text-[11px] text-red-600">{cardErrors.email}</p>}
+                                </div>
+                              </div>
+
+                              <div className="grid gap-4 sm:grid-cols-3">
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Mes</label>
+                                  <select
+                                    className={`w-full border rounded-sm px-4 py-3 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition ${cardErrors.expMonth ? 'border-red-400' : 'border-slate-200'}`}
+                                    value={cardForm.expMonth}
+                                    onChange={(e) => setCardForm(prev => ({ ...prev, expMonth: e.target.value }))}
+                                  >
+                                    <option value="">MM</option>
+                                    {MONTH_OPTIONS.map(month => (
+                                      <option key={month} value={month}>{month}</option>
+                                    ))}
+                                  </select>
+                                  {cardErrors.expMonth && <p className="text-[11px] text-red-600">{cardErrors.expMonth}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">Año</label>
+                                  <select
+                                    className={`w-full border rounded-sm px-4 py-3 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition ${cardErrors.expYear ? 'border-red-400' : 'border-slate-200'}`}
+                                    value={cardForm.expYear}
+                                    onChange={(e) => setCardForm(prev => ({ ...prev, expYear: e.target.value }))}
+                                  >
+                                    <option value="">AAAA</option>
+                                    {YEAR_OPTIONS.map(year => (
+                                      <option key={year} value={year}>{year}</option>
+                                    ))}
+                                  </select>
+                                  {cardErrors.expYear && <p className="text-[11px] text-red-600">{cardErrors.expYear}</p>}
+                                </div>
+                                <div className="space-y-2">
+                                  <label className="text-xs font-medium text-slate-700 uppercase tracking-wide">CVV</label>
+                                  <input
+                                    inputMode="numeric"
+                                    autoComplete="cc-csc"
+                                    className={`w-full border rounded-sm px-4 py-3 text-sm bg-white focus:border-slate-400 focus:outline-none focus:ring-0 transition ${cardErrors.cvv ? 'border-red-400' : 'border-slate-200'}`}
+                                    placeholder="000"
+                                    maxLength={4}
+                                    value={cardForm.cvv}
+                                    onChange={(e) => setCardForm(prev => ({ ...prev, cvv: e.target.value.replace(/\D/g, '') }))}
+                                  />
+                                  {cardErrors.cvv && <p className="text-[11px] text-red-600">{cardErrors.cvv}</p>}
+                                </div>
+                              </div>
+                            </div>
+
+                            {paymentError && (
+                              <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-600 font-medium">
+                                {paymentError}
                               </div>
                             )}
-                            {form.voucherFile && (
-                              <div className="flex items-center gap-4 p-4">
-                                <div className="w-16 h-16 border border-slate-200 rounded-sm flex items-center justify-center overflow-hidden bg-slate-50">
-                                  {form.voucherFile.type === 'application/pdf' ? (
-                                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h10M7 12h10M7 17h6" />
-                                    </svg>
-                                  ) : (
-                                    // eslint-disable-next-line @next/next/no-img-element
-                                    <img
-                                      src={form.voucherPreview}
-                                      alt="Voucher preview"
-                                      className="object-cover w-full h-full"
-                                    />
-                                  )}
-                                </div>
-                                <div className="flex-1 min-w-0 space-y-1">
-                                  <p className="text-xs font-medium text-slate-900 truncate">{form.voucherFile.name}</p>
-                                  <p className="text-[11px] text-slate-500">{Math.round(form.voucherFile.size / 1024)} KB • {form.voucherFile.type === 'application/pdf' ? 'PDF' : 'Imagen'}</p>
-                                  <button
-                                    type="button"
-                                    onClick={() => handleVoucherFile(undefined)}
-                                    className="text-[11px] font-medium text-slate-500 hover:text-slate-700 inline-flex items-center gap-1"
-                                  >
-                                    <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                                    </svg>
-                                    Quitar
-                                  </button>
-                                </div>
+
+                            {paymentReceipt && !paymentError && (
+                              <div className="rounded-md border border-emerald-200 bg-emerald-50 px-4 py-3 text-xs text-emerald-700 flex items-center gap-2">
+                                <CheckCircle2 className="w-4 h-4" />
+                                <span>{paymentReceipt.message}</span>
                               </div>
                             )}
                           </div>
-                          {voucherError && <p className="mt-2 text-xs text-red-600 font-medium">{voucherError}</p>}
-                          {!voucherError && form.voucherFile && (
-                            <p className="mt-2 text-[11px] text-emerald-600 font-medium">Archivo listo para enviar.</p>
-                          )}
-                          <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
-                            Adjuntar el comprobante ayuda a acelerar la validación de tu pago por transferencia.
-                          </p>
-                        </div>
+                        )}
 
-                        {/* Cuentas bancarias */}
-                        <div className="space-y-3 pt-4 border-t border-slate-100">
-                          <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
-                            Cuentas bancarias para transferencia
-                            <span className="text-[10px] font-medium tracking-wide text-slate-500 uppercase">Confirma que el nombre coincida</span>
-                          </h3>
-                          <div className="grid gap-4 sm:grid-cols-2">
-                            {bankAccounts.map(acc => (
-                              <div key={acc.id} className={`relative rounded-md border p-4 bg-white shadow-sm hover:shadow transition group`}> 
-                                <div className="flex items-start justify-between gap-2">
-                                  <div className="space-y-1 min-w-0">
-                                    <p className="text-xs font-medium text-slate-900 flex items-center gap-1">
-                                      {acc.tipo}
-                                      <span className="inline-block px-1.5 py-0.5 text-[10px] rounded bg-slate-100 text-slate-600 font-normal">{acc.currency}</span>
-                                    </p>
-                                    <button
-                                      type="button"
-                                      onClick={() => copyToClipboard('numero', acc.numero)}
-                                      className="text-[11px] font-mono tracking-wide text-slate-800 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 hover:bg-slate-100 flex items-center gap-1"
-                                      title="Copiar número de cuenta"
-                                    >
-                                      {acc.numero}
-                                      <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-9 8h10a2 2 0 002-2V8a2 2 0 00-2-2h-5l-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
-                                    </button>
-                                    <p className="text-[11px] text-slate-600 truncate" title={acc.banco}>{acc.banco}</p>
-                                    <p className="text-[11px] text-slate-600 truncate" title={acc.nombre}>{acc.nombre}</p>
-                                    <div className="flex items-center gap-1 mt-1">
-                                      <span className="text-[10px] text-slate-500">RNC:</span>
+                        {form.paymentMethod === 'transferencia' && (
+                          <>
+                            {/* Cuentas bancarias */}
+                            <div className="space-y-3 pt-4 border-t border-slate-100">
+                              <h3 className="text-sm font-semibold text-slate-900 flex items-center gap-2">
+                                Cuentas bancarias para transferencia
+                                <span className="text-[10px] font-medium tracking-wide text-slate-500 uppercase">Confirma que el nombre coincida</span>
+                              </h3>
+                              <div className="grid gap-4 sm:grid-cols-2">
+                                {bankAccounts.map(acc => (
+                                  <div
+                                    onClick={() => copyToClipboard('numero', acc.numero)}
+                                    key={acc.id} className={` cursor-pointer relative rounded-md border p-4 bg-white shadow-sm hover:shadow transition group`}>
+                                    <div className="flex items-start justify-between gap-2">
+                                      <div className="space-y-1 min-w-0">
+                                        <p className="text-xs font-medium text-slate-900 flex items-center gap-1">
+                                          {acc.tipo}
+                                          <span className="inline-block px-1.5 py-0.5 text-[10px] rounded bg-slate-100 text-slate-600 font-normal">{acc.currency}</span>
+                                        </p>
+                                        <button
+                                          type="button"
+                                          className="text-[11px] font-mono tracking-wide text-slate-800 bg-slate-50 border border-slate-200 rounded px-1.5 py-0.5 hover:bg-slate-100 flex items-center gap-1"
+                                          title="Copiar número de cuenta"
+                                        >
+                                          {acc.numero}
+                                          <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-9 8h10a2 2 0 002-2V8a2 2 0 00-2-2h-5l-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        </button>
+                                        <p className="text-[11px] text-slate-600 truncate" title={acc.banco}>{acc.banco}</p>
+                                        <p className="text-[11px] text-slate-600 truncate" title={acc.nombre}>{acc.nombre}</p>
+                                        <div className="flex items-center gap-1 mt-1">
+                                          <span className="text-[10px] text-slate-500">RNC:</span>
+                                          <button
+                                            type="button"
+                                            onClick={() => copyToClipboard('rnc', acc.rnc)}
+                                            className="text-[10px] font-medium text-slate-700 hover:text-slate-900 flex items-center gap-0.5"
+                                            title="Copiar RNC"
+                                          >
+                                            {acc.rnc}
+                                            <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-9 8h10a2 2 0 002-2V8a2 2 0 00-2-2h-5l-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                          </button>
+                                        </div>
+                                      </div>
+                                    </div>
+                                    {copiedField && (copiedField === 'numero' + acc.numero || copiedField === 'rnc' + acc.rnc) && (
+                                      <div className="absolute top-2 right-2 text-[10px] bg-blue-500 text-white px-1.5 py-0.5 rounded-sm font-medium shadow">Copiado</div>
+                                    )}
+                                  </div>
+                                ))}
+                              </div>
+                              <p className="text-[11px] text-slate-500 leading-relaxed">
+                                Una vez realices la transferencia, adjunta el comprobante o puedes enviarlo luego respondiendo al correo de confirmación. Verificaremos el pago y actualizaremos el estado de tu orden.
+                              </p>
+                            </div>
+                            <div className="space-y-2">
+                              <label className="text-sm font-medium text-slate-700 flex items-center gap-2">
+                                Voucher / Comprobante
+                                <span className="text-xs font-normal text-slate-400">(imagen o PDF, máx 5MB)</span>
+                              </label>
+
+                              <div
+                                className={`mt-1 rounded-md border text-sm transition relative ${voucherDragging ? 'border-slate-900 bg-slate-50' : 'border-dashed border-slate-300 hover:border-slate-400 bg-white'}`}
+                                onDragOver={e => { e.preventDefault(); setVoucherDragging(true) }}
+                                onDragLeave={() => setVoucherDragging(false)}
+                                onDrop={e => {
+                                  e.preventDefault();
+                                  setVoucherDragging(false)
+                                  const file = e.dataTransfer.files?.[0]
+                                  handleVoucherFile(file)
+                                }}
+                              >
+                                <input
+                                  id="voucherInput"
+                                  type="file"
+                                  accept="image/*,application/pdf"
+                                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
+                                  onChange={e => handleVoucherFile(e.target.files?.[0])}
+                                />
+                                {!form.voucherFile && (
+                                  <div className="flex flex-col items-center justify-center px-6 py-10 text-center select-none">
+                                    <div className="">
+                                      <File className="mb-2 opacity-35" />
+                                    </div>
+                                    <p className="text-slate-600 font-medium">Arrastra y suelta el archivo aquí</p>
+                                    <p className="text-xs text-slate-500 mt-1">o haz clic para seleccionar</p>
+                                    <p className="mt-3 text-[10px] uppercase tracking-wide text-slate-400">JPG · PNG · WEBP · PDF · Máx 5MB</p>
+                                  </div>
+                                )}
+                                {form.voucherFile && (
+                                  <div className="flex items-center gap-4 p-4">
+                                    <div className="w-16 h-16 border border-slate-200 rounded-sm flex items-center justify-center overflow-hidden bg-slate-50">
+                                      {form.voucherFile.type === 'application/pdf' ? (
+                                        <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M7 7h10M7 12h10M7 17h6" />
+                                        </svg>
+                                      ) : (
+                                        // eslint-disable-next-line @next/next/no-img-element
+                                        <img
+                                          src={form.voucherPreview}
+                                          alt="Voucher preview"
+                                          className="object-cover w-full h-full"
+                                        />
+                                      )}
+                                    </div>
+                                    <div className="flex-1 min-w-0 space-y-1">
+                                      <p className="text-xs font-medium text-slate-900 truncate">{form.voucherFile.name}</p>
+                                      <p className="text-[11px] text-slate-500">{Math.round(form.voucherFile.size / 1024)} KB • {form.voucherFile.type === 'application/pdf' ? 'PDF' : 'Imagen'}</p>
                                       <button
                                         type="button"
-                                        onClick={() => copyToClipboard('rnc', acc.rnc)}
-                                        className="text-[10px] font-medium text-slate-700 hover:text-slate-900 flex items-center gap-0.5"
-                                        title="Copiar RNC"
+                                        onClick={() => handleVoucherFile(undefined)}
+                                        className="text-[11px] font-medium text-slate-500 hover:text-slate-700 inline-flex items-center gap-1"
                                       >
-                                        {acc.rnc}
-                                        <svg className="w-3 h-3 text-slate-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8 16h8M8 12h8m-9 8h10a2 2 0 002-2V8a2 2 0 00-2-2h-5l-2-2H7a2 2 0 00-2 2v12a2 2 0 002 2z" /></svg>
+                                        <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
+                                        </svg>
+                                        Quitar
                                       </button>
                                     </div>
                                   </div>
-                                </div>
-                                {copiedField && (copiedField === 'numero' + acc.numero || copiedField === 'rnc' + acc.rnc) && (
-                                  <div className="absolute top-2 right-2 text-[10px] bg-emerald-500 text-white px-1.5 py-0.5 rounded-sm font-medium shadow">Copiado</div>
                                 )}
                               </div>
-                            ))}
-                          </div>
-                          <p className="text-[11px] text-slate-500 leading-relaxed">
-                            Una vez realices la transferencia, adjunta el comprobante o puedes enviarlo luego respondiendo al correo de confirmación. Verificaremos el pago y actualizaremos el estado de tu orden.
-                          </p>
-                        </div>
+                              {voucherError && <p className="mt-2 text-xs text-red-600 font-medium">{voucherError}</p>}
+                              {!voucherError && form.voucherFile && (
+                                <p className="mt-2 text-[11px] text-emerald-600 font-medium">Archivo listo para enviar.</p>
+                              )}
+                              <p className="mt-3 text-[11px] leading-relaxed text-slate-500">
+                                Adjuntar el comprobante ayuda a acelerar la validación de tu pago por transferencia.
+                              </p>
+                            </div>
+                          </>
+                        )}
                       </div>
                     </section>
 
                     <div className="flex justify-end">
                       <button
                         type="submit"
-                        disabled={!isValid || submitting || creatingOrder}
+                        disabled={!isValid || submitting || creatingOrder || processingPayment}
                         className="inline-flex items-center gap-3 px-12 py-4 bg-slate-900 text-white font-semibold tracking-tight disabled:opacity-50 disabled:cursor-not-allowed hover:bg-slate-800 transition-all duration-200 rounded-sm shadow-sm hover:shadow-md"
                       >
-                        {submitting || creatingOrder ? (
+                        {processingPayment ? (
+                          <>
+                            <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
+                              <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                              <path className="opacity-75" fill="currentColor" d="m4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                            </svg>
+                            Procesando pago...
+                          </>
+                        ) : submitting || creatingOrder ? (
                           <>
                             <svg className="animate-spin w-4 h-4" fill="none" viewBox="0 0 24 24">
                               <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
@@ -725,7 +1120,7 @@ export default function CheckoutPage() {
                         </>
                       </div>
                     </div>
-                    
+
                     {/* Información de pasarela eliminada */}
                   </div>
                 </div>
