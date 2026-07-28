@@ -30,7 +30,7 @@ export default function AdminDashboardHome() {
   return (
     <>
       <Head>
-        <title>Admin Dashboard | Romana Ebanistería</title>
+        <title>Admin Dashboard | La Fabbrica</title>
       </Head>
       <AdminLayout activeTab="dashboard" onTabChange={handleTabChange} user={user}>
         <DashboardOverview />

@@ -25,7 +25,7 @@ export default function LoginPage() {
   useEffect(() => {
     if (user) router.replace(returnTo)
     try {
-      const remembered = localStorage.getItem("romana_last_email")
+      const remembered = localStorage.getItem("La Fabbrica_last_email")
       if (remembered) setForm((f) => ({ ...f, email: remembered }))
     } catch {}
   }, [returnTo, router, user])
@@ -38,8 +38,8 @@ export default function LoginPage() {
     try {
       await login(form.email, form.password)
       try {
-        localStorage.setItem("romana_last_email", form.email)
-        localStorage.setItem("romana_flash", "Has iniciado sesión correctamente.")
+        localStorage.setItem("La Fabbrica_last_email", form.email)
+        localStorage.setItem("La Fabbrica_flash", "Has iniciado sesión correctamente.")
       } catch {}
       router.replace("/profile")
     } catch (e: any) {
@@ -52,7 +52,7 @@ export default function LoginPage() {
   return (
     <main className={openSans.className}>
       <Head>
-        <title>Iniciar sesión | Romana Ebanistería</title>
+        <title>Iniciar sesión | La Fabbrica</title>
       </Head>
       <Header />
 

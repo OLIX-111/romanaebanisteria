@@ -138,7 +138,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     `
 
     await transporter.sendMail({
-      from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+      from: `La Fabbrica <${FROM_EMAIL}>`,
       to: INTERNAL_EMAILS.join(','),
       subject: `Nueva orden ${snapshot.orderId}`,
       html: internalHtml,
@@ -146,7 +146,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     })
 
     await transporter.sendMail({
-      from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+      from: `La Fabbrica <${FROM_EMAIL}>`,
       to: snapshot.customer.email,
       subject: `Confirmación de compra · ${snapshot.orderId}`,
       html: clientHtml,

@@ -72,7 +72,7 @@ const SMTP_PASS = "***SENDGRID_KEY_REMOVED***"
 
     // **Correo de confirmación al cliente**
     await transporter.sendMail({
-      from: '"ROMAna Ebanistería" <info@grupochavon.com>',
+      from: '"La Fabbrica" <info@grupochavon.com>',
       to: [email, "jheremy802@gmail.com"],
       subject: "Confirmación de Solicitud de Cotización",
       html: `
@@ -103,7 +103,7 @@ const SMTP_PASS = "***SENDGRID_KEY_REMOVED***"
                     <p>Si necesitas más información, puedes escribirnos a <a href="mailto:info@grupochavon.com">info@grupochavon.com</a>.</p>
               </div>
               <div class="footer">
-                  ROMAna Ebanistería | La Romana, República Dominicana | info@grupochavon.com
+                  La Fabbrica | La Romana, República Dominicana | info@grupochavon.com
               </div>
           </div>
       </body>

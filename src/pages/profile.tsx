@@ -92,10 +92,10 @@ export default function ProfilePage() {
   // Read and clear flash message from localStorage
   useEffect(() => {
     try {
-      const f = localStorage.getItem('romana_flash')
+      const f = localStorage.getItem('La Fabbrica_flash')
       if (f) {
         setFlash(f)
-        localStorage.removeItem('romana_flash')
+        localStorage.removeItem('La Fabbrica_flash')
       }
     } catch {}
   }, [])

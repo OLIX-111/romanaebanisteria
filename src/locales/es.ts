@@ -26,9 +26,9 @@ const es = {
     seeAll: "Ver todos los proyectos",
   },
   aboutUs: {
-    title: "Acerca de ROMAna Ebanistería",
+    title: "Acerca de La Fabbrica",
     paragraph1:
-      "Con más de 48 años de trayectoria, nos enorgullecemos de ser la fábrica de ebanistería y carpintería en aluminio más grande de La Romana. Fundada en 1977, ROMAna Ebanistería ha evolucionado desde la fabricación tradicional de puertas y muebles en madera, hasta convertirse en un referente en la innovación con materiales modernos como melamina y MDF.",
+      "Con más de 48 años de trayectoria, nos enorgullecemos de ser la fábrica de ebanistería y carpintería en aluminio más grande de La Romana. Fundada en 1977, La Fabbrica ha evolucionado desde la fabricación tradicional de puertas y muebles en madera, hasta convertirse en un referente en la innovación con materiales modernos como melamina y MDF.",
     paragraph2:
       "Hoy, colaboramos con desarrolladores inmobiliarios, cadenas hoteleras y proyectos residenciales de alto nivel, brindando soluciones integrales y personalizadas. Nuestro compromiso es ofrecer resultados excepcionales, cuidando cada detalle para garantizar precisión, calidad y durabilidad.",
   },
@@ -80,7 +80,7 @@ const es = {
   },
   // otras traducciones...
   whyUs: {
-    heading: "¿Por qué elegir ROMAna Ebanistería?",
+    heading: "¿Por qué elegir La Fabbrica?",
     reasons: [
       {
         title: "Atención Personalizada",
@@ -153,7 +153,7 @@ const es = {
     heading: "Nuestra Ubicación",
     subheading: "Descubre nuestro showroom y fábrica en el corazón de La Romana",
     showroomHeading: "Showroom & Fábrica",
-    companyTitle: "ROMAna Ebanistería",
+    companyTitle: "La Fabbrica",
     addressLine1: "Calle 4, No. 7, Sector Reparto Torres",
     addressLine2: "La Romana, República Dominicana",
     visitMessage:

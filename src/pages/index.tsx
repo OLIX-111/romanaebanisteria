@@ -22,9 +22,9 @@ export default function Home() {
     <>
       <Head>
         <title>
-          Ebanistería y Carpintería en Aluminio de Alta Calidad | ROMAna Ebanistería
+          Ebanistería y Carpintería en Aluminio de Alta Calidad | La Fabbrica
         </title>
-        <meta name="description" content={"ROMAna Ebanistería, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana."} />
+        <meta name="description" content={"La Fabbrica, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana."} />
         <link rel="icon" href="/home/ebanisteria.png" />
       </Head>
       <main

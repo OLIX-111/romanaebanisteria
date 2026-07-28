@@ -36,7 +36,7 @@ export default function RegisterPage() {
         password_confirmation: form.password2,
         telefono: form.telefono || undefined
       })
-      try { localStorage.setItem('romana_flash', 'Cuenta creada. ¡Bienvenido!') } catch {}
+      try { localStorage.setItem('La Fabbrica_flash', 'Cuenta creada. ¡Bienvenido!') } catch {}
       window.location.href = "/profile"
     } catch (e: any) {
       setError(e?.message || "No se pudo completar el registro")
@@ -48,7 +48,7 @@ export default function RegisterPage() {
   return (
     <main className={openSans.className}>
       <Head>
-        <title>Crear cuenta | Romana Ebanistería</title>
+        <title>Crear cuenta | La Fabbrica</title>
       </Head>
       <Header />
 

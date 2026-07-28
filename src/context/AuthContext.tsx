@@ -1,9 +1,9 @@
 "use client"
 import React, { createContext, useContext, useEffect, useState, useCallback } from 'react'
-import { AuthResponse, RomanaUser, getAuth, saveAuth, loginUser, registerUser, logoutUser as baseLogoutUser, fetchCurrentUser, clearAuth } from '@/lib/auth'
+import { AuthResponse, LaFabbricaUser, getAuth, saveAuth, loginUser, registerUser, logoutUser as baseLogoutUser, fetchCurrentUser, clearAuth } from '@/lib/auth'
 
 interface AuthContextValue {
-  user: RomanaUser | null
+  user: LaFabbricaUser | null
   token: string | null
   loading: boolean
   error: string | null
@@ -16,7 +16,7 @@ interface AuthContextValue {
 const AuthContext = createContext<AuthContextValue | undefined>(undefined)
 
 export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-  const [user, setUser] = useState<RomanaUser | null>(null)
+  const [user, setUser] = useState<LaFabbricaUser | null>(null)
   const [token, setToken] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)

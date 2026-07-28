@@ -125,7 +125,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         })
 
         await transporter.sendMail({
-          from: '"ROMAna Ebanistería" <info@grupochavon.com>',
+          from: '"La Fabbrica" <info@grupochavon.com>',
           to: [email, 'jheremy802@gmail.com'],
           subject: 'Confirmación de Solicitud de Cotización',
           html: clientHtml
@@ -193,7 +193,7 @@ function buildClientEmail({ fullName, serviceName, phone, company, projectDescri
         <p><strong>Descripción:</strong> ${projectDescription}</p>
         <p>Si necesitas más información, puedes escribirnos a <a href="mailto:info@grupochavon.com">info@grupochavon.com</a>.</p>
       </div>
-      <div class="footer">ROMAna Ebanistería | La Romana, República Dominicana | info@grupochavon.com</div>
+      <div class="footer">La Fabbrica | La Romana, República Dominicana | info@grupochavon.com</div>
     </div>
   </body></html>`
 }

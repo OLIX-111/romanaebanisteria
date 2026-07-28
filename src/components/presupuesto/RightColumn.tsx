@@ -66,7 +66,7 @@ export default function RightColumn({ items, subtotal, tax, total, onQtyChange, 
         <div className="bg-[#434343] px-4 py-3">
           <Image
             src="/romanaEbanistería_alt.png"
-            alt="Romana Ebanistería"
+            alt="La Fabbrica"
             width={140}
             height={40}
             className="h-8 w-auto"

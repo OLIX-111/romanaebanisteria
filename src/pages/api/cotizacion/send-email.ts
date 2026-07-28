@@ -75,7 +75,7 @@ function generatePDF(items: CotizacionItem[], customerData: CustomerData, subtot
 
       // Header con logo y información de la empresa
       try {
-        const logoPath = "/romanaEbanistería.png";
+        const logoPath = "/RomanaEbanistería.png";
         const dataUrl = await loadImageAsDataURL(logoPath);
         if (dataUrl) {
           doc.addImage(dataUrl, "PNG", 15, y, 35, 15);
@@ -85,7 +85,7 @@ function generatePDF(items: CotizacionItem[], customerData: CustomerData, subtot
       // Información de la empresa (derecha)
       doc.setFontSize(12);
       doc.setFont("helvetica", "bold");
-      doc.text("ROMANA EBANISTERÍA", 120, y + 5);
+      doc.text("La Fabbrica", 120, y + 5);
       doc.setFontSize(9);
       doc.setFont("helvetica", "normal");
       doc.text("La Romana, República Dominicana", 120, y + 10);
@@ -260,7 +260,7 @@ function generatePDF(items: CotizacionItem[], customerData: CustomerData, subtot
       y = pageHeight - 15;
       doc.setFontSize(7);
       doc.text(`Cotización ${finalQuoteNumber} - Generada el ${currentDate.toLocaleString("es-DO")}`, pageWidth / 2, y, { align: "center" });
-      doc.text("Romana Ebanistería - La Romana, República Dominicana", pageWidth / 2, y + 4, { align: "center" });
+      doc.text("La Fabbrica - La Romana, República Dominicana", pageWidth / 2, y + 4, { align: "center" });
 
       resolve(Buffer.from(doc.output('arraybuffer')));
     } catch (error) {
@@ -312,7 +312,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
       <html>
       <head>
         <meta charset="utf-8">
-        <title>Cotización Romana Ebanistería - ${quoteNumber}</title>
+        <title>Cotización La Fabbrica - ${quoteNumber}</title>
         <style>
           body { font-family: Arial, Helvetica, sans-serif; margin: 0; padding: 0; background-color: #f6f6f6; }
           .container { max-width: 800px; margin: 0 auto; background: white; }
@@ -355,7 +355,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         <div class="container">
           <!-- Header -->
           <div class="header">
-            <h1>ROMANA EBANISTERÍA</h1>
+            <h1>La Fabbrica</h1>
             <div class="company-info">
               La Romana, República Dominicana<br>
               Tel: (809) 000-0000 | Email: info@romanaebanisteria.com<br>
@@ -466,7 +466,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
           <!-- Footer -->
           <div class="footer">
-            <p><strong>Romana Ebanistería</strong></p>
+            <p><strong>La Fabbrica</strong></p>
             <p>Cotización ${quoteNumber} - Generada el ${currentDate.toLocaleString("es-DO")}</p>
             <p>La Romana, República Dominicana | www.romanaebanisteria.com</p>
           </div>
@@ -524,7 +524,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         <div class="container">
           <!-- Header -->
           <div class="header">
-            <h1>ROMANA EBANISTERÍA</h1>
+            <h1>La Fabbrica</h1>
             <div class="alert">
               🚨 NUEVA COTIZACIÓN GENERADA - ${formatCurrency(total)}
             </div>
@@ -632,7 +632,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           <div class="footer">
             <p><strong>Sistema de Cotizaciones Web</strong></p>
             <p>Cotización ${quoteNumber} - Generada el ${currentDate.toLocaleString("es-DO")}</p>
-            <p>Romana Ebanistería - La Romana, República Dominicana</p>
+            <p>La Fabbrica - La Romana, República Dominicana</p>
           </div>
         </div>
       </body>
@@ -641,12 +641,12 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Enviar email al cliente
     await transporter.sendMail({
-      from: '"Romana Ebanistería" <info@grupochavon.com>',
+      from: '"La Fabbrica" <info@grupochavon.com>',
       to: customerData.email,
-      subject: `Cotización ${quoteNumber} - Romana Ebanistería - ${formatCurrency(total)}`,
+      subject: `Cotización ${quoteNumber} - La Fabbrica - ${formatCurrency(total)}`,
       html: clientEmailHtml,
       attachments: [{
-        filename: `cotizacion-${quoteNumber}-romana-ebanisteria.pdf`,
+        filename: `cotizacion-${quoteNumber}-La Fabbrica-ebanisteria.pdf`,
         content: pdfBuffer,
         contentType: 'application/pdf'
       }]

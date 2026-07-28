@@ -197,7 +197,7 @@ export default function OrdersManagement() {
         <div>
           <h1 className="text-3xl font-bold text-gray-900">Gestión de Órdenes</h1>
           <p className="text-gray-600 mt-1">
-            Administra todas las órdenes de Romana Ebanistería
+            Administra todas las órdenes de La Fabbrica
           </p>
         </div>
         <div className="flex items-center gap-3">

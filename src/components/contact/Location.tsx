@@ -55,10 +55,10 @@ const InfoWindow = ({ onClose }: InfoWindowProps) => (
       >
         <X className="w-4 h-4" />
       </button>
-      <h4 className="font-semibold text-gray-900 mb-1">ROMAna Ebanistería</h4>
+      <h4 className="font-semibold text-gray-900 mb-1">La Fabbrica</h4>
       <p className="text-sm text-gray-600 mb-2">Calle 4, No. 7, Sector Reparto Torres</p>
       <a
-        href="https://maps.google.com/?q=Calle+4,+No.+7,+Sector+Reparto+Torres,+La+Romana,+República+Dominicana"
+        href="https://maps.google.com/?q=Calle+4,+No.+7,+Sector+Reparto+Torres,+La+La Fabbrica,+República+Dominicana"
         target="_blank"
         rel="noopener noreferrer"
         className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
@@ -175,7 +175,7 @@ export default function ElegantLocationSection() {
                 {locationSection.visitMessage}
               </p>
               <a
-                href="https://maps.google.com/?q=Calle+4,+No.+7,+Sector+Reparto+Torres,+La+Romana,+República+Dominicana"
+                href="https://maps.google.com/?q=Calle+4,+No.+7,+Sector+Reparto+Torres,+La+La Fabbrica,+República+Dominicana"
                 target="_blank"
                 rel="noopener noreferrer"
                 className="inline-flex items-center gap-2 px-6 w- py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"

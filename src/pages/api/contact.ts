@@ -95,7 +95,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Internal email
     await transporter.sendMail({
-      from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+      from: `La Fabbrica <${FROM_EMAIL}>`,
       to: INTERNAL_EMAILS.join(","),
       replyTo: email,
       subject: `Nueva solicitud de contacto de ${firstName} ${lastName}`,
@@ -104,7 +104,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Client confirmation
     await transporter.sendMail({
-      from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+      from: `La Fabbrica <${FROM_EMAIL}>`,
       to: email,
       subject: "Confirmación de solicitud de contacto",
       html: clientHtml,

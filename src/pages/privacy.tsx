@@ -13,9 +13,9 @@ export default function Privacy() {
     <>
       <Head>
         <title>
-          Política de Privacidad | ROMAna Ebanistería
+          Política de Privacidad | La Fabbrica
         </title>
-        <meta name="description" content="Política de privacidad de ROMAna Ebanistería. Conoce cómo protegemos y utilizamos tu información personal cuando navegas en nuestra web y solicitas nuestros servicios." />
+        <meta name="description" content="Política de privacidad de La Fabbrica. Conoce cómo protegemos y utilizamos tu información personal cuando navegas en nuestra web y solicitas nuestros servicios." />
         <link rel="icon" href="/home/ebanisteria.png" />
       </Head>
       <main className={`${openSans.className}`}>
@@ -27,7 +27,7 @@ export default function Privacy() {
 
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Introducción</h2>
           <p className="text-gray-700">
-            En <strong>ROMAna Ebanistería</strong>, nos comprometemos a proteger tu privacidad y garantizar la seguridad de tu información personal. 
+            En <strong>La Fabbrica</strong>, nos comprometemos a proteger tu privacidad y garantizar la seguridad de tu información personal. 
             Esta política de privacidad explica cómo recopilamos, utilizamos y protegemos tus datos cuando visitas nuestro sitio web 
             (<a href="www.romanaebanisteria.com" className="text-blue-600 underline">www.romanaebanisteria.com</a>).
           </p>

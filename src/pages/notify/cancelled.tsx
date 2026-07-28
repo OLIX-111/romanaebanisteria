@@ -27,7 +27,7 @@ export default function PaymentCancelledPage() {
   return (
     <main className={openSans.className}>
       <Head>
-        <title>Pago cancelado | Romana Ebanistería</title>
+        <title>Pago cancelado | La Fabbrica</title>
       </Head>
       <Header />
       

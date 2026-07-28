@@ -176,9 +176,9 @@ export default function CheckoutPage() {
   }
 
   const bankAccounts: BankAccount[] = [
-    { id: 'usd-ahorro-popular', currency: 'USD', tipo: 'Cuenta de Ahorro', numero: '797745478', banco: 'Banco Popular', nombre: 'Romana Ebanistería', rnc: '131132359' },
-    { id: 'dop-ahorro-popular', currency: 'DOP', tipo: 'Cuenta de Ahorro', numero: '0786475814', banco: 'Banco Popular', nombre: 'Romana Ebanistería S.R.L', rnc: '131132359' },
-    { id: 'dop-corriente-reservas', currency: 'DOP', tipo: 'Cuenta Corriente', numero: '3850000860', banco: 'Banco Reservas RD', nombre: 'Romana Ebanistería', rnc: '131132359' }
+    { id: 'usd-ahorro-popular', currency: 'USD', tipo: 'Cuenta de Ahorro', numero: '797745478', banco: 'Banco Popular', nombre: 'La Fabbrica', rnc: '131132359' },
+    { id: 'dop-ahorro-popular', currency: 'DOP', tipo: 'Cuenta de Ahorro', numero: '0786475814', banco: 'Banco Popular', nombre: 'La Fabbrica S.R.L', rnc: '131132359' },
+    { id: 'dop-corriente-reservas', currency: 'DOP', tipo: 'Cuenta Corriente', numero: '3850000860', banco: 'Banco Reservas RD', nombre: 'La Fabbrica', rnc: '131132359' }
   ]
 
   useEffect(() => {
@@ -467,7 +467,7 @@ export default function CheckoutPage() {
   return (
     <main className={openSans.className}>
       <Head>
-        <title>Checkout | Romana Ebanistería</title>
+        <title>Checkout | La Fabbrica</title>
       </Head>
       <Header />
 

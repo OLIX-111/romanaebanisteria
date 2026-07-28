@@ -30,7 +30,7 @@ export default function AdminOrdersPage() {
   return (
     <>
       <Head>
-        <title>Órdenes | Romana Ebanistería Admin</title>
+        <title>Órdenes | La Fabbrica Admin</title>
       </Head>
       <AdminLayout activeTab="orders" onTabChange={handleTabChange} user={user}>
         <OrdersManagement />

@@ -64,7 +64,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, user }: 
         </div>
         {!sidebarCollapsed && (
           <div className="flex-1 min-w-0">
-            <h1 className="text-lg font-semibold text-gray-900 tracking-tight">Romana</h1>
+            <h1 className="text-lg font-semibold text-gray-900 tracking-tight">La Fabbrica</h1>
             <p className="text-xs text-gray-500 font-medium">Ebanistería Admin</p>
           </div>
         )}
@@ -172,7 +172,7 @@ export default function AdminLayout({ children, activeTab, onTabChange, user }: 
                 <div className="w-7 h-7 bg-orange-600 rounded-lg flex items-center justify-center">
                   <span className="text-white font-bold text-xs">RE</span>
                 </div>
-                <span className="font-semibold text-gray-900">Romana Admin</span>
+                <span className="font-semibold text-gray-900">La Fabbrica Admin</span>
               </div>
             </div>
 

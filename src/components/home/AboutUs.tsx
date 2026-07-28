@@ -55,7 +55,7 @@ function CTA() {
             >
                 <Image
                     src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/1grupochavonRomana_Ebanisteria.png"
-                    alt="Romana Ebanistería"
+                    alt="La Fabbrica"
                     fill
                     className="object-cover shadow-md"
                     priority

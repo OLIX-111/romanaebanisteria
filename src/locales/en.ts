@@ -66,12 +66,12 @@ const en = {
     name: "Name",
   },
   aboutUs: {
-    title: "About ROMAna Ebanistería",
+    title: "About La Fabbrica",
     paragraph1: "With over 48 years of experience, we take pride in being the largest aluminum carpentry and ebanistería factory in La Romana.",
     paragraph2: "We collaborate with real estate developers, hotel chains, and high-level residential projects, providing comprehensive and customized solutions.",
   },
   whyUs: {
-    heading: "Why choose ROMAna Ebanistería?",
+    heading: "Why choose La Fabbrica?",
     reasons: [
       {
         title: "Personalized Attention",
@@ -148,7 +148,7 @@ const en = {
     heading: "Our Location",
     subheading: "Discover our showroom and factory in the heart of La Romana",
     showroomHeading: "Showroom & Factory",
-    companyTitle: "ROMAna Ebanistería",
+    companyTitle: "La Fabbrica",
     addressLine1: "Calle 4, No. 7, Sector Reparto Torres",
     addressLine2: "La Romana, Dominican Republic",
     visitMessage: "We serve customers throughout the eastern region and nationwide. Visit us to learn more about our facilities and cabinetry solutions.",

@@ -162,7 +162,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
         <table width="100%" cellspacing="0" cellpadding="0" style="max-width:720px;margin:0 auto;background:#ffffff;border:1px solid #eaeaea;">
           <tr>
             <td style="padding:20px 24px;border-bottom:1px solid #eaeaea;display:flex;align-items:center;gap:12px;">
-              <img src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png" width="140" alt="ROMAna Ebanistería"/>
+              <img src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/RomanaEbanisteri%CC%81a.png" width="140" alt="La Fabbrica"/>
               <div style="margin-left:auto;text-align:right;">
                 <div style="font-size:12px;color:#666;">Orden</div>
                 <div style="font-size:16px;font-weight:700;color:#111;">#${orderId}</div>
@@ -231,7 +231,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           </tr>
           <tr>
             <td style="padding:16px 24px;border-top:1px solid #eaeaea;background:#fafafa;color:#999;font-size:12px;text-align:center;">
-              ROMAna Ebanistería · La Romana, República Dominicana · ${orderDate}
+              La Fabbrica · La Romana, República Dominicana · ${orderDate}
             </td>
           </tr>
         </table>
@@ -316,7 +316,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
           </tr>
           <tr>
             <td style="padding:16px 24px;border-top:1px solid #eaeaea;background:#fafafa;color:#999;font-size:12px;text-align:center;">
-              ROMAna Ebanistería · Sistema de Órdenes · ${orderDate}
+              La Fabbrica · Sistema de Órdenes · ${orderDate}
             </td>
           </tr>
         </table>
@@ -327,7 +327,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     await Promise.all([
       // Client confirmation email
       transporter.sendMail({
-        from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+        from: `La Fabbrica <${FROM_EMAIL}>`,
         to: customer.email,
         subject: `Confirmación de compra #${orderId} - ${formatCurrency(totals.total)}`,
         html: clientEmailHtml,
@@ -335,7 +335,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
       // Internal notification email
       transporter.sendMail({
-        from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+        from: `La Fabbrica <${FROM_EMAIL}>`,
         to: INTERNAL_EMAILS.join(","),
         replyTo: customer.email,
         subject: `💰 Nueva orden pagada #${orderId} - ${customer.firstName} ${customer.lastName} - ${formatCurrency(totals.total)}`,

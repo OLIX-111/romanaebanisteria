@@ -223,7 +223,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
                   </tbody>
                 </table>
               ` : ""}
-              <p style="margin:16px 0 0 0;color:#777;font-size:12px;">ROMAna Ebanistería</p>
+              <p style="margin:16px 0 0 0;color:#777;font-size:12px;">La Fabbrica</p>
             </td>
           </tr>
         </table>
@@ -232,7 +232,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // 1) Internal email
     await transporter.sendMail({
-      from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+      from: `La Fabbrica <${FROM_EMAIL}>`,
       to: INTERNAL_EMAIL,
       subject: `Nueva solicitud de financiamiento - ${fullName}`,
       html: internalHtml,
@@ -242,7 +242,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
     // 2) Client confirmation
     if (email) {
       await transporter.sendMail({
-        from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+        from: `La Fabbrica <${FROM_EMAIL}>`,
         to: email,
         subject: "Confirmación de solicitud de financiamiento",
         html: clientHtml,

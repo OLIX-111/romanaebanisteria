@@ -31,7 +31,7 @@ export default function CartPage() {
   return (
     <main className={openSans.className}>
       <Head>
-        <title>Carrito | Romana Ebanistería</title>
+        <title>Carrito | La Fabbrica</title>
       </Head>
       <Header />
       <div className="container mx-auto mt-24 px-6 pb-32 pt-10">

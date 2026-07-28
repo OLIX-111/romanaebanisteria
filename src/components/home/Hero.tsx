@@ -1,12 +1,35 @@
 "use client"
 
-import { motion } from "framer-motion"
+import { motion, AnimatePresence } from "framer-motion"
 import { useTranslation } from "@/hook/UseTranslation"
 import { ArrowRight, Factory, Home, Plus } from "lucide-react"
+import { useEffect, useState } from "react"
+
+const frases = [
+  "Calidad que se ve, precisión que se siente.",
+  "Desde la materia prima hasta la obra terminada.",
+  "Fabricado en La Romana, instalado en el mundo.",
+  "Donde el arte se encuentra con la ingeniería.",
+  "48 años construyendo el futuro.",
+  "Del diseño a la realidad, sin compromisos.",
+  "Madera. Aluminio. Excelencia.",
+  "Construimos más que muebles — creamos espacios.",
+  "Precisión industrial, acabado artesanal.",
+  "La fuerza de una fábrica, el alma de un taller.",
+]
 
 export default function Hero() {
   const dict = useTranslation()
   const { hero } = dict
+  const [fraseIndex, setFraseIndex] = useState(0)
+
+  useEffect(() => {
+    setFraseIndex(Math.floor(Math.random() * frases.length))
+    const interval = setInterval(() => {
+      setFraseIndex(i => (i + 1) % frases.length)
+    }, 4000)
+    return () => clearInterval(interval)
+  }, [])
 
   const fadeInUp = {
     initial: { opacity: 0, y: 20 },
@@ -74,10 +97,26 @@ export default function Hero() {
       >
         <motion.div variants={stagger} className="mx-auto mb-12 w-full max-w-4xl text-center md:mb-16 lg:mb-20">
           <motion.h1 variants={fadeInUp} className="mb-4 text-2xl lg:text-4xl w-full font-semibold text-gray-50">
-            {hero?.bigTitlePart1} <span className="text-primary">|</span> {hero?.bigTitlePart2} <span className="text-primary">|</span> {hero?.bigTitlePart3}
+            Fabricamos <span className="text-primary">|</span> {hero?.bigTitlePart1} <span className="text-primary">|</span> {hero?.bigTitlePart2}
           </motion.h1>
         </motion.div>
       </motion.div>
+
+      {/* Frase aleatoria */}
+      <div className="w-full flex items-center justify-center pb-6">
+        <AnimatePresence mode="wait">
+          <motion.p
+            key={fraseIndex}
+            initial={{ opacity: 0, y: 8 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -8 }}
+            transition={{ duration: 0.5 }}
+            className="text-xl lg:text-2xl text-white font-semibold tracking-wide text-center px-4"
+          >
+            {frases[fraseIndex]}
+          </motion.p>
+        </AnimatePresence>
+      </div>
 
       {/* Información adicional */}
       <motion.div
@@ -93,7 +132,7 @@ export default function Hero() {
               subtitle: hero?.stats?.factory
             },
             {
-              Icon: <img src="/home/ebanisteria.png" alt="ebanistería" className="h-8" />,
+              Icon: <img src="/Isotipo%20-%20blanco.png" alt="La Fabbrica isotipo" className="h-8" />,
               title: hero?.stats?.experience,
               subtitle: hero?.stats?.experienceSubtitle
             },

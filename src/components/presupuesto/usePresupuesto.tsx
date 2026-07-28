@@ -72,7 +72,7 @@ export function usePresupuesto() {
             price: Number(item.price ?? 0),
             description: item.description ?? "",
             type: item.category ?? item.type ?? "",
-            vendor: item.vendor ?? "Romana",
+            vendor: item.vendor ?? "La Fabbrica",
             status: item.status ?? "available",
             track_stock: Boolean(item.track_stock ?? false),
             total_qty: Number(item.total_qty ?? 0),
@@ -257,7 +257,7 @@ export function usePresupuesto() {
     y += 6
     doc.setFontSize(FS_BASE) // antes 10
     doc.setFont("helvetica", "bold")
-    doc.text("Contacto: Romana Ebanisteria", margin, y)
+    doc.text("Contacto: La Fabbrica", margin, y)
     doc.setFont("helvetica", "normal")
     doc.setTextColor(157, 84, 33) // #9d5421
     doc.text("COTIZACION VALIDA POR 5 DIAS", pageWidth - margin - 2, y, { align: "right" })
@@ -447,7 +447,7 @@ export function usePresupuesto() {
       "3) Trabajos presupuestados en este documento tienen un plazo de entrega de _______Dias Calendario a la firma del mismo y pago del primer avance.",
       "4) La energia electrica y andamios si son requeridos, el cliente se comprometera a facilitar las condiciones favorables para el desarrollo del trabajo.",
       "5) Cualquier trabajo de ajustes adicionales a las especificaciones dadas pueden ser considerados como otros gastos que deberan ser cubiertos por el cliente.",
-      "6) El Cliente autoriza a Romana Ebanisteria y/o su grupo de trabajo a grabar, fotografiar o documentar el trabajo realizado, y a utilizar dicho material con fines promocionales o de portafolio, en cualquier medio, sin que esto genere compensación adicional.",
+      "6) El Cliente autoriza a La Fabbrica y/o su grupo de trabajo a grabar, fotografiar o documentar el trabajo realizado, y a utilizar dicho material con fines promocionales o de portafolio, en cualquier medio, sin que esto genere compensación adicional.",
     ]
     doc.setFontSize(FS_BASE)
     doc.setFont("helvetica", "normal")
@@ -503,7 +503,7 @@ export function usePresupuesto() {
     // Si se solicita descarga, guardar el PDF
     if (options.download) {
       const quoteNumber = generateQuoteNumber();
-      doc.save(`cotizacion-${quoteNumber}-romana-ebanisteria.pdf`)
+      doc.save(`cotizacion-${quoteNumber}-La Fabbrica-ebanisteria.pdf`)
     }
   }
 

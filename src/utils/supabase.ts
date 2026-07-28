@@ -53,7 +53,7 @@ export async function getAllProductsWithDetails() {
       })),
       description: item.description || "",
       type: item.category || "",
-      vendor: "Romana Ebanistería",
+      vendor: "La Fabbrica",
       track_stock: variants.length > 0,
       total_qty: totalQty,
       use_variant: variants.length > 1,

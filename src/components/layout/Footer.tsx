@@ -3,26 +3,23 @@ import Link from "next/link";
 import Image from "next/image";
 
 const Footer = () => {
- 
-
   const dict = useTranslation()
-  const { header, footer } = dict 
+  const { header, footer } = dict
 
   return (
     <footer
-      className="bg-white text-gray-700 border-t border-gray-200 pt-16 pb-20 md:pt-24 md:pb-28"
-      style={{ borderRadius: 0 }}
+      className="border-t pt-16 pb-20 md:pt-24 md:pb-28"
+      style={{ borderRadius: 0, backgroundColor: "#0a0a0a", borderColor: "#2a2a2a" }}
     >
       <div className="container mx-auto px-4">
-        {/* Fila principal */}
         <div className="flex flex-col md:flex-row items-center justify-between gap-y-8">
-          {/* Logo y Nombre */}
+          {/* Logo */}
           <div className="mb-4 md:mb-0">
             <Link href="/">
               <Image
-                src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png"
-                alt="ROMAna Ebanistería Logo"
-                width={160}
+                src="/Blanco%20La%20Fabbrica.png"
+                alt="La Fabbrica Logo"
+                width={200}
                 height={64}
                 style={{ height: '4rem', width: 'auto', borderRadius: 0 }}
                 priority
@@ -30,62 +27,63 @@ const Footer = () => {
             </Link>
           </div>
 
-          <div className="">
-            <nav className="flex flex-wrap gap-8 text-base font-medium">
-              {
-                [
-                  { href: "/", text: header?.nav?.home },
-                  { href: "/store/services", text: header?.nav?.services },
-                  { href: "/store", text: header?.nav?.store },
-                  { href: "/gallery", text: header?.nav?.projects },
-                  { href: "/contact", text: header?.nav?.contact },
-                ].map((item, index) => (
-                  <Link key={index} href={`${item.href}`} className="hover:text-gray-900 transition-colors">
-                    {item.text}
-                  </Link>
-                ))
-              }
+          <div>
+            <nav className="flex flex-wrap gap-8 text-sm font-medium" style={{ color: "#8a8a8a" }}>
+              {[
+                { href: "/", text: header?.nav?.home },
+                { href: "/store/services", text: header?.nav?.services },
+                { href: "/store", text: header?.nav?.store },
+                { href: "/gallery", text: header?.nav?.projects },
+                { href: "/contact", text: header?.nav?.contact },
+                { href: "/aliados", text: "Aliados" },
+                { href: "/marketplace", text: "Marketplace" },
+              ].map((item, index) => (
+                <Link
+                  key={index}
+                  href={item.href}
+                  className="transition-colors hover:text-white"
+                  style={{ color: "inherit" }}
+                >
+                  {item.text}
+                </Link>
+              ))}
             </nav>
-            <div className="flex gap-4 justify-center mt-5 text-sm">
-              <Link
-                href="/terms"
-                className="hover:text-gray-900 transition-colors"
-              >
+            <div className="flex gap-4 justify-center mt-5 text-xs" style={{ color: "#454545" }}>
+              <Link href="/terms" className="hover:text-white transition-colors">
                 {footer?.nav?.terms}
               </Link>
-              <Link
-                href="/privacy"
-                className="hover:text-gray-900 transition-colors"
-              >
+              <Link href="/privacy" className="hover:text-white transition-colors">
                 {footer?.nav?.privacy}
               </Link>
             </div>
           </div>
 
-          {/* Redes Sociales (texto un poco más grande) */}
-          <div className="flex items-center space-x-6 text-base font-medium">
+          {/* Redes Sociales */}
+          <div className="flex items-center space-x-6 text-sm font-medium" style={{ color: "#8a8a8a" }}>
             <Link
-              href="https://instagram.com/romanaebanisteria"
+              href="https://www.instagram.com/lafabbrica.rd/"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-gray-900 transition-colors"
+              className="hover:text-white transition-colors"
             >
               {footer?.social?.instagram}
             </Link>
             <Link
-              href="https://facebook.com/romanaebanisteria"
+              href="https://web.facebook.com/profile.php?id=61592563232977"
               target="_blank"
               rel="noopener noreferrer"
-              className="hover:text-gray-900 transition-colors"
+              className="hover:text-white transition-colors"
             >
               {footer?.social?.facebook}
             </Link>
           </div>
         </div>
 
-        {/* Fila final: Derechos reservados */}
-        <div className="mt-12 text-center text-sm text-gray-500">
-          &copy; {new Date().getFullYear()} ROMAna Ebanistería. {footer?.copy}
+        {/* Línea divisora */}
+        <div className="mt-12 pt-8" style={{ borderTop: "1px solid #1e1e1e" }}>
+          <p className="text-center text-xs" style={{ color: "#454545" }}>
+            &copy; {new Date().getFullYear()} La Fabbrica. {footer?.copy}
+          </p>
         </div>
       </div>
     </footer>

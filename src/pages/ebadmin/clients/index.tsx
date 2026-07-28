@@ -30,7 +30,7 @@ export default function AdminClientsPage() {
   return (
     <>
       <Head>
-        <title>Clientes | Romana Ebanistería Admin</title>
+        <title>Clientes | La Fabbrica Admin</title>
       </Head>
       <AdminLayout activeTab="clients" onTabChange={handleTabChange} user={user}>
         <ClientsManagement />

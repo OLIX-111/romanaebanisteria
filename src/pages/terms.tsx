@@ -13,9 +13,9 @@ export default function Terms() {
     <>
       <Head>
         <title>
-          Ebanistería y Carpintería en Aluminio de Alta Calidad | ROMAna Ebanistería
+          Ebanistería y Carpintería en Aluminio de Alta Calidad | La Fabbrica
         </title>
-        <meta name="description" content="ROMAna Ebanistería, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana." />
+        <meta name="description" content="La Fabbrica, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana." />
         <link rel="icon" href="/home/ebanisteria.png" />
       </Head>
       <main className={`${openSans.className} pt-28`}>
@@ -27,7 +27,7 @@ export default function Terms() {
 
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">1. Introducción</h2>
           <p className="text-gray-700">
-            Bienvenido a <strong>ROMAna Ebanistería</strong>. Al acceder y utilizar nuestro sitio web 
+            Bienvenido a <strong>La Fabbrica</strong>. Al acceder y utilizar nuestro sitio web 
             (<a href="www.romanaebanisteria.com" className="text-blue-600 underline">www.romanaebanisteria.com</a>), 
             aceptas cumplir con los siguientes términos y condiciones de uso. Si no estás de acuerdo con alguno de estos términos, 
             por favor, no utilices nuestro sitio.
@@ -62,7 +62,7 @@ export default function Terms() {
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">4. Propiedad Intelectual</h2>
           <p className="text-gray-700">
             Todos los contenidos de este sitio web, incluidos textos, imágenes, logotipos y diseños, son propiedad de 
-            <strong> ROMAna Ebanistería</strong> o de terceros con licencia. No está permitido el uso de estos materiales sin el 
+            <strong> La Fabbrica</strong> o de terceros con licencia. No está permitido el uso de estos materiales sin el 
             consentimiento previo por escrito.
           </p>
 
@@ -82,7 +82,7 @@ export default function Terms() {
 
           <h2 className="text-2xl font-semibold text-gray-900 mt-8 mb-4">7. Limitación de Responsabilidad</h2>
           <p className="text-gray-700">
-            No garantizamos que el sitio web esté disponible de forma ininterrumpida o libre de errores. **ROMAna Ebanistería** no se hace responsable 
+            No garantizamos que el sitio web esté disponible de forma ininterrumpida o libre de errores. **La Fabbrica** no se hace responsable 
             por daños o pérdidas derivadas del uso del sitio web o de la información contenida en él.
           </p>
 

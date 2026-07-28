@@ -70,7 +70,7 @@ export default function WhyUs() {
         >
           <Image
             src={"/home/learnmore_romana_ebanisteria.jpg"}
-            alt="ROMAna Ebanistería project showcase"
+            alt="La Fabbrica project showcase"
             height={1200}
             width={1400}
             className="w-full h-96 lg:h-[43rem] object-cover"

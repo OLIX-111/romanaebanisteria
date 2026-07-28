@@ -42,7 +42,7 @@ const SingleService = ({ service, index }: { service: Service; index: number }) 
             src={service.imageUrl || "/placeholder.svg"}
             width={900}
             height={900}
-            alt={service.description + " | ROMAna Ebanistería"}
+            alt={service.description + " | La Fabbrica"}
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105 z-10"
           />
         </div>

@@ -12,7 +12,7 @@ const openSans = Open_Sans({ subsets: ['latin'] })
 export default function PaymentSuccessPage(){
   return (
     <main className={openSans.className}>
-      <Head><title>Confirmación de orden | Romana Ebanistería</title></Head>
+      <Head><title>Confirmación de orden | La Fabbrica</title></Head>
       <Header />
       <div className="min-h-screen bg-slate-50/30 flex items-center justify-center px-6 py-40">
         <div className="max-w-md mx-auto bg-white border border-slate-200 rounded-lg shadow-sm p-8 text-center space-y-6">

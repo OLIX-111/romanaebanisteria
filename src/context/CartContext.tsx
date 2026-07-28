@@ -76,7 +76,7 @@ export const CartProvider: React.FC<{ children: React.ReactNode }> = ({ children
         await clearServerCart(existingToken, authToken)
       }
       // Limpiar token local para forzar creación de nuevo carrito en próxima adición
-      try { localStorage.removeItem('romana_cart_token') } catch {}
+      try { localStorage.removeItem('La Fabbrica_cart_token') } catch {}
       setCart({ id: cart?.id || 'local', token: '', items: [], total: 0 })
     } catch (e:any) {
       setError(e?.message || 'No se pudo limpiar el carrito')

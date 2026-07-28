@@ -1,7 +1,7 @@
-// Simple client-side auth helper for Romana Ebanistería custom API
+// Simple client-side auth helper for La Fabbrica custom API
 // Stores token + user in localStorage
 
-export interface RomanaUser {
+export interface LaFabbricaUser {
   id: string
   nombre: string
   correo: string
@@ -12,12 +12,12 @@ export interface RomanaUser {
 }
 
 export interface AuthResponse {
-  user: RomanaUser
+  user: LaFabbricaUser
   token: string
   token_type: string
 }
 
-const STORAGE_KEY = 'romana_auth'
+const STORAGE_KEY = 'La Fabbrica_auth'
 
 export function saveAuth(data: AuthResponse) {
   try { localStorage.setItem(STORAGE_KEY, JSON.stringify(data)) } catch {}
@@ -70,7 +70,7 @@ export function logoutUser() {
 
 // Fetch current authenticated user from /auth/me using stored bearer token
 // Updates the cached auth user (preserving token) if successful.
-export async function fetchCurrentUser(): Promise<RomanaUser> {
+export async function fetchCurrentUser(): Promise<LaFabbricaUser> {
   const auth = getAuth()
   if (!auth?.token) throw new Error('NO_AUTH')
   const res = await fetch(`${BASE_URL}/auth/me`, {
@@ -88,7 +88,7 @@ export async function fetchCurrentUser(): Promise<RomanaUser> {
   }
   const data = await res.json()
   // API returns id_usuario; map to our id field
-  const mapped: RomanaUser = {
+  const mapped: LaFabbricaUser = {
     id: data.id_usuario || data.id || '',
     nombre: data.nombre,
     correo: data.correo,

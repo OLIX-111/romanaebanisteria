@@ -102,7 +102,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
       initial="hidden"
       animate="visible"
       className={`fixed w-full top-0 z-50 transition-all duration-300 px-4 lg:px-8 ${
-        scrollPosition > 50 ? `bg-white/95 shadow-md` : `${enableScroll ?"bg-transparent": "bg-white border-b"} `
+        scrollPosition > 50 ? `bg-[#0a0a0a]/95 shadow-[0_2px_20px_rgba(0,0,0,0.8)]` : `${enableScroll ? "bg-transparent" : "bg-[#0a0a0a] border-b border-[#2a2a2a]"}`
       }`}
     >
       <nav className="mx-auto container">
@@ -116,7 +116,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               whileTap={{ scale: 0.95 }}
             >
               <Link href="/store/cart" className="relative inline-block" aria-label={`Carrito, ${cartCount} artículos`}>
-                <ShoppingCart className={`h-8 w-8 ${isScrolled ? "text-gray-800" : "text-gray-50"}`} />
+                <ShoppingCart className="h-8 w-8 text-gray-100" />
                 {cartCount > 0 && (
                   <span className="absolute -right-2 -top-1 bg-gray-900 text-white text-[10px] leading-none px-1.5 py-0.5 font-semibold" aria-hidden>
                     {cartCount}
@@ -127,16 +127,12 @@ export default function Header({ enableScroll = false }: HeaderProps) {
           </div>
           {/* Logo centrado */}
           <Link href="/" className="flex-shrink-0 w-1/3 flex justify-center">
-            <span className="sr-only">Logo</span>
             <motion.img
-              src={
-                isScrolled
-                  ? `https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png`
-                  : `/romanaEbanistería_alt.png`
-              }
-              alt="Logo"
-              width={120}
-              height={50}
+              src="/Blanco%20La%20Fabbrica.png"
+              alt="La Fabbrica RD"
+              width={280}
+              height={100}
+              className="h-28 w-auto object-contain"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
@@ -150,24 +146,20 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             whileHover={{ scale: 1.05 }}
             whileTap={{ scale: 0.95 }}
           >
-            <MenuIcon className={`h-8 w-8 ${isScrolled ? "text-gray-800" : "text-gray-50"}`} />
+            <MenuIcon className="h-8 w-8 text-gray-100" />
           </motion.button>
         </div>
         {/* ===== DESKTOP HEADER ===== */}
-        <div className="hidden lg:flex items-center justify-between py-2">
+        <div className="hidden lg:grid lg:grid-cols-3 items-center py-2">
           <div className="flex items-center">
-            <Link href="/" className="">
-              <span className="sr-only">Logo</span>
+            <Link href="/">
+              <span className="sr-only">La Fabbrica</span>
               <motion.img
-                src={
-                  isScrolled
-                    ? `https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png`
-                    : `/romanaEbanistería_alt.png`
-                }
-                alt="Logo"
-                width={150}
-                height={55}
-                className="h-18 object-contain"
+                src="/Blanco%20La%20Fabbrica.png"
+                alt="La Fabbrica RD"
+                width={480}
+                height={160}
+                className="h-36 w-auto object-contain"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
@@ -175,7 +167,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             </Link>
           </div>
           <motion.div
-            className={`flex space-x-6 text-[14px] font-medium ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
+            className="flex justify-center space-x-6 text-[13px] font-medium text-gray-100"
             variants={headerVariants}
           >
             {[
@@ -185,6 +177,8 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               { href: "https://tienda.romanaebanisteria.com/shop", text: header?.nav?.store },
               { href: "/gallery", text: header?.nav?.projects },
               { href: "https://tienda.romanaebanisteria.com/contactanos", text: header?.nav?.contact },
+              { href: "/aliados", text: "Aliados" },
+              { href: "/marketplace", text: "Marketplace" },
             ].map((item, index) => (
               <motion.div key={index} variants={navItemVariants}>
                 <Link href={item.href} className="hover:text-primary transition-colors duration-200">
@@ -193,7 +187,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               </motion.div>
             ))}
           </motion.div>
-          <div className="flex items-center space-x-4">
+          <div className="flex items-center justify-end space-x-4">
             <Menu as="div" className="relative">
               {/* <Menu.Button className={`flex items-center gap-1 ${isScrolled ? "text-gray-800" : "text-gray-50"}`}>
                 <Globe className="w-5 h-5" />
@@ -240,23 +234,19 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               </Transition> */}
             </Menu>
             <motion.button
-              className={`hidden md:inline-flex items-center gap-2 px-4 py-2 border transition-transform ${
-                isScrolled
-                  ? "text-gray-800 border-gray-300 hover:bg-gray-100"
-                  : "text-gray-50 border-white/60 hover:bg-white/10"
-              }`}
+              className="hidden md:inline-flex items-center gap-2 px-4 py-2 border border-[#454545] text-gray-100 hover:bg-[#1e1e1e] transition-colors"
             >
               <Link href="/presupuesto">Crear presupuesto</Link>
             </motion.button>
             <div className="hidden md:flex items-center gap-3 pb-1">
               <Link href="/profile"
-                className={`hidden md:inline-flex items-center gap-2 px-3 py-2 text-sm transition-colors ${isScrolled ? "text-gray-800 hover:text-gray-600" : "text-gray-50 hover:text-gray-200"}`}
+                className="hidden md:inline-flex items-center gap-2 px-3 py-2 text-sm transition-colors text-gray-100 hover:text-gray-300"
               >
                 <User2 className="w-5 h-5" />
               </Link>
             </div>
             <motion.button
-              className={` transition-transform ${isScrolled ? "text-gray-800" : "text-gray-50"}`}
+              className="transition-transform text-gray-100"
             >
               <Link href="/store/cart" className="relative inline-block" aria-label={`Carrito, ${cartCount} artículos`}>
                 <ShoppingCart className="h-6 w-6 mr-[1px]" />
@@ -282,61 +272,75 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               initial="hidden"
               animate="visible"
               exit="exit"
-              className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-white p-6 shadow-xl"
+              className="fixed inset-y-0 right-0 z-50 w-full overflow-y-auto bg-[#0a0a0a] p-6 shadow-xl"
             >
               <div className="flex items-center justify-between">
                 <Link href="/" className="-m-2 p-2">
                   <span className="sr-only">Logo</span>
                   <img
-                    src={`https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png`}
+                    src="/Blanco%20La%20Fabbrica.png"
                     alt="Logo"
                     width={150}
                     height={50}
                   />
                 </Link>
-                <button type="button" className="p-2 text-gray-800" onClick={() => setMobileMenuOpen(false)}>
+                <button type="button" className="p-2 text-gray-100" onClick={() => setMobileMenuOpen(false)}>
                   <X className="h-8 w-8" />
                 </button>
               </div>
               <div className="mt-12 space-y-8">
                 <Link
                   href="/profile"
-                  className="block text-lg font-medium text-gray-800"
+                  className="block text-lg font-medium text-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {authUser ? 'Perfil' : 'Perfil / Rastreo'}
                 </Link>
                 <Link
                   href="/"
-                  className="block text-lg font-medium text-gray-800"
+                  className="block text-lg font-medium text-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {header?.nav?.home}
                 </Link>
                 <Link
                   href="/store/services"
-                  className="block text-lg font-medium text-gray-800"
+                  className="block text-lg font-medium text-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {header?.nav?.services}
                 </Link>
                 <Link
                   href="/store"
-                  className="block text-lg font-medium text-gray-800"
+                  className="block text-lg font-medium text-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {header?.nav?.store}
                 </Link>
                 <Link
                   href="/news"
-                  className="block text-lg font-medium text-gray-800"
+                  className="block text-lg font-medium text-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {header?.nav?.news}
                 </Link>
+                <Link
+                  href="/aliados"
+                  className="block text-lg font-medium text-gray-100"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Aliados
+                </Link>
+                <Link
+                  href="/marketplace"
+                  className="block text-lg font-medium text-gray-100"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Marketplace
+                </Link>
                 {/* <Link
                   href="/presupuesto"
-                  className="block text-lg font-medium text-gray-800"
+                  className="block text-lg font-medium text-gray-100"
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   Crear cotización

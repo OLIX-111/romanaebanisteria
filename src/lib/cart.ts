@@ -4,7 +4,7 @@
 // Response returns carrito_token we persist for guests & logged users.
 
 const BASE_URL = process.env.NEXT_PUBLIC_ROMANA_API || 'https://romana-ebanisteria-api-production.up.railway.app/api/v1'
-const CART_TOKEN_KEY = 'romana_cart_token'
+const CART_TOKEN_KEY = 'La Fabbrica_cart_token'
 
 export interface AddCartItemResponseData {
   id: string

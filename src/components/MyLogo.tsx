@@ -6,7 +6,7 @@ const MyCustomLogo = () => {
   return (
     <Image
       src="/romanaEbanistería-alt.png"
-      alt="Romana Ebanistería"
+      alt="La Fabbrica"
       width={25}
       height={25}
       style={{ objectFit: 'contain' }}

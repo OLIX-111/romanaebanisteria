@@ -63,7 +63,7 @@ export default function AdminLogin() {
   return (
     <>
       <Head>
-        <title>Admin Login | Romana Ebanistería</title>
+        <title>Admin Login | La Fabbrica</title>
       </Head>
 
       <div className="min-h-screen bg-gradient-to-br from-slate-50 to-slate-100 flex items-center justify-center p-4">
@@ -74,7 +74,7 @@ export default function AdminLogin() {
               <Shield className="w-8 h-8 text-white" />
             </div>
             <h1 className="text-2xl font-bold text-gray-900 mb-2">
-              Admin Romana Ebanistería
+              Admin La Fabbrica
             </h1>
             <p className="text-gray-600">
               Acceso al panel de administración

@@ -30,7 +30,7 @@ export default function AdminServiceRequestsPage() {
   return (
     <>
       <Head>
-        <title>Solicitudes de Servicios | Romana Ebanistería Admin</title>
+        <title>Solicitudes de Servicios | La Fabbrica Admin</title>
       </Head>
       <AdminLayout activeTab="services" onTabChange={handleTabChange} user={user}>
         <ServiceRequestsManagement />

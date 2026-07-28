@@ -30,7 +30,7 @@ function formatCurrency(amount: number, currency: string) {
 function buildOrderHtml(data: any, opts: { client: boolean }): string {
   const currency = data.currency || "DOP"
   const storeUrl = "www.romanaebanisteria.com"
-  const logoUrl = "https://storage.googleapis.com/portfoliprofiles/GG%20studio/romanaEbanisteri%CC%81a.png"
+  const logoUrl = "https://storage.googleapis.com/portfoliprofiles/GG%20studio/RomanaEbanisteri%CC%81a.png"
   const items = (data.items || []) as Array<any>
   const itemsRows = items
     .map(
@@ -69,7 +69,7 @@ function buildOrderHtml(data: any, opts: { client: boolean }): string {
     <table width="100%" cellspacing="0" cellpadding="0" style="max-width:720px;margin:0 auto;background:#ffffff;border:1px solid #eaeaea;">
       <tr>
         <td style="padding:20px 24px;border-bottom:1px solid #eaeaea;display:flex;align-items:center;gap:12px;">
-          <img src="${logoUrl}" width="140" alt="ROMAna Ebanistería"/>
+          <img src="${logoUrl}" width="140" alt="La Fabbrica"/>
           <div style="margin-left:auto;text-align:right;">
             <div style="font-size:12px;color:#666;">Orden</div>
             <div style="font-size:16px;font-weight:700;color:#111;">#${data.order_no}</div>
@@ -123,7 +123,7 @@ function buildOrderHtml(data: any, opts: { client: boolean }): string {
       </tr>
       <tr>
         <td style="padding:16px 24px;border-top:1px solid #eaeaea;background:#fafafa;color:#999;font-size:12px;text-align:center;">
-          ROMAna Ebanistería · La Romana, República Dominicana
+          La Fabbrica · La Romana, República Dominicana
         </td>
       </tr>
     </table>
@@ -145,7 +145,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Mail to client
     await transporter.sendMail({
-      from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+      from: `La Fabbrica <${FROM_EMAIL}>`,
       to: toEmail,
       subject: `Confirmación de pedido #${data.order_no}`,
       html: clientHtml,
@@ -153,7 +153,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 
     // Mail to internal team
     await transporter.sendMail({
-      from: `ROMAna Ebanistería <${FROM_EMAIL}>`,
+      from: `La Fabbrica <${FROM_EMAIL}>`,
       to: INTERNAL_EMAILS.join(","),
       replyTo: data.contact_email || toEmail,
       subject: `Nueva orden #${data.order_no}`,
