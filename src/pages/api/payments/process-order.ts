@@ -8,7 +8,7 @@ const SMTP_HOST = "smtp.sendgrid.net"
 const SMTP_PORT = 465
 const SMTP_SECURE = true
 const SMTP_USER = "apikey"
-const SMTP_PASS = "***SENDGRID_KEY_REMOVED***"
+const SMTP_PASS = process.env.SMTP_PASS || ""
 
 const FROM_EMAIL = "info@grupochavon.com"
 const INTERNAL_EMAILS = ["jheremy802@gmail.com"]

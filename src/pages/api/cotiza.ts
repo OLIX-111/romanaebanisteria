@@ -7,7 +7,7 @@ export default async function handler(req: NextApiRequest, res: NextApiResponse)
 const SMTP_PORT = 465 // SSL
 const SMTP_SECURE = true
 const SMTP_USER = "apikey"
-const SMTP_PASS = "***SENDGRID_KEY_REMOVED***"
+const SMTP_PASS = process.env.SMTP_PASS || ""
   try {
     if (req.method !== "POST") {
       return res.status(405).send({ message: "Solo se permiten solicitudes POST." });

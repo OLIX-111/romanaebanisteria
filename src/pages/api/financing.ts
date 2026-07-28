@@ -7,7 +7,7 @@ const SMTP_HOST = process.env.SMTP_HOST || "smtp.sendgrid.net"
 const SMTP_PORT = Number(process.env.SMTP_PORT || 465)
 const SMTP_SECURE = String(process.env.SMTP_SECURE || "true") === "true"
 const SMTP_USER = process.env.SMTP_USER || "apikey"
-const SMTP_PASS = process.env.SMTP_PASS || "***SENDGRID_KEY_REMOVED***"
+const SMTP_PASS = process.env.SMTP_PASS || process.env.SMTP_PASS || ""
 
 const FROM_EMAIL = process.env.FINANCING_FROM_EMAIL || "info@grupochavon.com"
 const INTERNAL_EMAIL = process.env.FINANCING_INTERNAL_EMAIL || "tecnologia@grupochavon.com"
