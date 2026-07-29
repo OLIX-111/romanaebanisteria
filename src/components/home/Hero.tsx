@@ -50,7 +50,7 @@ export default function Hero() {
           <img
             src="/Blanco%20La%20Fabbrica.png"
             alt="La Fabbrica"
-            className="mt-4 mx-auto h-24 w-auto object-contain"
+            className="mt-4 mx-auto h-40 w-auto object-contain"
           />
         </motion.div>
       </div>
