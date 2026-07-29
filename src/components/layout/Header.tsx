@@ -149,9 +149,9 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             <MenuIcon className="h-8 w-8 text-gray-100" />
           </motion.button>
         </div>
-        {/* ===== DESKTOP HEADER — igual que Binova: logo izquierda, nav centrado, nada a la derecha ===== */}
-        <div className="hidden lg:flex items-center justify-between py-1">
-          <Link href="/">
+        {/* ===== DESKTOP HEADER — logo izquierda + nav pegado a la derecha del logo, igual que Binova ===== */}
+        <div className="hidden lg:flex items-center gap-10 py-1">
+          <Link href="/" className="flex-shrink-0">
             <motion.img
               src="/Blanco%20La%20Fabbrica.png"
               alt="La Fabbrica RD"
@@ -164,7 +164,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             />
           </Link>
           <motion.nav
-            className="flex items-center space-x-7 text-[12px] tracking-wider uppercase text-gray-100"
+            className="flex items-center gap-8 text-[12px] tracking-widest uppercase text-gray-100 font-light"
             variants={headerVariants}
           >
             {[
@@ -183,8 +183,6 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               </motion.div>
             ))}
           </motion.nav>
-          {/* Espacio vacío para mantener el nav centrado */}
-          <div className="w-[200px]" />
         </div>
       </nav>
       {/* ===== MENÚ MÓVIL ===== */}
