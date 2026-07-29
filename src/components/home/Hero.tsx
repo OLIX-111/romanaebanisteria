@@ -47,11 +47,9 @@ export default function Hero() {
           >
             LA FABBRICA
           </h1>
-          <img
-            src="/Blanco%20La%20Fabbrica.png"
-            alt="La Fabbrica"
-            className="mt-4 mx-auto h-40 w-auto object-contain"
-          />
+          <p className="text-gray-300 text-sm lg:text-base mt-4 tracking-widest uppercase">
+            Suministro e Instalación — Todo desde el origen
+          </p>
         </motion.div>
       </div>
 
