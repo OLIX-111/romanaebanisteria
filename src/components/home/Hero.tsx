@@ -9,18 +9,14 @@ export default function Hero() {
 
   return (
     <div className="relative isolate flex flex-col justify-end overflow-hidden h-screen min-h-[600px]">
-      <video
-        autoPlay
-        loop
-        muted
-        playsInline
-        className="absolute object-cover w-full h-full -z-10"
-      >
-        <source src="/home/chavo.mp4" type="video/mp4" />
-      </video>
+      {/* Foto estática de fondo — carga instantánea como Binova */}
+      <div
+        className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat"
+        style={{ backgroundImage: "url('/home/learnmore_romana_ebanisteria.jpg')" }}
+      />
 
-      {/* Overlay — más opaco abajo como Binova */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-black/25 to-black/80" />
+      {/* Overlay oscuro igual que Binova */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-black/50 to-black/85" />
 
       {/* Bloque de texto centrado — igual que Binova */}
       <div className="w-full text-center px-4 pb-10">

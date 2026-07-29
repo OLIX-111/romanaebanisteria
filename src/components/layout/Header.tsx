@@ -149,29 +149,25 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             <MenuIcon className="h-8 w-8 text-gray-100" />
           </motion.button>
         </div>
-        {/* ===== DESKTOP HEADER ===== */}
-        <div className="hidden lg:grid lg:grid-cols-3 items-center py-2">
-          <div className="flex items-center">
-            <Link href="/">
-              <span className="sr-only">La Fabbrica</span>
-              <motion.img
-                src="/Blanco%20La%20Fabbrica.png"
-                alt="La Fabbrica RD"
-                width={480}
-                height={160}
-                className="h-36 w-auto object-contain"
-                initial={{ opacity: 0 }}
-                animate={{ opacity: 1 }}
-                transition={{ duration: 0.5 }}
-              />
-            </Link>
-          </div>
-          <motion.div
-            className="flex justify-center space-x-6 text-[13px] font-medium text-gray-100"
+        {/* ===== DESKTOP HEADER — igual que Binova: logo izquierda, nav centrado, nada a la derecha ===== */}
+        <div className="hidden lg:flex items-center justify-between py-1">
+          <Link href="/">
+            <motion.img
+              src="/Blanco%20La%20Fabbrica.png"
+              alt="La Fabbrica RD"
+              width={200}
+              height={67}
+              className="h-14 w-auto object-contain"
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 1 }}
+              transition={{ duration: 0.5 }}
+            />
+          </Link>
+          <motion.nav
+            className="flex items-center space-x-7 text-[12px] tracking-wider uppercase text-gray-100"
             variants={headerVariants}
           >
             {[
-            /* { href: "/about", text: header?.nav?.about }, */
               { href: "/", text: header?.nav?.home },
               { href: "/store/services", text: header?.nav?.services },
               { href: "https://tienda.romanaebanisteria.com/shop", text: header?.nav?.store },
@@ -181,83 +177,14 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               { href: "https://fabbrica-maketplace.vercel.app/", text: "Marketplace" },
             ].map((item, index) => (
               <motion.div key={index} variants={navItemVariants}>
-                <Link href={item.href} className="hover:text-primary transition-colors duration-200">
+                <Link href={item.href} className="hover:text-white transition-colors duration-200">
                   {item.text}
                 </Link>
               </motion.div>
             ))}
-          </motion.div>
-          <div className="flex items-center justify-end space-x-4">
-            <Menu as="div" className="relative">
-              {/* <Menu.Button className={`flex items-center gap-1 ${isScrolled ? "text-gray-800" : "text-gray-50"}`}>
-                <Globe className="w-5 h-5" />
-                <span className="uppercase">{locale}</span>
-                <ChevronDownIcon className="w-4 h-4" />
-              </Menu.Button> */}
-              {/* <Transition
-                as={Fragment}
-                enter="transition ease-out duration-200"
-                enterFrom="opacity-0 scale-95"
-                enterTo="opacity-100 scale-100"
-                leave="transition ease-in duration-150"
-                leaveFrom="opacity-100 scale-100"
-                leaveTo="opacity-0 scale-95"
-              >
-                <Menu.Items className="absolute left-0 mt-2 w-20 origin-top-left rounded-md bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden">
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={() => changeLanguage("en")}
-                        className={classNames(
-                          active ? "bg-gray-100" : "",
-                          "block w-full text-left px-4 py-2 text-sm text-gray-700",
-                        )}
-                      >
-                        EN
-                      </button>
-                    )}
-                  </Menu.Item>
-                  <Menu.Item>
-                    {({ active }) => (
-                      <button
-                        onClick={() => changeLanguage("es")}
-                        className={classNames(
-                          active ? "bg-gray-100" : "",
-                          "block w-full text-left px-4 py-2 text-sm text-gray-700",
-                        )}
-                      >
-                        ES
-                      </button>
-                    )}
-                  </Menu.Item>
-                </Menu.Items>
-              </Transition> */}
-            </Menu>
-            <motion.button
-              className="hidden md:inline-flex items-center gap-2 px-4 py-2 border border-[#454545] text-gray-100 hover:bg-[#1e1e1e] transition-colors"
-            >
-              <Link href="/presupuesto">Crear presupuesto</Link>
-            </motion.button>
-            <div className="hidden md:flex items-center gap-3 pb-1">
-              <Link href="/profile"
-                className="hidden md:inline-flex items-center gap-2 px-3 py-2 text-sm transition-colors text-gray-100 hover:text-gray-300"
-              >
-                <User2 className="w-5 h-5" />
-              </Link>
-            </div>
-            <motion.button
-              className="transition-transform text-gray-100"
-            >
-              <Link href="/store/cart" className="relative inline-block" aria-label={`Carrito, ${cartCount} artículos`}>
-                <ShoppingCart className="h-6 w-6 mr-[1px]" />
-                {cartCount > 0 && (
-                  <span className="absolute -right-2 -top-2 bg-gray-900 text-white text-[10px] leading-none px-1.5 py-0.5 font-semibold" aria-hidden>
-                    {cartCount}
-                  </span>
-                )}
-              </Link>
-            </motion.button>
-          </div>
+          </motion.nav>
+          {/* Espacio vacío para mantener el nav centrado */}
+          <div className="w-[200px]" />
         </div>
       </nav>
       {/* ===== MENÚ MÓVIL ===== */}
