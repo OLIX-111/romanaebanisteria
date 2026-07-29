@@ -39,13 +39,13 @@ export default function Hero() {
           transition={{ duration: 0.9, ease: "easeOut" as const }}
         >
           <p className="font-serif-display text-lg lg:text-2xl italic text-gray-100 mb-1">
-            La Fabbrica desde 1976
+            desde 1981
           </p>
           <h1
             className="font-serif-display font-normal text-white uppercase leading-none"
             style={{ fontSize: "clamp(3.2rem, 10vw, 9.5rem)" }}
           >
-            EBANISTERÍA
+            LA FABBRICA
           </h1>
           <p className="text-gray-300 text-sm lg:text-base mt-4 max-w-xl mx-auto leading-relaxed">
             La fábrica más grande de muebles y carpintería en aluminio en La Romana, República Dominicana.
