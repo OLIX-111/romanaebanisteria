@@ -53,7 +53,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
       y: 0,
       transition: {
         duration: 0.5,
-        ease: "easeOut",
+        ease: "easeOut" as const,
         staggerChildren: 0.1,
         delayChildren: 0.2,
       },
@@ -65,7 +65,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
     visible: {
       opacity: 1,
       y: 0,
-      transition: { duration: 0.3, ease: "easeOut" },
+      transition: { duration: 0.3, ease: "easeOut" as const },
     },
   }
 
@@ -75,7 +75,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
       opacity: 1,
       x: 0,
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 300,
         damping: 30,
       },
@@ -84,7 +84,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
       opacity: 0,
       x: "100%",
       transition: {
-        type: "spring",
+        type: "spring" as const,
         stiffness: 300,
         damping: 30,
       },
@@ -176,9 +176,9 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               { href: "/store/services", text: header?.nav?.services },
               { href: "https://tienda.romanaebanisteria.com/shop", text: header?.nav?.store },
               { href: "/gallery", text: header?.nav?.projects },
-              { href: "https://tienda.romanaebanisteria.com/contactanos", text: header?.nav?.contact },
+              { href: "/contact", text: header?.nav?.contact },
               { href: "/aliados", text: "Aliados" },
-              { href: "/marketplace", text: "Marketplace" },
+              { href: "https://fabbrica-maketplace.vercel.app/", text: "Marketplace" },
             ].map((item, index) => (
               <motion.div key={index} variants={navItemVariants}>
                 <Link href={item.href} className="hover:text-primary transition-colors duration-200">

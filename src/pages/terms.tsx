@@ -16,7 +16,7 @@ export default function Terms() {
           Ebanistería y Carpintería en Aluminio de Alta Calidad | La Fabbrica
         </title>
         <meta name="description" content="La Fabbrica, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana." />
-        <link rel="icon" href="/home/ebanisteria.png" />
+        <link rel="icon" type="image/png" href="/isotipo.png" />
       </Head>
       <main className={`${openSans.className} pt-28`}>
         <Header />

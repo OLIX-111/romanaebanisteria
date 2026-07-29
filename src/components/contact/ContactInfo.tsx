@@ -29,8 +29,8 @@ export function ContactInfo() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-600">{contactInfo.emailLabel}</p>
-            <a href="mailto:info@grupochavon.com" className="text-lg hover:text-primary">
-              info@grupochavon.com
+            <a href="mailto:info@lafabbrica.do" className="text-lg hover:text-primary">
+              info@lafabbrica.do
             </a>
           </div>
         </div>
@@ -41,8 +41,8 @@ export function ContactInfo() {
           </div>
           <div>
             <p className="text-sm font-medium text-gray-600">{contactInfo.phoneLabel}</p>
-            <a href="tel:+18292222483" className="text-lg hover:text-primary">
-              +1 (829) 222-2483
+            <a href="tel:+14842025040" className="text-lg hover:text-primary">
+              +1 (484) 202-5040
             </a>
           </div>
         </div>

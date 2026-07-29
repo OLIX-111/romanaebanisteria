@@ -4,10 +4,8 @@ import { useMemo, useState } from "react"
 import { Open_Sans } from "next/font/google"
 import { Formik, Form, Field } from "formik"
 import * as Yup from "yup"
-import { PortableText } from "@portabletext/react"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
-import { getServiceBySlug } from "../../../../sanity/sanityQueries"
 import { CheckCircle, AlertTriangle, Clock, Calendar, DollarSign, Tag } from "lucide-react"
 import Link from "next/link"
 import { useTranslation } from "@/hook/UseTranslation"
@@ -217,10 +215,8 @@ export default function ServicePage({ service }: ServicePageProps) {
                 <div className="mb-8">
                   <h2 className="text-xl font-semibold mb-4 text-gray-800">Descripción del Servicio</h2>
                   <div className="prose max-w-none text-gray-700">
-                    {typeof service.description === "string" ? (
+                    {typeof service.description === "string" && (
                       <p>{service.description}</p>
-                    ) : (
-                      <PortableText value={service.description} />
                     )}
                   </div>
                 </div>
@@ -479,20 +475,7 @@ export default function ServicePage({ service }: ServicePageProps) {
   )
 }
 
-export async function getServerSideProps(context: any) {
-  const { slug } = context.params
-  const service = await getServiceBySlug(slug)
-
-  if (!service) {
-    return {
-      notFound: true,
-    }
-  }
-
-  return {
-    props: {
-      service,
-    },
-  }
+export async function getServerSideProps() {
+  return { notFound: true }
 }
 

@@ -3,7 +3,6 @@ import { Open_Sans } from "next/font/google"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
 import { ServiceDetail } from "@/components/store/ServiceDetail"
-import { getServiceBySlug } from "../../../../sanity/sanityQueries"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -39,20 +38,6 @@ export default function ServicePage({ service }: ServicePageProps) {
   )
 }
 
-export const getServerSideProps: GetServerSideProps = async (context) => {
-  const { slug } = context.params as { slug: string }
-  const service = await getServiceBySlug(slug)
-
-  if (!service) {
-    return {
-      notFound: true,
-    }
-  }
-
-  return {
-    props: {
-      service,
-    },
-  }
+export const getServerSideProps: GetServerSideProps = async () => {
+  return { notFound: true }
 }
-

@@ -16,7 +16,7 @@ export default function Privacy() {
           Política de Privacidad | La Fabbrica
         </title>
         <meta name="description" content="Política de privacidad de La Fabbrica. Conoce cómo protegemos y utilizamos tu información personal cuando navegas en nuestra web y solicitas nuestros servicios." />
-        <link rel="icon" href="/home/ebanisteria.png" />
+        <link rel="icon" type="image/png" href="/isotipo.png" />
       </Head>
       <main className={`${openSans.className}`}>
         <Header />

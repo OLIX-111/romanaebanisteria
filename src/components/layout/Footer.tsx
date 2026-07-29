@@ -19,9 +19,10 @@ const Footer = () => {
               <Image
                 src="/Blanco%20La%20Fabbrica.png"
                 alt="La Fabbrica Logo"
-                width={200}
-                height={64}
-                style={{ height: '4rem', width: 'auto', borderRadius: 0 }}
+                width={480}
+                height={160}
+                className="h-36 w-auto object-contain"
+                style={{ borderRadius: 0 }}
                 priority
               />
             </Link>
