@@ -105,7 +105,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
         scrollPosition > 50 ? `bg-[#0a0a0a]/95 shadow-[0_2px_20px_rgba(0,0,0,0.8)]` : `${enableScroll ? "bg-transparent" : "bg-[#0a0a0a] border-b border-[#2a2a2a]"}`
       }`}
     >
-      <nav className="mx-auto container">
+      <nav className="mx-auto max-w-6xl px-6">
         {/* ===== MOBILE HEADER ===== */}
         <div className="lg:hidden flex items-center justify-between py-4">
           {/* Botón CTA a la derecha */}
