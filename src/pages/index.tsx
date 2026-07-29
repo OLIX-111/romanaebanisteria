@@ -1,21 +1,17 @@
-import Image from 'next/image'
-import { Inter, Open_Sans } from 'next/font/google'
+import { Open_Sans } from 'next/font/google'
 const openSans = Open_Sans({ subsets: ['latin'] })
 import { useTranslation } from '@/hook/UseTranslation';
 import Header from '@/components/layout/Header';
 import Hero from '@/components/home/Hero';
-import ServiceList from '@/components/home/ServiceList';
 import AboutUs from '@/components/home/AboutUs';
 import WhyUs from '@/components/home/WhyUs';
-import ProjectGrid from '@/components/home/ProjectGrid';
-import StoreSection from '@/components/home/StoreSection';
 import Cta from '@/components/home/Cta';
+import StoreSection from '@/components/home/StoreSection';
+import ProjectGrid from '@/components/home/ProjectGrid';
 import Footer from '@/components/layout/Footer';
 import Head from 'next/head';
-import { SuspendedBanner } from '@/components/Suspended';
 
 export default function Home() {
-
   const dict = useTranslation();
 
   return (
@@ -27,18 +23,15 @@ export default function Home() {
         <meta name="description" content={"La Fabbrica, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana."} />
         <link rel="icon" type="image/png" href="/isotipo.png" />
       </Head>
-      <main
-        className={`${openSans.className} bg-[#0a0a0a]`}
-      >
-        <Header enableScroll/>
-        <Hero/>
-        <StoreSection/>
-        <AboutUs/>
-        <ServiceList/>
-        <WhyUs/>
-        <ProjectGrid/>
-        <Cta/>
-        <Footer/>
+      <main className={`${openSans.className} bg-black`}>
+        <Header enableScroll />
+        <Hero />
+        <AboutUs />
+        <WhyUs />
+        <Cta />
+        <StoreSection />
+        <ProjectGrid />
+        <Footer />
       </main>
     </>
   )

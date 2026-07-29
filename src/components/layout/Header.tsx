@@ -127,15 +127,16 @@ export default function Header({ enableScroll = false }: HeaderProps) {
           </div>
           {/* Logo centrado */}
           <Link href="/" className="flex-shrink-0 w-1/3 flex justify-center">
-            <motion.div
-              className="flex flex-col items-center leading-none"
+            <motion.img
+              src="/Blanco%20La%20Fabbrica.png"
+              alt="La Fabbrica RD"
+              width={280}
+              height={100}
+              className="h-28 w-auto object-contain"
               initial={{ opacity: 0 }}
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5 }}
-            >
-              <span className="text-white font-bold tracking-[0.2em] text-xl uppercase">La Fabbrica</span>
-              <span className="text-gray-400 text-[9px] tracking-[0.12em] uppercase mt-1">Suministro e instalación</span>
-            </motion.div>
+            />
           </Link>
           {/* Botón de menú a la izquierda */}
           <motion.button
@@ -152,15 +153,17 @@ export default function Header({ enableScroll = false }: HeaderProps) {
         <div className="hidden lg:grid lg:grid-cols-3 items-center py-2">
           <div className="flex items-center">
             <Link href="/">
-              <motion.div
-                className="flex flex-col leading-none"
+              <span className="sr-only">La Fabbrica</span>
+              <motion.img
+                src="/Blanco%20La%20Fabbrica.png"
+                alt="La Fabbrica RD"
+                width={480}
+                height={160}
+                className="h-36 w-auto object-contain"
                 initial={{ opacity: 0 }}
                 animate={{ opacity: 1 }}
                 transition={{ duration: 0.5 }}
-              >
-                <span className="text-white font-bold tracking-[0.2em] text-2xl uppercase">La Fabbrica</span>
-                <span className="text-gray-500 text-[10px] tracking-[0.12em] uppercase mt-1">Suministro e instalación</span>
-              </motion.div>
+              />
             </Link>
           </div>
           <motion.div
@@ -273,10 +276,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
             >
               <div className="flex items-center justify-between">
                 <Link href="/" className="-m-2 p-2">
-                  <div className="flex flex-col leading-none">
-                    <span className="text-white font-bold tracking-[0.2em] text-lg uppercase">La Fabbrica</span>
-                    <span className="text-gray-500 text-[9px] tracking-[0.1em] uppercase mt-0.5">Suministro e instalación</span>
-                  </div>
+                  <span className="sr-only">Logo</span>
+                  <img
+                    src="/Blanco%20La%20Fabbrica.png"
+                    alt="Logo"
+                    width={150}
+                    height={50}
+                  />
                 </Link>
                 <button type="button" className="p-2 text-gray-100" onClick={() => setMobileMenuOpen(false)}>
                   <X className="h-8 w-8" />

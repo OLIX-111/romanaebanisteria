@@ -9,7 +9,6 @@ export default function Hero() {
 
   return (
     <div className="relative isolate flex flex-col justify-end overflow-hidden h-screen min-h-[600px]">
-      {/* Video de fondo */}
       <video
         autoPlay
         loop
@@ -20,47 +19,53 @@ export default function Hero() {
         <source src="/home/chavo.mp4" type="video/mp4" />
       </video>
 
-      {/* Overlay oscuro degradado */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/20 via-black/30 to-black/80" />
+      {/* Overlay — más opaco abajo como Binova */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/10 via-black/25 to-black/80" />
 
-      {/* Texto principal — anclado abajo */}
-      <div className="w-full px-8 lg:px-16 pb-16 lg:pb-24">
+      {/* Bloque de texto centrado — igual que Binova */}
+      <div className="w-full text-center px-4 pb-10">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: "easeOut" as const }}
         >
-          <p className="text-xs tracking-[0.4em] text-gray-300 uppercase mb-4">
-            La Romana, República Dominicana
+          <p className="font-serif-display text-lg lg:text-2xl italic text-gray-100 mb-1">
+            La Fabbrica desde 1976
           </p>
-          <h1 className="font-serif-display font-normal text-white leading-none tracking-tight"
-              style={{ fontSize: "clamp(3rem, 9vw, 8rem)" }}>
-            {hero?.bigTitlePart1 ?? "Ebanistería"}<br />
-            {hero?.bigTitlePart2 ?? "& Carpintería"}
+          <h1
+            className="font-serif-display font-normal text-white uppercase leading-none"
+            style={{ fontSize: "clamp(3.2rem, 10vw, 9.5rem)" }}
+          >
+            EBANISTERÍA
           </h1>
+          <p className="text-gray-300 text-sm lg:text-base mt-4 max-w-xl mx-auto leading-relaxed">
+            La fábrica más grande de muebles y carpintería en aluminio en La Romana, República Dominicana.
+          </p>
         </motion.div>
+      </div>
 
-        {/* Stats — fila pequeña debajo del título */}
-        <motion.div
-          initial={{ opacity: 0, y: 15 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.7, delay: 0.4 }}
-          className="flex gap-12 mt-8 text-white"
-        >
+      {/* Stats bar — en la parte más baja */}
+      <motion.div
+        initial={{ opacity: 0, y: 15 }}
+        animate={{ opacity: 1, y: 0 }}
+        transition={{ duration: 0.7, delay: 0.4 }}
+        className="w-full py-5 bg-black/50 backdrop-blur-sm"
+      >
+        <div className="max-w-2xl mx-auto flex justify-around text-white text-center px-4">
           <div>
             <span className="block text-xl font-medium">{hero?.stats?.factorySize}</span>
-            <span className="text-xs text-gray-400 tracking-widest uppercase">{hero?.stats?.factory}</span>
+            <span className="text-[10px] text-gray-400 tracking-widest uppercase">{hero?.stats?.factory}</span>
           </div>
           <div>
             <span className="block text-xl font-medium">{hero?.stats?.experience}</span>
-            <span className="text-xs text-gray-400 tracking-widest uppercase">{hero?.stats?.experienceSubtitle}</span>
+            <span className="text-[10px] text-gray-400 tracking-widest uppercase">{hero?.stats?.experienceSubtitle}</span>
           </div>
           <div>
             <span className="block text-xl font-medium">{hero?.stats?.territory}</span>
-            <span className="text-xs text-gray-400 tracking-widest uppercase">{hero?.stats?.territorySubtitle}</span>
+            <span className="text-[10px] text-gray-400 tracking-widest uppercase">{hero?.stats?.territorySubtitle}</span>
           </div>
-        </motion.div>
-      </div>
+        </div>
+      </motion.div>
     </div>
   )
 }
