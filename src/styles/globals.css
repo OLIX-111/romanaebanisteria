@@ -28,7 +28,11 @@ body {
 /* Override browser visited-link colors in the header nav */
 header nav a,
 header nav a:visited,
-header nav a:link {
-  color: #e5e7eb;
-  text-decoration: none;
+header nav a:link,
+header nav a:active {
+  color: #e5e7eb !important;
+  text-decoration: none !important;
+}
+header nav a:hover {
+  color: #ffffff !important;
 }
