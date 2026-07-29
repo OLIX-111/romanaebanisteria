@@ -16,15 +16,10 @@ const Footer = () => {
           {/* Logo */}
           <div className="mb-4 md:mb-0">
             <Link href="/">
-              <Image
-                src="/Blanco%20La%20Fabbrica.png"
-                alt="La Fabbrica Logo"
-                width={480}
-                height={160}
-                className="h-36 w-auto object-contain"
-                style={{ borderRadius: 0 }}
-                priority
-              />
+              <div className="flex flex-col leading-none">
+                <span className="text-white font-bold tracking-[0.2em] text-2xl uppercase">La Fabbrica</span>
+                <span className="text-gray-600 text-[10px] tracking-[0.12em] uppercase mt-1">Suministro e instalación</span>
+              </div>
             </Link>
           </div>
 

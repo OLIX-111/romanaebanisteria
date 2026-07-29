@@ -1,56 +1,57 @@
 "use client"
 
-import { ArrowRight } from "lucide-react"
 import Link from "next/link"
-import { motion, useScroll, useTransform } from "framer-motion"
+import { motion } from "framer-motion"
 import { useRef } from "react"
 import { useTranslation } from "@/hook/UseTranslation"
 import { useRouter } from "next/router"
 
 export default function Cta() {
   const ref = useRef<HTMLDivElement>(null)
-  const { scrollYProgress } = useScroll({
-    target: ref,
-    offset: ["start end", "end start"],
-  })
-
-  const opacity = useTransform(scrollYProgress, [0, 0.5, 1], [0, 1, 0])
-  const y = useTransform(scrollYProgress, [0, 0.5, 1], [100, 0, -100])
-
   const dict = useTranslation()
   const { ctaSection } = dict
-
-  const backgroundImageUrl = "/projects/romana_ebanisteria_grupo_chavon31.png"
+  const { locale } = useRouter() as { locale: 'en' | 'es' }
 
   return (
     <div
       ref={ref}
-      className="relative isolate overflow-hidden bg-cover bg-fixed bg-no-repeat py-32 md:py-48"
+      className="relative isolate overflow-hidden bg-cover bg-no-repeat min-h-[600px] flex items-stretch"
       style={{
-        backgroundImage: `url('${backgroundImageUrl}')`,
+        backgroundImage: `url('/projects/romana_ebanisteria_grupo_chavon31.png')`,
         backgroundPosition: "center",
       }}
     >
-      <div className="absolute inset-0 bg-black/60 z-0" />
+      {/* Overlay sutil */}
+      <div className="absolute inset-0 bg-black/40 z-0" />
 
-      <motion.div className="relative z-10 mx-auto max-w-3xl px-4 text-center" style={{ opacity, y }}>
-        <h2 className="text-3xl md:text-4xl font-medium text-white mb-6">
-          {ctaSection.title}
-        </h2>
-        <p className="text-lg md:text-xl text-gray-200 mb-8">
-          {ctaSection.subTitle}
-        </p>
-        <Link href="/store">
-          <motion.button
-            whileHover={{ gap: "0.75rem" }}
-            className="mx-auto bg-white backdrop-blur-xl text-black border-white hover:border-black hover:bg-black w-fit flex items-center gap-2 py-3 px-8 border-2 rounded-md hover:text-white duration-300"
-          >
-            {ctaSection.buttonText}
-            <ArrowRight className="ml-2" />
-          </motion.button>
-        </Link>
+      {/* Caja blanca — anclada a la derecha */}
+      <motion.div
+        initial={{ opacity: 0, x: 40 }}
+        whileInView={{ opacity: 1, x: 0 }}
+        viewport={{ once: true }}
+        transition={{ duration: 0.7 }}
+        className="relative z-10 ml-auto flex items-center"
+      >
+        <div className="bg-white text-black p-12 lg:p-16 max-w-sm lg:max-w-md w-full">
+          <span className="text-xs tracking-[0.35em] uppercase text-gray-500 block mb-6">
+            {locale === 'es' ? 'Contáctenos' : 'Contact Us'}
+          </span>
+          <h2 className="font-serif-display text-3xl lg:text-4xl font-normal text-black leading-snug mb-5">
+            {ctaSection.title}
+          </h2>
+          <p className="text-sm text-gray-600 leading-relaxed mb-8">
+            {ctaSection.subTitle}
+          </p>
+          <Link href="/contact">
+            <motion.button
+              whileHover={{ backgroundColor: "#0a0a0a", color: "#ffffff" }}
+              className="border border-black text-black text-xs tracking-[0.2em] uppercase px-8 py-4 transition-colors duration-300"
+            >
+              {ctaSection.buttonText}
+            </motion.button>
+          </Link>
+        </div>
       </motion.div>
     </div>
   )
 }
-

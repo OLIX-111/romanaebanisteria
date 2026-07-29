@@ -45,7 +45,7 @@ export default function ProjectGrid() {
   }
 
   return (
-    <section className="w-full bg-white py-24">
+    <section className="w-full bg-[#0a0a0a] py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -54,7 +54,7 @@ export default function ProjectGrid() {
           transition={{ duration: 0.5 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl font-medium text-gray-900 mb-6">{projTrans.title}</h2>
+          <h2 className="font-serif-display text-5xl lg:text-7xl font-normal text-white mb-6">{projTrans.title}</h2>
         </motion.div>
 
         {/* <div className="flex flex-wrap justify-center gap-6 mb-12">

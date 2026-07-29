@@ -67,11 +67,10 @@ export default function FeaturedProductsElegant() {
     loadFeaturedProducts()
   }, [])
 
-  if (isLoading) return <div className="text-center py-24">{storeSection?.loading}</div>
-  if (error) return <div className="text-center py-24 text-red-500">{storeSection?.error}</div>
+  if (isLoading || error) return null
 
   return (
-    <section className="w-full bg-white py-24">
+    <section className="w-full bg-[#0a0a0a] py-24">
       <div className="container mx-auto px-4">
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -80,8 +79,8 @@ export default function FeaturedProductsElegant() {
           transition={{ duration: 0.5 }}
           className="mb-16 text-center"
         >
-          <h2 className="text-3xl font-medium text-gray-900 mb-4">{locale === 'es' ? 'Explora nuestros productos' : 'Explore our products'}</h2>
-          <p className="text-gray-600 max-w-2xl mx-auto">
+          <h2 className="font-serif-display text-5xl lg:text-7xl font-normal text-white mb-4">{locale === 'es' ? 'Explora nuestros productos' : 'Explore our products'}</h2>
+          <p className="text-gray-400 max-w-2xl mx-auto">
             {locale === 'es'
               ? 'Descubre una selección curada de artículos de nuestra tienda.'
               : 'Discover a curated selection from our store.'}
@@ -98,7 +97,7 @@ export default function FeaturedProductsElegant() {
           {featuredProducts.map((product) => (
             <motion.div key={product.id} variants={item} className="group">
               <Link href={`/store/${product.id}`} className="block">
-                <div className="aspect-square overflow-hidden bg-gray-100 mb-6">
+                <div className="aspect-square overflow-hidden bg-gray-800 mb-6">
                   <Image
                     src={product.image || "/placeholder.svg"}
                     alt={product.name}
@@ -107,9 +106,9 @@ export default function FeaturedProductsElegant() {
                     className="object-cover w-full h-full transition-transform duration-300 group-hover:scale-105"
                   />
                 </div>
-                <h3 className="text-xl font-medium text-gray-900 mb-2">{product.name}</h3>
-                <p className="text-gray-600 mb-4 line-clamp-2">{product.description}</p>
-                <span className="text-lg font-medium text-gray-900">RD$ {Number(product.price || 0).toLocaleString()}</span>
+                <h3 className="text-xl font-medium text-gray-50 mb-2">{product.name}</h3>
+                <p className="text-gray-400 mb-4 line-clamp-2">{product.description}</p>
+                <span className="text-lg font-medium text-gray-200">RD$ {Number(product.price || 0).toLocaleString()}</span>
               </Link>
             </motion.div>
           ))}
@@ -119,7 +118,7 @@ export default function FeaturedProductsElegant() {
         <Link href="/store" passHref>
           <motion.button
             whileHover={{ gap: "0.75rem" }}
-            className="bg-white backdrop-blur-lg text-black border-black hover:border-black hover:bg-black w-fit flex items-center gap-2 py-3 px-8 border-2 rounded-md hover:text-white duration-300"
+            className="bg-transparent text-white border-white hover:bg-white hover:text-black w-fit flex items-center gap-2 py-3 px-8 border-2 rounded-md duration-300"
           >
             {locale === 'es' ? 'Ver la tienda' : 'View store'} <ArrowRight size={18} />
           </motion.button>
