@@ -47,9 +47,11 @@ export default function Hero() {
           >
             LA FABBRICA
           </h1>
-          <p className="text-gray-300 text-sm lg:text-base mt-4 max-w-xl mx-auto leading-relaxed">
-            La fábrica más grande de muebles y carpintería en aluminio en La Romana, República Dominicana.
-          </p>
+          <img
+            src="/Blanco%20La%20Fabbrica.png"
+            alt="La Fabbrica"
+            className="mt-4 mx-auto h-24 w-auto object-contain"
+          />
         </motion.div>
       </div>
 
