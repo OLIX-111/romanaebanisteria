@@ -24,7 +24,7 @@ export default function Home() {
         <link rel="icon" type="image/png" href="/isotipo.png" />
       </Head>
       <main className={`${openSans.className} bg-black`}>
-        <Header enableScroll />
+        <Header />
         <Hero />
         <AboutUs />
         <WhyUs />

@@ -177,7 +177,11 @@ export default function Header({ enableScroll = false }: HeaderProps) {
               { href: "https://fabbrica-maketplace.vercel.app/", text: "Marketplace" },
             ].map((item, index) => (
               <motion.div key={index} variants={navItemVariants}>
-                <Link href={item.href} className="hover:text-white transition-colors duration-200">
+                <Link
+                  href={item.href}
+                  className="text-gray-200 hover:text-white transition-colors duration-200"
+                  style={{ color: "#e5e7eb" }}
+                >
                   {item.text}
                 </Link>
               </motion.div>
