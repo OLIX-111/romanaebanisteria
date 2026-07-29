@@ -37,10 +37,10 @@ export default function AboutUs() {
                         className="relative"
                         style={{ height: '520px' }}
                     >
-                        {/* Foto superior-derecha */}
+                        {/* Foto superior-derecha — imagen principal del hero */}
                         <div className="absolute right-0 top-0 overflow-hidden" style={{ width: '62%', height: '52%' }}>
                             <Image
-                                src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/1grupochavonRomana_Ebanisteria.png"
+                                src="/home/learnmore_romana_ebanisteria.jpg"
                                 alt="La Fabbrica taller"
                                 fill
                                 className="object-cover"

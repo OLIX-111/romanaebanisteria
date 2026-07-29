@@ -9,14 +9,27 @@ export default function Hero() {
 
   return (
     <div className="relative isolate flex flex-col justify-end overflow-hidden h-screen min-h-[600px]">
-      {/* Foto estática de fondo — carga instantánea como Binova */}
-      <div
-        className="absolute inset-0 -z-10 bg-cover bg-center bg-no-repeat"
-        style={{ backgroundImage: "url('/home/learnmore_romana_ebanisteria.jpg')" }}
-      />
+      {/* Video de YouTube de fondo */}
+      <div className="absolute inset-0 -z-10 overflow-hidden bg-black">
+        <iframe
+          src="https://www.youtube.com/embed/TxmBzBeRa3M?autoplay=1&mute=1&loop=1&playlist=TxmBzBeRa3M&controls=0&showinfo=0&rel=0&modestbranding=1&iv_load_policy=3&disablekb=1"
+          title="La Fabbrica background video"
+          allow="autoplay; encrypted-media"
+          className="absolute border-0 pointer-events-none"
+          style={{
+            width: '100vw',
+            height: '56.25vw',
+            minHeight: '100vh',
+            minWidth: '177.78vh',
+            top: '50%',
+            left: '50%',
+            transform: 'translate(-50%, -50%)',
+          }}
+        />
+      </div>
 
-      {/* Overlay oscuro igual que Binova */}
-      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/40 via-black/50 to-black/85" />
+      {/* Overlay oscuro */}
+      <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/50 via-black/50 to-black/85" />
 
       {/* Bloque de texto centrado — igual que Binova */}
       <div className="w-full text-center px-4 pb-10">
