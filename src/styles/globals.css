@@ -24,3 +24,11 @@ body {
 .font-serif-display {
   font-family: var(--font-playfair), Georgia, serif;
 }
+
+/* Override browser visited-link colors in the header nav */
+header nav a,
+header nav a:visited,
+header nav a:link {
+  color: #e5e7eb;
+  text-decoration: none;
+}
