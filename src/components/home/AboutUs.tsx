@@ -35,19 +35,28 @@ export default function AboutUs() {
                         viewport={{ once: true }}
                         transition={{ duration: 0.7 }}
                         className="relative"
-                        style={{ height: '520px' }}
+                        style={{ height: '620px' }}
                     >
-                        {/* Foto superior-derecha — imagen principal del hero */}
-                        <div className="absolute right-0 top-0 overflow-hidden" style={{ width: '62%', height: '52%' }}>
+                        {/* Foto superior-derecha */}
+                        <div className="absolute right-0 top-0 overflow-hidden" style={{ width: '60%', height: '44%' }}>
                             <Image
-                                src="/home/learnmore_romana_ebanisteria.jpg"
+                                src="https://storage.googleapis.com/portfoliprofiles/GG%20studio/1grupochavonRomana_Ebanisteria.png"
                                 alt="La Fabbrica taller"
                                 fill
                                 className="object-cover"
                             />
                         </div>
-                        {/* Foto inferior-izquierda — más alta, offset */}
-                        <div className="absolute left-0 bottom-0 overflow-hidden" style={{ width: '60%', height: '68%' }}>
+                        {/* Foto central-izquierda — imagen trasladada del hero */}
+                        <div className="absolute left-0 overflow-hidden" style={{ width: '58%', height: '44%', top: '28%' }}>
+                            <Image
+                                src="/home/learnmore_romana_ebanisteria.jpg"
+                                alt="La Fabbrica instalación"
+                                fill
+                                className="object-cover"
+                            />
+                        </div>
+                        {/* Foto inferior-derecha */}
+                        <div className="absolute right-0 bottom-0 overflow-hidden" style={{ width: '56%', height: '42%' }}>
                             <Image
                                 src="/projects/romana_ebanisteria_grupo_chavon5.png"
                                 alt="La Fabbrica proyecto"
