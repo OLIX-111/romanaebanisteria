@@ -47,8 +47,11 @@ export default function Hero() {
           >
             LA FABBRICA
           </h1>
-          <p className="text-gray-300 text-sm lg:text-base mt-4 tracking-widest uppercase">
-            Suministro e Instalación — Todo desde el origen
+          <p className="text-gray-300 text-base lg:text-xl mt-4 tracking-widest uppercase">
+            Suministro e Instalación
+          </p>
+          <p className="mt-1 text-sm lg:text-base tracking-widest uppercase" style={{ color: "#d4641a" }}>
+            Todo desde el origen
           </p>
         </motion.div>
       </div>
