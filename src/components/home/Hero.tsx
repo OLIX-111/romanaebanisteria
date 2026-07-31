@@ -2,6 +2,7 @@
 
 import { motion } from "framer-motion"
 import { useTranslation } from "@/hook/UseTranslation"
+import Image from "next/image"
 
 export default function Hero() {
   const dict = useTranslation()
@@ -32,25 +33,30 @@ export default function Hero() {
       <div className="absolute inset-0 -z-10 bg-gradient-to-b from-black/50 via-black/50 to-black/85" />
 
       {/* Bloque de texto centrado — igual que Binova */}
-      <div className="w-full text-center px-4 pb-10">
+      <div className="w-full text-center px-4">
         <motion.div
           initial={{ opacity: 0, y: 30 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.9, ease: "easeOut" as const }}
         >
-          <p className="font-serif-display text-lg lg:text-2xl italic text-gray-100 mb-1">
+          <p className="font-serif-display text-lg lg:text-2xl italic text-gray-100 mb-0">
             desde 1981
           </p>
-          <h1
-            className="font-serif-display font-normal text-white uppercase leading-none"
-            style={{ fontSize: "clamp(3.2rem, 10vw, 9.5rem)" }}
-          >
-            LA FABBRICA
-          </h1>
-          <p className="text-gray-300 text-base lg:text-xl mt-4 tracking-widest uppercase">
+          <div className="flex justify-center" style={{ marginTop: "-3rem", marginBottom: "-2.5rem" }}>
+            <Image
+              src="/Materiales de la FABBRICA (3).png"
+              alt="La Fabbrica"
+              width={900}
+              height={260}
+              className="object-contain"
+              style={{ height: "clamp(7rem, 22vw, 20rem)", width: "auto" }}
+              priority
+            />
+          </div>
+          <p className="text-gray-300 text-base lg:text-xl mt-0 tracking-widest uppercase">
             Suministro e Instalación
           </p>
-          <p className="mt-1 text-sm lg:text-base tracking-widest uppercase" style={{ color: "#d4641a" }}>
+          <p className="mt-1 text-sm lg:text-base tracking-widest uppercase mb-10" style={{ color: "#d4641a" }}>
             Todo desde el origen
           </p>
         </motion.div>

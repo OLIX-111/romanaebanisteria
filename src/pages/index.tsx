@@ -23,7 +23,7 @@ export default function Home() {
         <meta name="description" content={"La Fabbrica, la fábrica más grande de ebanistería y carpintería en aluminio en La Romana. Más de 48 años ofreciendo soluciones personalizadas para proyectos residenciales, hoteleros e inmobiliarios en la República Dominicana."} />
         <link rel="icon" type="image/png" href="/isotipo.png" />
       </Head>
-      <main className={`${openSans.className} bg-black`}>
+      <main className={`${openSans.className} bg-black overflow-x-hidden`}>
         <Header />
         <Hero />
         <AboutUs />

@@ -25,6 +25,10 @@ body {
   font-family: var(--font-playfair), Georgia, serif;
 }
 
+.font-logo {
+  font-family: var(--font-jost), 'Futura', 'Century Gothic', sans-serif;
+}
+
 /* Override browser visited-link colors in the header nav */
 header nav a,
 header nav a:visited,

@@ -169,6 +169,7 @@ export default function Header({ enableScroll = false }: HeaderProps) {
           >
             {[
               { href: "/", text: header?.nav?.home },
+              { href: "/quienes-somos", text: "Quiénes Somos" },
               { href: "/store/services", text: header?.nav?.services },
               { href: "https://tienda.romanaebanisteria.com/shop", text: header?.nav?.store },
               { href: "/gallery", text: header?.nav?.projects },
@@ -231,6 +232,13 @@ export default function Header({ enableScroll = false }: HeaderProps) {
                   onClick={() => setMobileMenuOpen(false)}
                 >
                   {header?.nav?.home}
+                </Link>
+                <Link
+                  href="/quienes-somos"
+                  className="block text-lg font-medium text-gray-100"
+                  onClick={() => setMobileMenuOpen(false)}
+                >
+                  Quiénes Somos
                 </Link>
                 <Link
                   href="/store/services"

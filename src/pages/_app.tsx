@@ -2,7 +2,7 @@ import '@/styles/globals.css'
 import type { AppProps } from 'next/app'
 import { AuthProvider } from '@/context/AuthContext'
 import { CartProvider } from '@/context/CartContext'
-import { Playfair_Display } from 'next/font/google'
+import { Playfair_Display, Jost } from 'next/font/google'
 
 const playfair = Playfair_Display({
   subsets: ['latin'],
@@ -10,9 +10,16 @@ const playfair = Playfair_Display({
   display: 'swap',
 })
 
+const jost = Jost({
+  subsets: ['latin'],
+  variable: '--font-jost',
+  display: 'swap',
+  weight: ['300', '400', '500', '600'],
+})
+
 export default function App({ Component, pageProps }: AppProps) {
   return (
-    <div className={`${playfair.variable}`}>
+    <div className={`${playfair.variable} ${jost.variable}`}>
       <AuthProvider>
         <CartProvider>
           <Component {...pageProps} />
