@@ -19,7 +19,7 @@ const aliados = [
     nombre: "Aludespa",
     descripcion: "Proveedor internacional de soluciones en aluminio y sistemas de carpintería de alta gama para proyectos residenciales y comerciales.",
     categoria: "Soluciones Internacionales",
-    link: "/quienes-somos",
+    link: "/aludespa",
   },
   {
     nombre: "Ferretería Industrial RD",
