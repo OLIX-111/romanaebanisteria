@@ -4,6 +4,7 @@ import Footer from "@/components/layout/Footer"
 import Head from "next/head"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import { useRouter } from "next/router"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
@@ -48,6 +49,7 @@ const fadeInUp = {
 }
 
 export default function AliadosPage() {
+  const router = useRouter()
   return (
     <main className={openSans.className} style={{ backgroundColor: "#0a0a0a" }}>
       <Head>
@@ -111,7 +113,7 @@ export default function AliadosPage() {
                 style={{ backgroundColor: "#0a0a0a" }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#111111")}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#0a0a0a")}
-                onClick={() => aliado.link && window.open(aliado.link, "_self")}
+                onClick={() => aliado.link && router.push(aliado.link)}
               >
                 <span className="text-xs font-semibold uppercase tracking-widest mb-5 block" style={{ color: "#454545" }}>
                   {aliado.categoria}
