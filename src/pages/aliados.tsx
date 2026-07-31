@@ -12,12 +12,13 @@ const aliados = [
     nombre: "Romana Ebanistería",
     descripcion: "La fábrica más grande de ebanistería y carpintería en aluminio de La Romana, con más de 40 años de trayectoria.",
     categoria: "Ebanistería",
-    link: "/quienes-somos",
+    link: "/romana-ebanisteria",
   },
   {
-    nombre: "Casa de Campo Resort",
-    descripcion: "Uno de los complejos turísticos más exclusivos del Caribe, socio estratégico en proyectos de interiorismo y carpintería de lujo.",
-    categoria: "Turismo & Hospitalidad",
+    nombre: "Aludespa",
+    descripcion: "Proveedor internacional de soluciones en aluminio y sistemas de carpintería de alta gama para proyectos residenciales y comerciales.",
+    categoria: "Soluciones Internacionales",
+    link: "/aludespa",
   },
   {
     nombre: "Ferretería Industrial RD",
