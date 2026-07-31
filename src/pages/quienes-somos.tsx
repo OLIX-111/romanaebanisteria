@@ -16,15 +16,31 @@ export default function QuienesSomos() {
             <main className={`${openSans.className} bg-black min-h-screen`}>
                 <Header enableScroll={false} />
 
-                <div className="pt-24 w-full flex justify-center">
-                    <Image
-                        src="/padre de pillier.png"
-                        alt="Domingo Pilier — Fundador"
-                        width={1528}
-                        height={772}
-                        priority
-                        className="w-full h-auto"
-                    />
+                <div className="pt-24 w-full">
+                    <div className="relative w-full">
+                        <Image
+                            src="/padre de pillier.png"
+                            alt="Domingo Pilier — Fundador"
+                            width={1528}
+                            height={772}
+                            priority
+                            className="w-full h-auto"
+                        />
+                        <a
+                            href="https://www.romanaebanisteria.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute top-6 right-6"
+                        >
+                            <Image
+                                src="/RomanaEbanistería.png"
+                                alt="Romana Ebanistería"
+                                width={140}
+                                height={56}
+                                className="object-contain hover:opacity-80 transition-opacity duration-200"
+                            />
+                        </a>
+                    </div>
                 </div>
 
                 <Footer />

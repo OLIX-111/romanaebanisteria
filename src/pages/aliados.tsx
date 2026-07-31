@@ -12,6 +12,7 @@ const aliados = [
     nombre: "Grupo Chavon",
     descripcion: "Desarrollador inmobiliario de referencia en La Romana, con proyectos residenciales y comerciales de alto nivel.",
     categoria: "Desarrollo Inmobiliario",
+    link: "/quienes-somos",
   },
   {
     nombre: "Casa de Campo Resort",
@@ -105,10 +106,11 @@ export default function AliadosPage() {
                 whileInView="animate"
                 viewport={{ once: true }}
                 transition={{ duration: 0.5, delay: i * 0.06 }}
-                className="p-10 group transition-colors duration-300"
+                className={`p-10 group transition-colors duration-300${aliado.link ? " cursor-pointer" : ""}`}
                 style={{ backgroundColor: "#0a0a0a" }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#111111")}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#0a0a0a")}
+                onClick={() => aliado.link && window.open(aliado.link, "_self")}
               >
                 <span className="text-xs font-semibold uppercase tracking-widest mb-5 block" style={{ color: "#454545" }}>
                   {aliado.categoria}
