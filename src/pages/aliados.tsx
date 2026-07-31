@@ -22,9 +22,10 @@ const aliados = [
     link: "/aludespa",
   },
   {
-    nombre: "Ferretería Industrial RD",
-    descripcion: "Proveedor principal de materiales y herrajes industriales para nuestra línea de producción.",
-    categoria: "Proveedor",
+    nombre: "Novach",
+    descripcion: "Agencia de marketing especializada en posicionamiento de marca y estrategias digitales para empresas de alto nivel.",
+    categoria: "Marketing",
+    link: "/novach",
   },
   {
     nombre: "Codia",
