@@ -4,44 +4,27 @@ import Footer from "@/components/layout/Footer"
 import Head from "next/head"
 import { motion } from "framer-motion"
 import Link from "next/link"
+import Image from "next/image"
 
 const openSans = Open_Sans({ subsets: ["latin"] })
 
-const aliados = [
-  {
-    nombre: "Grupo Chavon",
-    descripcion: "Desarrollador inmobiliario de referencia en La Romana, con proyectos residenciales y comerciales de alto nivel.",
-    categoria: "Desarrollo Inmobiliario",
-  },
-  {
-    nombre: "Casa de Campo Resort",
-    descripcion: "Uno de los complejos turísticos más exclusivos del Caribe, socio estratégico en proyectos de interiorismo y carpintería de lujo.",
-    categoria: "Turismo & Hospitalidad",
-  },
-  {
-    nombre: "Ferretería Industrial RD",
-    descripcion: "Proveedor principal de materiales y herrajes industriales para nuestra línea de producción.",
-    categoria: "Proveedor",
-  },
-  {
-    nombre: "Codia",
-    descripcion: "Colegio Dominicano de Ingenieros, Arquitectos y Agrimensores. Trabajamos de la mano con profesionales certificados.",
-    categoria: "Asociación Profesional",
-  },
-  {
-    nombre: "Construmart RD",
-    descripcion: "Red de distribución de materiales de construcción con presencia nacional.",
-    categoria: "Distribución",
-  },
-  {
-    nombre: "ProHotel Dominicano",
-    descripcion: "Asociación de hoteleros que confían en nuestras soluciones de mobiliario para proyectos de renovación.",
-    categoria: "Turismo & Hospitalidad",
-  },
+const marcas = [
+  { nombre: "Romana Ebanistería", categoria: "Ebanistería", logo: "/romanaEbanistería_alt.png", link: "https://www.romanaebanisteria.com/", logoW: 140, logoH: 56 },
+  { nombre: "Aludespa", categoria: "Soluciones Internacionales", logo: "/aludespa.png", link: "https://aludespagroup.com/", logoW: 280, logoH: 112 },
+  { nombre: "Waoo", categoria: "Experiencias", logo: "/Waoo.png", link: "https://www.waooexperience.com/", logoW: 280, logoH: 112 },
+  { nombre: "Tretton", categoria: "", logo: "/NuevoTretton.png", link: "https://odoo.grupochavon.com/", logoW: 280, logoH: 112 },
+  { nombre: "Novach", categoria: "Marketing", logo: "/1-NOVACH.png", link: "https://www.instagram.com/novach.rd/", logoW: 280, logoH: 112 },
+  { nombre: "Marca F", categoria: "Iluminación" },
+  { nombre: "Marca G", categoria: "Aluminio" },
+  { nombre: "Marca H", categoria: "Herrajes" },
+  { nombre: "Marca I", categoria: "Madera" },
+  { nombre: "Marca J", categoria: "Acabados" },
+  { nombre: "Marca K", categoria: "Vidrio" },
+  { nombre: "Marca L", categoria: "Iluminación" },
 ]
 
 const fadeInUp = {
-  initial: { opacity: 0, y: 24 },
+  initial: { opacity: 0, y: 20 },
   animate: { opacity: 1, y: 0 },
 }
 
@@ -49,13 +32,14 @@ export default function AliadosPage() {
   return (
     <main className={openSans.className} style={{ backgroundColor: "#0a0a0a" }}>
       <Head>
-        <title>Aliados | La Fabbrica</title>
-        <meta name="description" content="Conoce nuestros aliados estratégicos: desarrolladores, hoteleros y proveedores que confían en La Fabbrica." />
+        <title>Marcas Aliadas | La Fabbrica</title>
+        <meta name="description" content="Las marcas y proveedores que respaldan la calidad de La Fabbrica." />
+        <link rel="icon" type="image/png" href="/isotipo.png" />
       </Head>
-      <Header enableScroll />
+      <Header enableScroll={false} />
 
       {/* Hero */}
-      <section className="relative text-white pt-48 pb-32 overflow-hidden" style={{ backgroundColor: "#0a0a0a" }}>
+      <section className="relative text-white pt-48 pb-24 overflow-hidden">
         <div className="container mx-auto px-4 text-center">
           <motion.p
             initial={{ opacity: 0 }}
@@ -64,15 +48,15 @@ export default function AliadosPage() {
             className="uppercase tracking-widest text-xs font-semibold mb-6"
             style={{ color: "#8a8a8a" }}
           >
-            Red de colaboración
+            Respaldados por los mejores
           </motion.p>
           <motion.h1
             initial={{ opacity: 0, y: 20 }}
             animate={{ opacity: 1, y: 0 }}
             transition={{ duration: 0.6, delay: 0.1 }}
-            className="text-5xl lg:text-7xl font-light mb-8 text-white"
+            className="text-5xl lg:text-7xl font-light mb-6 text-white"
           >
-            Nuestros Aliados
+            Nuestras Marcas
           </motion.h1>
           <motion.div
             initial={{ scaleX: 0 }}
@@ -88,33 +72,51 @@ export default function AliadosPage() {
             className="max-w-xl mx-auto text-lg"
             style={{ color: "#8a8a8a" }}
           >
-            Empresas y organizaciones con las que construimos soluciones de alto nivel en toda la República Dominicana.
+            Trabajamos con las marcas y proveedores más reconocidos del mercado para garantizar materiales de primera calidad en cada proyecto.
           </motion.p>
         </div>
       </section>
 
-      {/* Grid de aliados */}
-      <section className="py-24" style={{ backgroundColor: "#0a0a0a" }}>
-        <div className="container mx-auto px-4">
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-px" style={{ backgroundColor: "#1e1e1e" }}>
-            {aliados.map((aliado, i) => (
+      {/* Grid de logos */}
+      <section className="pb-32">
+        <div className="container mx-auto px-4 max-w-6xl">
+          <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 gap-px" style={{ backgroundColor: "#1e1e1e" }}>
+            {marcas.map((marca, i) => (
               <motion.div
-                key={aliado.nombre}
+                key={marca.nombre}
                 variants={fadeInUp}
                 initial="initial"
                 whileInView="animate"
                 viewport={{ once: true }}
-                transition={{ duration: 0.5, delay: i * 0.06 }}
-                className="p-10 group transition-colors duration-300"
-                style={{ backgroundColor: "#0a0a0a" }}
+                transition={{ duration: 0.4, delay: i * 0.05 }}
+                className={`flex flex-col items-center justify-center gap-3 py-12 px-6 group transition-colors duration-300${marca.link ? " cursor-pointer" : ""}`}
+                style={{ backgroundColor: "#0a0a0a", minHeight: "160px" }}
                 onMouseEnter={e => (e.currentTarget.style.backgroundColor = "#111111")}
                 onMouseLeave={e => (e.currentTarget.style.backgroundColor = "#0a0a0a")}
+                onClick={() => marca.link && window.open(marca.link, "_blank", "noopener,noreferrer")}
               >
-                <span className="text-xs font-semibold uppercase tracking-widest mb-5 block" style={{ color: "#454545" }}>
-                  {aliado.categoria}
+                {marca.logo ? (
+                  <Image
+                    src={marca.logo}
+                    alt={marca.nombre}
+                    width={marca.logoW ?? 140}
+                    height={marca.logoH ?? 56}
+                    className="object-contain opacity-70 group-hover:opacity-100 transition-opacity duration-300"
+                    style={{ width: `${marca.logoW ?? 140}px`, height: `${marca.logoH ?? 56}px` }}
+                  />
+                ) : (
+                  <div
+                    className="w-24 h-12 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-100"
+                    style={{ border: "1px solid #2a2a2a", opacity: 0.5 }}
+                  >
+                    <span className="text-xs uppercase tracking-widest" style={{ color: "#555" }}>
+                      {marca.nombre}
+                    </span>
+                  </div>
+                )}
+                <span className="text-[10px] uppercase tracking-widest" style={{ color: "#3a3a3a" }}>
+                  {marca.categoria}
                 </span>
-                <h3 className="text-xl font-medium text-white mb-4">{aliado.nombre}</h3>
-                <p className="text-sm leading-relaxed" style={{ color: "#8a8a8a" }}>{aliado.descripcion}</p>
               </motion.div>
             ))}
           </div>
@@ -131,7 +133,7 @@ export default function AliadosPage() {
             transition={{ duration: 0.6 }}
             className="text-3xl font-light text-white mb-6"
           >
-            ¿Tu empresa quiere ser aliada?
+            ¿Tu marca quiere ser parte de La Fabbrica?
           </motion.h2>
           <motion.p
             initial={{ opacity: 0, y: 20 }}
@@ -141,7 +143,7 @@ export default function AliadosPage() {
             className="mb-10"
             style={{ color: "#8a8a8a" }}
           >
-            Estamos siempre abiertos a nuevas colaboraciones estratégicas. Escríbenos y hablemos.
+            Estamos abiertos a nuevas alianzas con marcas y proveedores que compartan nuestra visión de calidad. Escríbenos.
           </motion.p>
           <motion.div
             initial={{ opacity: 0, y: 20 }}
@@ -150,7 +152,7 @@ export default function AliadosPage() {
             transition={{ duration: 0.6, delay: 0.2 }}
           >
             <Link
-              href="/contactanos"
+              href="/contact"
               className="inline-block px-10 py-4 text-xs font-semibold uppercase tracking-widest transition-colors"
               style={{ backgroundColor: "#ffffff", color: "#0a0a0a" }}
               onMouseEnter={e => { (e.currentTarget as HTMLElement).style.backgroundColor = "#c0c0c0" }}
