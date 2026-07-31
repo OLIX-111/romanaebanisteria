@@ -9,9 +9,9 @@ const openSans = Open_Sans({ subsets: ["latin"] })
 
 const aliados = [
   {
-    nombre: "Grupo Chavon",
-    descripcion: "Desarrollador inmobiliario de referencia en La Romana, con proyectos residenciales y comerciales de alto nivel.",
-    categoria: "Desarrollo Inmobiliario",
+    nombre: "Romana Ebanistería",
+    descripcion: "La fábrica más grande de ebanistería y carpintería en aluminio de La Romana, con más de 40 años de trayectoria.",
+    categoria: "Ebanistería",
     link: "/quienes-somos",
   },
   {
