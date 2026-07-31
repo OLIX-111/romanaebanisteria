@@ -26,28 +26,27 @@ export default function QuienesSomos() {
                             priority
                             className="w-full h-auto"
                         />
-                        <div className="absolute top-6 right-6 flex flex-col items-end gap-1">
+                        <a
+                            href="https://www.romanaebanisteria.com/"
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="absolute top-6 right-6 flex flex-row items-center gap-3 hover:opacity-80 transition-opacity duration-200"
+                        >
                             <div
                                 className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg animate-bounce"
                                 style={{ backgroundColor: "#0a0a0a", color: "#ffffff", whiteSpace: "nowrap" }}
                             >
-                                <span>Visita nuestro sitio</span>
-                                <span>↓</span>
+                                <span>Conoce más de nuestro aliado</span>
+                                <span>→</span>
                             </div>
-                            <a
-                                href="https://www.romanaebanisteria.com/"
-                                target="_blank"
-                                rel="noopener noreferrer"
-                            >
-                                <Image
-                                    src="/RomanaEbanistería.png"
-                                    alt="Romana Ebanistería"
-                                    width={140}
-                                    height={56}
-                                    className="object-contain hover:opacity-80 transition-opacity duration-200"
-                                />
-                            </a>
-                        </div>
+                            <Image
+                                src="/RomanaEbanistería.png"
+                                alt="Romana Ebanistería"
+                                width={140}
+                                height={56}
+                                className="object-contain"
+                            />
+                        </a>
                     </div>
                 </div>
 
