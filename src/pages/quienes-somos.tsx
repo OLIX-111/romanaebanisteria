@@ -86,7 +86,7 @@ export default function QuienesSomos() {
                                             {s.top}
                                         </h2>
                                         <h2
-                                            className="font-serif-display text-5xl lg:text-6xl font-bold leading-none tracking-tight mt-1"
+                                            className="font-serif-display text-3xl lg:text-4xl font-bold leading-none tracking-tight mt-1"
                                             style={{ color: ORANGE }}
                                         >
                                             {s.bottom}
