@@ -1,118 +1,12 @@
 "use client"
 
-import React, { useState } from "react"
-import dynamic from "next/dynamic"
 import { useTranslation } from "@/hook/UseTranslation"
-
-// Import dinámico sin SSR
-const GoogleMapReact = dynamic(() => import("google-map-react"), {
-  ssr: false,
-})
-
-import { MapPin, Navigation, X } from "lucide-react"
+import { Navigation } from "lucide-react"
 import { motion } from "framer-motion"
 
-interface MarkerProps {
-  lat: number
-  lng: number
-  onClick: () => void
-}
-
-const LocationMarker = ({ onClick }: MarkerProps) => (
-  <motion.div
-    initial={{ scale: 0, opacity: 0 }}
-    animate={{ scale: 1, opacity: 1 }}
-    whileHover={{ scale: 1.1 }}
-    onClick={onClick}
-    className="relative -translate-x-1/2 -translate-y-1/2 cursor-pointer"
-  >
-    <div className="bg-primary rounded-full h-10 flex justify-center items-center w-10 shadow-lg hover:shadow-xl transition-shadow">
-      <MapPin className="w-6 h-6 text-white" />
-    </div>
-  </motion.div>
-)
-
-interface InfoWindowProps {
-  lat: number
-  lng: number
-  onClose: () => void
-}
-
-const InfoWindow = ({ onClose }: InfoWindowProps) => (
-  <motion.div
-    initial={{ opacity: 0, y: -10 }}
-    animate={{ opacity: 1, y: 0 }}
-    exit={{ opacity: 0, y: -10 }}
-    className="absolute bottom-full left-1/2 -translate-x-1/2 mb-2 w-72"
-  >
-    <div className="bg-white rounded-lg shadow-xl p-4 relative">
-      <button
-        onClick={(e) => {
-          e.stopPropagation()
-          onClose()
-        }}
-        className="absolute right-2 top-2 text-gray-400 hover:text-gray-600"
-      >
-        <X className="w-4 h-4" />
-      </button>
-      <h4 className="font-semibold text-gray-900 mb-1">La Fabbrica</h4>
-      <p className="text-sm text-gray-600 mb-2">Calle 4, No. 7, Sector Reparto Torres</p>
-      <a
-        href="https://maps.app.goo.gl/ipy5cBnW42YvVVRh7"
-        target="_blank"
-        rel="noopener noreferrer"
-        className="inline-flex items-center gap-1 text-sm text-primary hover:underline"
-      >
-        <Navigation className="w-3 h-3" />
-        <span>Ver en Google Maps</span>
-      </a>
-    </div>
-  </motion.div>
-)
-
-interface MarkerWrapperProps extends MarkerProps {
-  showInfo: boolean
-  onCloseInfo: () => void
-}
-
-const MarkerWrapper: React.FC<MarkerWrapperProps> = ({ lat, lng, onClick, showInfo, onCloseInfo }) => (
-  <>
-    <LocationMarker lat={lat} lng={lng} onClick={onClick} />
-    {showInfo && <InfoWindow lat={lat} lng={lng} onClose={onCloseInfo} />}
-  </>
-)
-
 export default function ElegantLocationSection() {
-  const [showInfo, setShowInfo] = useState(false)
   const dict = useTranslation()
   const { locationSection } = dict
-
-  const mapCenter = {
-    lat: 18.4363419,
-    lng: -68.9984306,
-  }
-
-  const mapOptions = {
-    styles: [
-      {
-        featureType: "all",
-        elementType: "geometry",
-        stylers: [{ lightness: 50 }],
-      },
-      {
-        featureType: "all",
-        elementType: "labels",
-        stylers: [{ lightness: 20 }],
-      },
-    ],
-    zoomControl: true,
-    mapTypeControl: false,
-    scaleControl: true,
-    streetViewControl: true,
-    rotateControl: false,
-    fullscreenControl: true,
-    clickableIcons: false,
-  }
 
   return (
     <section className="py-24">
@@ -130,31 +24,26 @@ export default function ElegantLocationSection() {
         </motion.div>
 
         <div className="grid md:grid-cols-2 gap-12 items-center">
+          {/* Mapa embed */}
           <motion.div
             initial={{ opacity: 0, x: -20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ duration: 0.6, delay: 0.2 }}
-            className="bg-white rounded-xl overflow-hidden shadow-2xl relative"
-            style={{ width: "100%", height: "500px" }}
+            className="overflow-hidden rounded-xl"
+            style={{ height: "500px" }}
           >
-            {/* Aquí el componente de GoogleMapReact cargado dinámicamente */}
-            <GoogleMapReact
-              bootstrapURLKeys={{ key: "AIzaSyBzThRkDOyyClUmtYw8NNtOmWkUk4A8Kew" }}
-              defaultCenter={mapCenter}
-              defaultZoom={16}
-              options={mapOptions}
-              onClick={() => setShowInfo(false)}
-            >
-              <MarkerWrapper
-                lat={mapCenter.lat}
-                lng={mapCenter.lng}
-                onClick={() => setShowInfo(true)}
-                showInfo={showInfo}
-                onCloseInfo={() => setShowInfo(false)}
-              />
-            </GoogleMapReact>
+            <iframe
+              src="https://maps.google.com/maps?q=18.4363419,-68.9984306&z=17&output=embed"
+              width="100%"
+              height="100%"
+              style={{ border: 0 }}
+              allowFullScreen
+              loading="lazy"
+              referrerPolicy="no-referrer-when-downgrade"
+            />
           </motion.div>
 
+          {/* Info */}
           <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
@@ -178,7 +67,7 @@ export default function ElegantLocationSection() {
                 href="https://maps.app.goo.gl/ipy5cBnW42YvVVRh7"
                 target="_blank"
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 px-6 w- py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
+                className="inline-flex items-center gap-2 px-6 py-3 bg-primary text-white rounded-full hover:bg-primary/90 transition-colors shadow-md"
               >
                 <Navigation className="w-5 h-5" />
                 <span>{locationSection.howToGetThere}</span>
