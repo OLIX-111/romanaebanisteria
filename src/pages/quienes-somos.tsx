@@ -111,12 +111,12 @@ export default function QuienesSomos() {
                                     <div>
                                         <SplitHeading
                                             text={s.top}
-                                            className="font-serif-display text-5xl lg:text-6xl font-bold text-white leading-none tracking-tight"
+                                            className="font-serif-display text-3xl lg:text-4xl font-bold text-white leading-none tracking-tight"
                                             delay={s.delay}
                                         />
                                         <SplitHeading
                                             text={s.bottom}
-                                            className="font-serif-display text-3xl lg:text-4xl font-bold leading-none tracking-tight mt-2"
+                                            className="font-serif-display text-sm lg:text-base font-bold leading-none tracking-widest uppercase mt-2"
                                             style={{ color: ORANGE }}
                                             delay={s.delay + 0.15}
                                         />
