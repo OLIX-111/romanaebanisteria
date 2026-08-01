@@ -10,7 +10,7 @@ export default function ContactPage() {
   return (
     <main className={openSans.className}>
       <Header />
-      <div className="min-h-screen bg-black/5 py-24">
+      <div className="min-h-screen bg-black py-24">
         <div className="container mx-auto px-4 pt-24">
           <div className="grid gap-12 lg:grid-cols-2 lg:gap-24 items-start">
             <ContactInfo />

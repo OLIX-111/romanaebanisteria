@@ -126,15 +126,15 @@ export function ContactForm() {
       initial={{ opacity: 0, y: 20 }}
       animate={{ opacity: 1, y: 0 }}
       transition={{ duration: 0.5, delay: 0.2 }}
-      className="bg-white shadow-lg p-8"
+      className="bg-zinc-900 border border-white/10 p-8"
     >
       {/* Sistema de notificaciones */}
       <AnimatePresence>
         {notification && <Toast notification={notification} onClose={closeNotification} />}
       </AnimatePresence>
 
-      <h2 className="text-2xl font-bold text-gray-900 mb-2">{contactForm.heading}</h2>
-      <p className="text-gray-600 mb-6">{contactForm.subheading}</p>
+      <h2 className="text-2xl font-bold text-white mb-2">{contactForm.heading}</h2>
+      <p className="text-gray-400 mb-6">{contactForm.subheading}</p>
 
       <form onSubmit={formik.handleSubmit} className="space-y-4">
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -146,7 +146,7 @@ export function ContactForm() {
               className={`w-full px-4 py-3 border ${
                 formik.touched.firstName && formik.errors.firstName
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : "border-gray-200 focus:border-primary focus:ring-primary"
+                  : "border-white/15 bg-black/30 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-orange-500"
               } focus:ring-2 focus:ring-opacity-20 outline-none transition-colors`}
             />
             {formik.touched.firstName && formik.errors.firstName && (
@@ -161,7 +161,7 @@ export function ContactForm() {
               className={`w-full px-4 py-3 border ${
                 formik.touched.lastName && formik.errors.lastName
                   ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                  : "border-gray-200 focus:border-primary focus:ring-primary"
+                  : "border-white/15 bg-black/30 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-orange-500"
               } focus:ring-2 focus:ring-opacity-20 outline-none transition-colors`}
             />
             {formik.touched.lastName && formik.errors.lastName && (
@@ -178,7 +178,7 @@ export function ContactForm() {
             className={`w-full px-4 py-3 border ${
               formik.touched.email && formik.errors.email
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                : "border-gray-200 focus:border-primary focus:ring-primary"
+                : "border-white/15 bg-black/30 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-orange-500"
             } focus:ring-2 focus:ring-opacity-20 outline-none transition-colors`}
           />
           {formik.touched.email && formik.errors.email && (
@@ -194,7 +194,7 @@ export function ContactForm() {
             className={`w-full px-4 py-3 border ${
               formik.touched.phone && formik.errors.phone
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                : "border-gray-200 focus:border-primary focus:ring-primary"
+                : "border-white/15 bg-black/30 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-orange-500"
             } focus:ring-2 focus:ring-opacity-20 outline-none transition-colors`}
           />
           {formik.touched.phone && formik.errors.phone && (
@@ -210,7 +210,7 @@ export function ContactForm() {
             className={`w-full px-4 py-3 border ${
               formik.touched.message && formik.errors.message
                 ? "border-red-500 focus:border-red-500 focus:ring-red-500"
-                : "border-gray-200 focus:border-primary focus:ring-primary"
+                : "border-white/15 bg-black/30 text-white placeholder-gray-500 focus:border-orange-500 focus:ring-orange-500"
             } focus:ring-2 focus:ring-opacity-20 outline-none transition-colors resize-none`}
           />
           {formik.touched.message && formik.errors.message && (
@@ -233,7 +233,7 @@ export function ContactForm() {
           )}
         </button>
 
-        <div className="flex items-center justify-center gap-4 text-sm text-gray-600 mt-6">
+        <div className="flex items-center justify-center gap-4 text-sm text-gray-500 mt-6">
           <p className="flex items-center">{contactForm.disclaimers.location}</p>|
           <p className="flex items-center">{contactForm.disclaimers.responseTime}</p>
         </div>
