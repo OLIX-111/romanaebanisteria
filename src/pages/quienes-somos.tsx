@@ -1,5 +1,4 @@
 import { Open_Sans } from "next/font/google"
-import Image from "next/image"
 import Head from "next/head"
 import Header from "@/components/layout/Header"
 import Footer from "@/components/layout/Footer"
@@ -93,33 +92,8 @@ export default function QuienesSomos() {
             <main className={`${openSans.className} bg-black min-h-screen`}>
                 <Header enableScroll={false} />
 
-                {/* Romana link — top-right */}
-                <div className="pt-24 w-full flex justify-end px-6 py-4">
-                    <a
-                        href="https://www.romanaebanisteria.com/"
-                        target="_blank"
-                        rel="noopener noreferrer"
-                        className="flex flex-row items-center gap-3 hover:opacity-80 transition-opacity duration-200"
-                    >
-                        <div
-                            className="flex items-center gap-2 px-3 py-1.5 rounded-full text-xs font-semibold shadow-lg animate-bounce"
-                            style={{ backgroundColor: "#1a1a1a", color: "#ffffff", whiteSpace: "nowrap" }}
-                        >
-                            <span>Conoce más de nuestro aliado</span>
-                            <span>→</span>
-                        </div>
-                        <Image
-                            src="/romanaEbanistería_alt.png"
-                            alt="Romana Ebanistería"
-                            width={140}
-                            height={56}
-                            className="object-contain"
-                        />
-                    </a>
-                </div>
-
                 {/* Quiénes Somos / Misión / Visión */}
-                <section className="w-full bg-black py-4">
+                <section className="w-full bg-black pt-28 pb-4">
                     <div className="max-w-6xl mx-auto px-6 lg:px-16">
                         {sections.map((s, i) => (
                             <div key={s.bottom}>
