@@ -59,30 +59,29 @@ export function ContactInfo() {
             </div>
           </div>
         </div>
-      </div>
 
-      {/* Redes sociales */}
-      <div>
-        <p className="text-sm font-medium text-gray-500 mb-3">Síguenos</p>
-        <div className="flex gap-3">
-          <a
-            href="https://www.instagram.com/lafabbrica.rd/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 px-4 py-2.5 rounded-lg text-white hover:text-orange-400 transition-all duration-200"
-          >
-            <Instagram className="w-5 h-5" />
-            <span className="text-sm">Instagram</span>
-          </a>
-          <a
-            href="https://web.facebook.com/profile.php?id=61592563232977"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex items-center gap-2 bg-white/5 hover:bg-orange-500/20 border border-white/10 hover:border-orange-500/40 px-4 py-2.5 rounded-lg text-white hover:text-orange-400 transition-all duration-200"
-          >
-            <Facebook className="w-5 h-5" />
-            <span className="text-sm">Facebook</span>
-          </a>
+        <div className="flex items-center gap-4">
+          <div className="bg-white/5 p-3 rounded-lg">
+            <Instagram className="w-6 h-6 text-orange-500" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Instagram</p>
+            <a href="https://www.instagram.com/lafabbrica.rd/" target="_blank" rel="noopener noreferrer" className="text-lg text-white hover:text-orange-500 transition-colors">
+              @lafabbrica.rd
+            </a>
+          </div>
+        </div>
+
+        <div className="flex items-center gap-4">
+          <div className="bg-white/5 p-3 rounded-lg">
+            <Facebook className="w-6 h-6 text-orange-500" />
+          </div>
+          <div>
+            <p className="text-sm font-medium text-gray-500">Facebook</p>
+            <a href="https://web.facebook.com/profile.php?id=61592563232977" target="_blank" rel="noopener noreferrer" className="text-lg text-white hover:text-orange-500 transition-colors">
+              La Fabbrica
+            </a>
+          </div>
         </div>
       </div>
     </motion.div>

@@ -123,8 +123,8 @@ export default function ElegantLocationSection() {
           transition={{ duration: 0.6 }}
           className="text-center mb-16"
         >
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">{locationSection.heading}</h2>
-          <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+          <h2 className="text-3xl md:text-4xl font-bold text-white mb-4">{locationSection.heading}</h2>
+          <p className="text-xl text-gray-400 max-w-2xl mx-auto">
             {locationSection.subheading}
           </p>
         </motion.div>
@@ -162,16 +162,16 @@ export default function ElegantLocationSection() {
             className="space-y-8"
           >
             <div>
-              <h3 className="text-2xl font-bold text-gray-900 mb-4">{locationSection.showroomHeading}</h3>
-              <div className="space-y-2 text-gray-600">
-                <p className="font-medium text-lg">{locationSection.companyTitle}</p>
+              <h3 className="text-2xl font-bold text-white mb-4">{locationSection.showroomHeading}</h3>
+              <div className="space-y-2 text-gray-400">
+                <p className="font-medium text-lg text-gray-200">{locationSection.companyTitle}</p>
                 <p>{locationSection.addressLine1}</p>
                 <p>{locationSection.addressLine2}</p>
               </div>
             </div>
 
-            <div className="rounded-lg p-6 shadow-inner">
-              <p className="text-gray-700 mb-4">
+            <div className="rounded-lg p-6">
+              <p className="text-gray-400 mb-4">
                 {locationSection.visitMessage}
               </p>
               <a
