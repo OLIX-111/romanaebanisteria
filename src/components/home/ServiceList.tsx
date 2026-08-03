@@ -3,14 +3,15 @@
 import { motion } from "framer-motion"
 import { useInView } from "react-intersection-observer"
 import { useTranslation } from "@/hook/UseTranslation"
+import Link from "next/link"
 
-const services = [
-  "Ebanistería",
-  "Carpintería en Aluminio",
-  "Puertas & Ventanas",
-  "Muebles a Medida",
-  "Cocinas",
-  "Closets",
+const services: { label: string; href?: string }[] = [
+  { label: "Ebanistería", href: "https://www.romanaebanisteria.com/store/services" },
+  { label: "Aluminio/Cristal", href: "https://aludespagroup.com/productos" },
+  { label: "Avisos Novach", href: "https://www.instagram.com/novach.rd/" },
+  { label: "Muebles a Medida" },
+  { label: "Cocinas" },
+  { label: "Closets" },
 ]
 
 const ServiceList = () => {
@@ -39,22 +40,33 @@ const ServiceList = () => {
           transition={{ duration: 0.7, delay: 0.2 }}
           className="grid grid-cols-2 md:grid-cols-3 gap-px bg-gray-900"
         >
-          {services.map((service, i) => (
-            <motion.div
-              key={service}
-              initial={{ opacity: 0, y: 10 }}
-              animate={inView ? { opacity: 1, y: 0 } : {}}
-              transition={{ duration: 0.4, delay: 0.05 * i }}
-              className="bg-black p-8 lg:p-10 group hover:bg-gray-950 transition-colors duration-300"
-            >
-              <span className="text-xs text-gray-600 tracking-widest uppercase mb-3 block">
-                0{i + 1}
-              </span>
-              <h3 className="font-serif-display text-2xl lg:text-3xl font-normal text-white">
-                {service}
-              </h3>
-            </motion.div>
-          ))}
+          {services.map(({ label, href }, i) => {
+            const inner = (
+              <>
+                <span className="text-xs text-gray-600 tracking-widest uppercase mb-3 block">
+                  0{i + 1}
+                </span>
+                <h3 className="font-serif-display text-2xl lg:text-3xl font-normal text-white">
+                  {label}
+                </h3>
+              </>
+            )
+            return (
+              <motion.div
+                key={label}
+                initial={{ opacity: 0, y: 10 }}
+                animate={inView ? { opacity: 1, y: 0 } : {}}
+                transition={{ duration: 0.4, delay: 0.05 * i }}
+                className="bg-black p-8 lg:p-10 group hover:bg-gray-950 transition-colors duration-300"
+              >
+                {href ? (
+                  <Link href={href} target="_blank" rel="noopener noreferrer" className="block">
+                    {inner}
+                  </Link>
+                ) : inner}
+              </motion.div>
+            )
+          })}
         </motion.div>
       </div>
     </section>
